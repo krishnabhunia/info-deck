@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InfoDeck — v1.6 D3 design · files to WhatsApp, optional footer</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100..900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#131A26; --ink2:#5A6675; --hint:#96A0AF;
+    --indigo:#3B5BDB; --indigo-c:#E8ECFD;
+    --teal:#0E9384; --teal-c:#DDF3F0;
+    --violet:#7A5AF8; --violet-c:#EEE9FE;
+    --green:#12A150; --green-c:#DFF5E8;
+    --amber:#B76E00; --amber-c:#FDF0DA;
+    --rose:#E5484D; --rose-c:#FDE7E8;
+    --purple:#9333EA; --purple-c:#F3E8FE;
+    --slate:#64748B; --slate-c:#EEF1F5;
+    --bg:#F6F8FC; --line:#E9EDF4; --outline:#C6CEDC;
+    --page:#E3E7F0; --tag:#22337F; --q:#7A5A00; --q-bg:#FFF3C4; --q-bd:#E2C35C;
+    --pri-d:#1E357F; --wa:#075E54; --wa-bg:#ECE5DD; --wa-out:#DCF8C6;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--page);font-family:Roboto,"Segoe UI",system-ui,sans-serif;color:var(--ink);padding:26px 18px 70px}
+  .wrap{max-width:1180px;margin:0 auto}
+  header.page h1{font-size:24px;font-weight:800;color:var(--pri-d)}
+  header.page p{font-size:13.5px;color:var(--ink2);margin-top:5px;line-height:1.55}
+  .stamp{display:inline-block;margin:10px 8px 0 0;font-size:12px;font-weight:700;color:#7A2E00;background:#FFE1CC;border:1px solid #E8B08C;border-radius:20px;padding:3px 12px}
+  .stamp.g{color:#22337F;background:var(--indigo-c);border-color:#B9C3F5}
+  .stamp.r{color:#8A1F19;background:var(--rose-c);border-color:#E7ADA8}
+  h2.sec{font-size:18px;font-weight:800;color:var(--pri-d);margin:38px 0 12px;padding-bottom:6px;border-bottom:2px solid #C9D1DD}
+  h3.sub{font-size:15px;color:var(--pri-d);margin-top:20px}
+  .rej-box{background:var(--rose-c);border:1px solid #E7ADA8;border-radius:10px;padding:12px 14px;font-size:13.5px;line-height:1.55;margin:10px 0 4px}
+  .rej-box b{color:#8A1F19}
+  .warn-box{background:#FFF6E5;border:1px solid #E8C98C;border-radius:10px;padding:12px 14px;font-size:13.5px;line-height:1.55;margin:10px 0 4px}
+  .warn-box b{color:#7A4A00}
+  .idea-box{background:var(--indigo-c);border:1px solid #B9C3F5;border-radius:10px;padding:12px 14px;font-size:13.5px;line-height:1.55;margin:10px 0 4px}
+  .idea-box b{color:var(--pri-d)}
+
+  table.tb{width:100%;border-collapse:collapse;font-size:12.5px;background:#fff;margin:6px 0 4px}
+  table.tb th{background:#E9EDF8;color:var(--pri-d);text-align:left;padding:6px 8px;border:1px solid #BFC9D8;font-size:12px}
+  table.tb td{padding:6px 8px;border:1px solid #D2D9E3;vertical-align:top;line-height:1.45}
+  table.tb .sr{width:1%;white-space:nowrap;text-align:center}
+  table.tb td.k{white-space:nowrap;font-weight:700;color:var(--tag)}
+  table.tb td.q{white-space:nowrap;font-weight:700;color:var(--q)}
+  table.tb td.rec{color:var(--green);font-weight:600}
+  table.tb td.new{white-space:nowrap;font-weight:700;color:var(--green)}
+  table.tb td.del{white-space:nowrap;font-weight:700;color:var(--rose)}
+  table.tb tr:nth-child(even) td{background:#FAFBFD}
+  code{font-family:Consolas,Menlo,monospace;font-size:12px;background:#EEF1F5;padding:1px 4px;border-radius:3px}
+
+  .frames{display:grid;grid-template-columns:repeat(auto-fit,minmax(520px,1fr));gap:34px 28px;margin-top:14px}
+  figure{display:flex;flex-direction:column;align-items:center;gap:8px}
+  figure h3{font-size:15px;font-weight:800;color:var(--pri-d);align-self:flex-start}
+  figure h3 small{font-weight:500;color:var(--ink2);font-size:12.5px;margin-left:6px}
+  figure table.tb{font-size:12px}
+  figure.full{grid-column:1 / -1}
+  figure.full h3{align-self:center}
+  figure.full table.tb{max-width:900px}
+  .duo{display:flex;gap:26px;justify-content:center;flex-wrap:wrap}
+
+  b.n{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:8px;background:var(--tag);color:#fff;font-size:10px;font-weight:800;flex-shrink:0;font-style:normal}
+  b.n.d{background:var(--rose)}
+  b.n.g{background:var(--green)}
+  i.q{display:inline-flex;font-style:normal;font-size:10px;font-weight:800;color:var(--q);background:var(--q-bg);border:1px solid var(--q-bd);border-radius:9px;padding:1px 6px}
+
+  .phone{width:378px;height:790px;background:var(--bg);border:9px solid #12151C;border-radius:38px;overflow:hidden;position:relative;box-shadow:0 16px 38px rgba(20,30,50,.22);display:flex;flex-direction:column;flex-shrink:0}
+  .sb{height:22px;color:var(--ink2);font-size:10.5px;font-weight:700;display:flex;align-items:center;justify-content:space-between;padding:0 16px;flex-shrink:0;background:#fff}
+  .nbar{height:48px;background:#fff;display:flex;align-items:center;gap:2px;padding:0 6px 0 12px;flex-shrink:0}
+  .nbar b.t{font-size:16.5px;font-weight:800;letter-spacing:-.3px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .nbar .ib{width:38px;height:38px;border-radius:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .hair{height:3px;background:linear-gradient(90deg,var(--indigo),var(--violet) 45%,var(--teal));flex-shrink:0}
+  .ic{width:21px;height:21px;fill:currentColor;flex-shrink:0}
+  .ic.s{width:17px;height:17px}
+  .ic.xs{width:13px;height:13px}
+  .body{flex:1;overflow:hidden;position:relative;padding:8px 12px 0}
+
+  /* WhatsApp mock */
+  .wa .sb{background:var(--wa);color:#fff}
+  .wa .wabar{height:50px;background:var(--wa);color:#fff;display:flex;align-items:center;gap:10px;padding:0 12px;font-weight:700;font-size:14px}
+  .wa .wabar .av{width:32px;height:32px;border-radius:16px;background:#fff3;display:flex;align-items:center;justify-content:center;font-size:12px}
+  .wa .body{background:var(--wa-bg);padding:12px}
+  .bub{max-width:82%;background:#fff;border-radius:10px;padding:7px 9px;font-size:12.5px;line-height:1.45;margin-bottom:8px;box-shadow:0 1px 1px rgba(0,0,0,.08);white-space:normal;position:relative}
+  .bub.out{background:var(--wa-out);margin-left:auto}
+  .bub .tm{display:block;text-align:right;font-size:9.5px;color:#7A8A7C;margin-top:2px}
+  .doc{display:flex;align-items:center;gap:8px;background:#fff;border-radius:8px;padding:8px;margin-bottom:4px}
+  .doc .fi{width:26px;height:32px;border-radius:5px;background:linear-gradient(160deg,#F0736F,#C0392F);color:#fff;font-size:7.5px;font-weight:800;display:flex;align-items:flex-end;justify-content:center;padding-bottom:3px;flex-shrink:0}
+  .doc .fi.doc2{background:linear-gradient(160deg,#5A8AE0,#20509E)}
+  .doc b{display:block;font-size:12px}
+  .doc small{display:block;font-size:10px;color:#7A8A7C}
+  .bad{background:var(--rose-c);color:#8A1F19;font-weight:700}
+
+  .dim{position:absolute;inset:0;background:rgba(12,18,30,.5);z-index:2}
+  .sheet{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:24px 24px 0 0;padding:10px 16px 0;max-height:95%;z-index:3}
+  .grab{width:36px;height:4px;border-radius:2px;background:#D3D9E4;margin:0 auto 12px}
+  .sheet h4{font-size:17px;font-weight:800;margin-bottom:6px;display:flex;align-items:center;gap:9px}
+  .lab{font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--indigo);margin:13px 0 7px 2px;display:flex;align-items:center;gap:6px}
+  .lab .r{margin-left:auto;text-transform:none;letter-spacing:0;font-size:11px;color:var(--ink2)}
+  .lab.pur{color:var(--purple)}
+  .frow{display:flex;align-items:center;gap:11px;padding:8px 2px;border-bottom:1px solid var(--line);min-height:44px}
+  .frow:last-of-type{border-bottom:0}
+  .frow .l{flex:1;min-width:0}
+  .frow .l .k{font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--indigo)}
+  .frow .l .v{font-size:13.5px;font-weight:700;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .frow .l .sub{font-size:11px;color:var(--ink2);margin-top:1px}
+  .chk{width:20px;height:20px;border-radius:6px;border:2px solid var(--outline);flex-shrink:0}
+  .chk.on{background:var(--indigo);border-color:var(--indigo);display:flex;align-items:center;justify-content:center}
+  .chk.on .ic{width:13px;height:13px;color:#fff}
+  .ftile{width:30px;height:36px;border-radius:7px;display:flex;align-items:flex-end;justify-content:center;font-size:8px;font-weight:800;color:#fff;padding-bottom:3px;flex-shrink:0}
+  .ftile.pdf{background:linear-gradient(160deg,#F0736F,#C0392F)}
+  .ftile.doc{background:linear-gradient(160deg,#5A8AE0,#20509E)}
+  .sw{width:44px;height:24px;border-radius:12px;background:#CDD4E0;position:relative;flex-shrink:0}
+  .sw i{position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:9px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+  .sw.on{background:var(--indigo)}
+  .sw.on i{left:23px}
+  .prev{background:#0F1522;color:#D8E2F2;border-radius:12px;padding:10px 12px;font-family:Consolas,Menlo,monospace;font-size:10.5px;line-height:1.55;white-space:pre-wrap;position:relative}
+  .prev .plab{position:absolute;right:10px;top:7px;font-size:8.5px;font-weight:800;color:#7C89A3;letter-spacing:.06em;font-family:Roboto,sans-serif}
+  .prev .att{margin-top:8px;padding-top:6px;border-top:1px dashed #33405A;color:#9DB4FF;font-family:Roboto,sans-serif;font-size:10.5px}
+  .note{border-radius:12px;padding:9px 11px;display:flex;gap:8px;align-items:flex-start;font-size:11px;line-height:1.45;margin-top:10px}
+  .note.warn{background:var(--amber-c);color:#7A4A00}
+  .note.ok{background:var(--green-c);color:#0B6B36}
+  .note .ic{width:15px;height:15px;flex-shrink:0;margin-top:1px}
+  .btnrow{display:flex;gap:9px;margin-top:12px}
+  .abtn{flex:1;height:50px;border-radius:14px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:13.5px;font-weight:800}
+  .abtn.cancel{border:1.5px solid var(--outline);color:var(--ink2);background:#fff}
+  .abtn.go{background:linear-gradient(140deg,#3CC272,#12A150);color:#fff;flex:1.4}
+  .sbs{height:30px;margin:12px -16px 0;border-top:1px dashed #C9D1DD;display:flex;align-items:center;justify-content:center;font-size:10.5px;color:var(--hint)}
+  .scard{background:#fff;border-radius:14px;box-shadow:0 2px 8px rgba(25,40,80,.07);overflow:hidden}
+  .srow{display:flex;align-items:center;gap:11px;padding:10px 12px;min-height:52px;border-bottom:1px solid var(--line)}
+  .srow:last-child{border-bottom:0}
+  .srow .tile{width:36px;height:36px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .srow .l{flex:1;min-width:0}
+  .srow .l b{display:block;font-size:13.5px;font-weight:700}
+  .srow .l small{display:block;font-size:11px;color:var(--ink2);margin-top:1px}
+  .srow .val{font-size:12px;font-weight:800;white-space:nowrap}
+  .flow{display:flex;flex-direction:column;gap:6px}
+  .step{display:flex;gap:10px;align-items:flex-start;background:#fff;border-radius:12px;padding:10px 12px;box-shadow:0 2px 7px rgba(25,40,80,.07);position:relative}
+  .step .num{width:24px;height:24px;border-radius:12px;background:var(--indigo);color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .step .num.g{background:var(--green)}
+  .step b{display:block;font-size:12.5px}
+  .step small{display:block;font-size:11px;color:var(--ink2);margin-top:1px;line-height:1.4}
+  .arrow{text-align:center;color:var(--hint);font-size:12px;font-weight:800}
+  .toast{position:absolute;left:12px;right:12px;bottom:74px;background:#18202E;color:#fff;border-radius:14px;padding:12px 14px;font-size:12.5px;display:flex;align-items:center;gap:10px;box-shadow:0 10px 22px rgba(0,0,0,.3);z-index:4}
+  .toast b{margin-left:auto;color:#7FE0AC;font-weight:800;white-space:nowrap}
+  .toast .ic{width:17px;height:17px;color:#9DB4FF}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></symbol>
+  <symbol id="i-share" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 1 0-3-3c0 .24.04.47.09.7L8.04 9.81A2.99 2.99 0 0 0 3 12a3 3 0 0 0 5.04 2.19l7.12 4.16c-.05.21-.08.43-.08.65a2.92 2.92 0 1 0 2.92-2.92z"/></symbol>
+  <symbol id="i-tick" viewBox="0 0 24 24"><path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></symbol>
+  <symbol id="i-attach" viewBox="0 0 24 24"><path d="M16.5 6v11.5a4 4 0 0 1-8 0V5a2.5 2.5 0 0 1 5 0v10.5a1 1 0 0 1-2 0V6H10v9.5a2.5 2.5 0 0 0 5 0V5a4 4 0 0 0-8 0v12.5a5.5 5.5 0 0 0 11 0V6h-1.5z"/></symbol>
+  <symbol id="i-wa" viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .1-1.7-.1-.4-.1-.9-.3-1.5-.6-2.7-1.2-4.4-3.9-4.5-4.1-.1-.2-1.1-1.4-1.1-2.7 0-1.3.7-1.9.9-2.2.2-.2.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 1.9c.1.2.1.4 0 .6l-.3.4-.4.4c-.1.1-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.1 1 2.1 1.3 2.4 1.4.3.1.5.1.6-.1l.9-1c.2-.2.4-.2.6-.1l2 .9c.2.1.4.2.4.3.1.2.1.7-.1 1.3z"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.48.48 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1 1 12 8.4a3.6 3.6 0 0 1 0 7.2z"/></symbol>
+</svg>
+
+<div class="wrap">
+<header class="page">
+  <h1>InfoDeck — v1.6 · D3 design</h1>
+  <p>Two bugs. <b>1)</b> In WhatsApp you got the file <b>names</b> as text and no files — two mistakes stacked, both mine, both named below. The fix sends the files for real, using the one pattern that works in every app: <b>text first, files as a follow-up send</b>. <b>2)</b> “Shared from InfoDeck” becomes a switch, off by default.</p>
+  <span class="stamp">DESIGN ONLY · nothing built · no version bump</span>
+  <span class="stamp g">Reply by tag: “S2.2 → default on”, “Q3 → b”, or “defaults” = all recommended</span>
+  <span class="stamp r">This supersedes part of B4 — files come back into the picker, but never into the text</span>
+</header>
+
+<div class="rej-box"><b>Checked in the shipped source.</b> The text builder in 1.6 lists <code>Kind.FILE</code> in its output order, so a ticked file was written into the message as <code>Policy document.pdf: Policy document.pdf</code>. At the same time the attachment intent used a wildcard type and silently fell back to text-only. Result: WhatsApp received a message containing file <i>names</i>, and nothing else. Both are fixed here; the first is a one-line removal, the second needs the flow in S3.</div>
+
+<h2 class="sec">A · Screens</h2>
+<div class="frames">
+
+<!-- S1 -->
+<figure class="full">
+  <h3>S1 · What WhatsApp received, and what it should<small>bug 1</small></h3>
+  <div class="duo">
+    <div class="phone wa" style="height:560px">
+      <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+      <div class="wabar"><span class="av">S</span>Sourav · 1.6 as shipped</div>
+      <div class="body">
+        <div class="bub out">Car Insurance — HDFC Ergo<br><br>Policy No: HD-2291-KX-2026<br>Registration: WB 24 AB 1234<br>Policy Expiry: 11-Oct-2026<br><span class="bad">Policy document.pdf: Policy document.pdf</span><br><span class="bad">Claim form.docx: Claim form.docx</span><br><br>Shared from InfoDeck<span class="tm">09:41 ✓✓</span><br>          <b class="n d" style="position:absolute;left:-8px;top:-8px">1</b><br>        </div>
+        <div class="bub" style="max-width:70%">Where are the files? 🤔<span class="tm">09:42</span></div><br>        <b class="n d" style="position:absolute;right:20px;top:200px">2</b><br>      </div>
+    </div>
+
+    <div class="phone wa" style="height:560px">
+      <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+      <div class="wabar"><span class="av">S</span>Sourav · proposed</div>
+      <div class="body">
+        <div class="bub out">Car Insurance — HDFC Ergo<br><br>Policy No: HD-2291-KX-2026<br>Registration: WB 24 AB 1234<br>Policy Expiry: 11-Oct-2026<span class="tm">09:41 ✓✓</span><br>          <b class="n g" style="position:absolute;left:-8px;top:-8px">3</b><br>        </div>
+        <div class="bub out" style="padding:5px"><br>          <div class="doc"><span class="fi">PDF</span><div><b>Policy document.pdf</b><small>1.8 MB · PDF</small></div></div>
+          <div class="doc"><span class="fi doc2">DOC</span><div><b>Claim form.docx</b><small>2.3 MB · DOCX</small></div></div>
+          <span class="tm">09:41 ✓✓</span>
+          <b class="n g" style="position:absolute;left:-8px;top:-8px">4</b>
+        </div>
+        <div class="bub" style="max-width:70%">Got them, thanks 👍<span class="tm">09:42</span></div>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="del">Names in the message</td><td>The builder wrote each ticked file as a “label: value” line. Files are <b>never text</b> — removed from the builder outright</td></tr>
+    <tr><td class="sr">2</td><td class="del">No documents arrived</td><td>The attachment intent failed and fell back to text-only without saying so — the same cause found in B4</td></tr>
+    <tr><td class="sr">3</td><td class="new">Message 1 — the text</td><td>Exactly the preview, nothing about files in it, footer only if you switched it on</td></tr>
+    <tr><td class="sr">4</td><td class="new">Message 2 — the documents</td><td>Sent as real files with their real types, as a second send straight after — the way a person would do it by hand</td></tr>
+  </table>
+</figure>
+
+<!-- S2 -->
+<figure>
+  <h3>S2 · The picker — files back, footer optional<small>bugs 1 and 2</small></h3>
+  <div class="phone" style="height:1000px">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="nbar"><b class="t">Car Insurance — HDFC Ergo</b><span class="ib" style="background:var(--green-c);color:var(--green)"><svg class="ic s"><use href="#i-share"/></svg></span></div>
+    <div class="hair"></div>
+    <div class="body"><div class="dim"></div>
+      <div class="sheet">
+        <div class="grab"></div>
+        <h4><svg class="ic" style="color:var(--green)"><use href="#i-share"/></svg>What to share</h4>
+
+        <div class="lab">Data <span class="r">2 of 3</span></div>
+        <div class="frow"><span class="chk on"><svg class="ic"><use href="#i-tick"/></svg></span><div class="l"><div class="k">Policy No</div><div class="v">HD-2291-KX-2026</div></div></div>
+        <div class="frow"><span class="chk on"><svg class="ic"><use href="#i-tick"/></svg></span><div class="l"><div class="k">Registration</div><div class="v">WB 24 AB 1234</div></div></div>
+
+        <div class="lab pur"><svg class="ic xs"><use href="#i-attach"/></svg>Files <span class="r">2 of 3 · 4.1 MB</span></div>
+        <div class="frow"><span class="chk on"><svg class="ic"><use href="#i-tick"/></svg></span><span class="ftile pdf">PDF</span><div class="l"><div class="v">Policy document.pdf</div><div class="sub">1.8 MB</div></div>
+          <b class="n" style="position:absolute;right:6px">1</b></div>
+        <div class="frow"><span class="chk on"><svg class="ic"><use href="#i-tick"/></svg></span><span class="ftile doc">DOC</span><div class="l"><div class="v">Claim form.docx</div><div class="sub">2.3 MB</div></div></div>
+        <div class="frow"><span class="chk"></span><span class="ftile pdf">PDF</span><div class="l"><div class="v">Old policy 2024.pdf</div><div class="sub">3.9 MB</div></div></div>
+
+        <div class="note ok"><svg class="ic"><use href="#i-tick"/></svg><div>Files go as a <b>second send</b> right after the text — real documents, never names in the message.</div></div>
+
+        <div class="lab">Options</div>
+        <div class="frow"><div class="l"><div class="v" style="font-size:13px">Add “Shared from InfoDeck”</div><div class="sub">One line at the end of the message</div></div><span class="sw"><i></i></span>
+          <b class="n" style="position:absolute;right:56px">2</b></div>
+
+        <div class="lab">Preview</div>
+        <div class="prev"><span class="plab">MESSAGE 1</span>Car Insurance — HDFC Ergo
+
+Policy No: HD-2291-KX-2026
+Registration: WB 24 AB 1234
+Policy Expiry: 11-Oct-2026<div class="att">then, as files: Policy document.pdf · Claim form.docx</div><b class="n g" style="position:absolute;right:6px;bottom:6px">3</b></div>
+
+        <div class="btnrow">
+          <span class="abtn cancel"><svg class="ic"><use href="#i-close"/></svg>Cancel</span>
+          <span class="abtn go"><svg class="ic"><use href="#i-share"/></svg>Next</span>
+        </div>
+        <div class="sbs">bottom clearance = max(25 % screen height, nav bar + 24 dp)</div>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="new">Files back in the picker</td><td>Per-file ticks, as 1.5.D2 drew them. This partly reverses B4 — the per-file Share pill on the card stays too <i class="q">Q1</i></td></tr>
+    <tr><td class="sr">2</td><td class="new">Footer switch</td><td>“Add ‘Shared from InfoDeck’” — <b>off by default</b>, remembered once you set it, mirrored in Settings ▸ Sharing <i class="q">Q2</i></td></tr>
+    <tr><td class="sr">3</td><td class="new">Preview says what travels how</td><td>The dark block is <b>only</b> message 1; the file list beneath is a note, never part of the text. No more names leaking into the message</td></tr>
+    <tr><td class="sr">4</td><td class="k">No Attach / Bundle switch</td><td>Gone. There is one way files travel now, and it works</td></tr>
+  </table>
+</figure>
+
+<!-- S3 -->
+<figure>
+  <h3>S3 · Text first, files next<small>bug 1 · the flow that actually works</small></h3>
+  <div class="phone" style="height:900px">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="nbar"><b class="t">Send with</b></div>
+    <div class="hair"></div>
+    <div class="body">
+      <div class="flow">
+        <div class="step"><span class="num">1</span><div><b>You tap WhatsApp</b><small>Message 1 opens in WhatsApp as plain text, addressed straight to the app</small></div></div>
+        <div class="arrow">▼</div>
+        <div class="step"><span class="num">2</span><div><b>You pick the chat and send</b><small>Same as today. Nothing changed here</small></div></div>
+        <div class="arrow">▼</div>
+        <div class="step"><span class="num">3</span><div><b>You come back to InfoDeck</b><small>InfoDeck remembers there are 2 files waiting for this share</small>
+          <b class="n" style="position:absolute;right:8px;top:8px">1</b></div></div>
+        <div class="arrow">▼</div>
+        <div class="step"><span class="num g">4</span><div><b>“Now send the 2 files to WhatsApp?”</b><small>One tap. The files open in WhatsApp as documents with their real types — you pick the same chat</small>
+          <b class="n g" style="position:absolute;right:8px;top:8px">2</b></div></div>
+      </div>
+
+      <div class="toast"><svg class="ic"><use href="#i-file"/></svg>2 files ready for WhatsApp<b>SEND FILES</b>
+        <b class="n" style="position:absolute;left:-6px;top:-8px">3</b></div>
+
+      <div class="lab" style="margin-top:14px">Why two sends and not one</div>
+      <div class="scard">
+        <div class="srow"><span class="tile" style="background:var(--amber-c);color:var(--amber)"><svg class="ic s"><use href="#i-warn"/></svg></span>
+          <div class="l"><b>Android has no “text plus documents” message</b><small>A single intent carries one or the other reliably. WhatsApp keeps the file and drops the words</small></div></div>
+        <div class="srow"><span class="tile" style="background:var(--green-c);color:var(--green)"><svg class="ic s"><use href="#i-tick"/></svg></span>
+          <div class="l"><b>Two sends is what you would do by hand</b><small>Type the message, then attach the documents. InfoDeck just does the second tap for you</small></div></div>
+        <div class="srow"><span class="tile" style="background:var(--indigo-c);color:var(--indigo)"><svg class="ic s"><use href="#i-share"/></svg></span>
+          <div class="l"><b>Gmail gets both at once</b><small>Mail carries text and attachments together, so there the follow-up is skipped</small></div>
+          <b class="n" style="position:absolute;right:12px;top:6px">4</b></div>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="new">Pending files are remembered</td><td>Held only while the card view is open; leaving the card clears them. Nothing is stored</td></tr>
+    <tr><td class="sr">2</td><td class="new">Follow-up send</td><td><code>ACTION_SEND_MULTIPLE</code> (or <code>ACTION_SEND</code> for one file), the real MIME per file, addressed to the <b>same app</b> you chose in step 1 — no chooser to click through again <i class="q">Q3</i></td></tr>
+    <tr><td class="sr">3</td><td class="new">The snackbar</td><td>Appears the moment you return, stays until you act or dismiss — this one does not time out, because timing out would lose the files</td></tr>
+    <tr><td class="sr">4</td><td class="k">Per-app</td><td>WhatsApp, SMS-like apps and Telegram get the two-step; Gmail and Email get one send with attachments; the chooser gets one send too, since you can pick a mail app there</td></tr>
+  </table>
+</figure>
+
+<!-- S4 -->
+<figure>
+  <h3>S4 · The footer, everywhere it can be set<small>bug 2</small></h3>
+  <div class="phone" style="height:700px">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="nbar"><b class="t">Settings</b><span class="ib" style="background:var(--teal-c);color:var(--teal)"><svg class="ic s"><use href="#i-gear"/></svg></span></div>
+    <div class="hair"></div>
+    <div class="body">
+      <div class="lab" style="margin-top:2px">Sharing</div>
+      <div class="scard">
+        <div class="srow"><div class="l"><b>Add “Shared from InfoDeck”</b><small>One line at the end of every shared message</small></div><span class="sw"><i></i></span>
+          <b class="n" style="position:absolute;right:56px;top:6px">1</b></div>
+        <div class="srow"><div class="l"><b>Include the card name</b></div><span class="sw on"><i></i></span></div>
+        <div class="srow"><div class="l"><b>Remember ticks per card</b><small>Reopen with the same selection</small></div><span class="sw on"><i></i></span></div>
+        <div class="srow"><div class="l"><b>Send files as a second message</b><small>For apps that cannot carry text and documents together</small></div><span class="val" style="color:var(--indigo)">Automatic</span>
+          <b class="n" style="position:absolute;right:12px;top:6px">2</b></div>
+      </div>
+
+      <div class="lab">With the footer off</div>
+      <div class="prev"><span class="plab">MESSAGE</span>Car Insurance — HDFC Ergo
+
+Policy No: HD-2291-KX-2026
+Policy Expiry: 11-Oct-2026</div>
+
+      <div class="lab">With it on</div>
+      <div class="prev"><span class="plab">MESSAGE</span>Car Insurance — HDFC Ergo
+
+Policy No: HD-2291-KX-2026
+Policy Expiry: 11-Oct-2026
+
+Shared from InfoDeck<b class="n" style="position:absolute;right:6px;bottom:6px">3</b></div>
+
+      <div class="note warn"><svg class="ic"><use href="#i-warn"/></svg><div>Settings ▸ Sharing is in the queue but not built yet — this switch ships in the picker first, and the Settings row when that screen lands.</div></div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="new">One switch, two homes</td><td>The picker and Settings ▸ Sharing show the same value; flipping either flips both</td></tr>
+    <tr><td class="sr">2</td><td class="k">Two-step is automatic</td><td>Shown here so you know it exists; not something you have to manage</td></tr>
+    <tr><td class="sr">3</td><td class="k">Exactly one line</td><td>When on, it is the last line, after a blank line — the same text the builder already uses</td></tr>
+  </table>
+</figure>
+
+</div><!-- /frames -->
+
+<h2 class="sec">B · Specification</h2>
+
+<h3 class="sub">C1 · What was wrong, precisely</h3>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Mistake</th><th>Where</th><th>Fix</th></tr>
+  <tr><td class="sr">1</td><td class="del">File names written into the text</td><td><code>ShareText.build()</code> lists <code>Kind.FILE</code> in its output order</td><td class="rec">Remove FILE from the builder. Files are never text</td></tr>
+  <tr><td class="sr">2</td><td class="del">Wildcard MIME with a pinned package</td><td><code>Sharer.send()</code> used <code>*/*</code> and <code>setPackage</code></td><td class="rec">Real MIME per file via <code>FileShare.mime()</code>; files sent in a separate intent</td></tr>
+  <tr><td class="sr">3</td><td class="del">Silent fallback to text-only</td><td>The catch block</td><td class="rec">Any degrade is announced (rule from B4, kept)</td></tr>
+  <tr><td class="sr">4</td><td class="del">Footer always on</td><td>Hard-coded <code>footer = true</code> at the call sites</td><td class="rec">A preference, off by default, switch in the picker</td></tr>
+</table>
+
+<h3 class="sub">C2 · How each target gets the files</h3>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Target</th><th>Send 1</th><th>Send 2</th></tr>
+  <tr><td class="sr">1</td><td class="k">WhatsApp</td><td>text/plain, pinned to WhatsApp</td><td class="rec">files with real MIME, pinned to WhatsApp, offered on return</td></tr>
+  <tr><td class="sr">2</td><td class="k">Gmail · Email</td><td class="rec">text + files in one intent — mail carries both</td><td>—</td></tr>
+  <tr><td class="sr">3</td><td class="k">SMS</td><td>text only</td><td class="del">never — Android cannot; the picker says so when files are ticked</td></tr>
+  <tr><td class="sr">4</td><td class="k">All other apps</td><td>text + files in one intent through the chooser</td><td>offered on return only if the chosen app is a known chat app <i class="q">Q3</i></td></tr>
+</table>
+
+<h3 class="sub">C3 · Rules</h3>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Rule</th><th>Detail</th></tr>
+  <tr><td class="sr">1</td><td class="k">Pending files</td><td>Kept in memory only while the card view is open; cleared on leaving, on Send files, or on dismissing the snackbar</td></tr>
+  <tr><td class="sr">2</td><td class="k">Snackbar</td><td>Indefinite, with SEND FILES and a dismiss; never times out</td></tr>
+  <tr><td class="sr">3</td><td class="k">Missing file</td><td>Skipped and named in the snackbar; the rest still go</td></tr>
+  <tr><td class="sr">4</td><td class="k">Footer</td><td>Preference <code>shareFooter</code>, default false; one line, last, after a blank line</td></tr>
+  <tr><td class="sr">5</td><td class="k">Per-file Share pill</td><td>Stays on every file row (B4) — for when you only want one document and no message</td></tr>
+  <tr><td class="sr">6</td><td class="k">Masking</td><td>The masked-plus-attached warning from 1.5.D2 returns with the file rows, since the trap returns with them</td></tr>
+</table>
+
+<h3 class="sub">C4 · Three companions</h3>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Item</th><th>Exception handling</th><th>Logger.e</th><th>Tests</th></tr>
+  <tr><td class="sr">1</td><td class="k">Builder fix</td><td>FILE fields can be selected but never rendered; an all-files selection yields an empty message and the picker says “tick at least one field or send files only”</td><td>—</td><td>JUnit that <code>build()</code> output never contains a file name for any selection, and the 1.5 text tests still pass</td></tr>
+  <tr><td class="sr">2</td><td class="k">Two-step send</td><td>Send 2 runs only after send 1 launched successfully; a failed send 2 announces itself and keeps the files pending; URIs only via FileProvider; real MIME per file</td><td>logs a failed send 1, a failed send 2, a missing file, and any degrade</td><td>JUnit on the per-target plan (one send vs two), the MIME per file, and the pending-files lifecycle; device checklist into WhatsApp and Gmail — the per-app behaviour itself remains unverifiable from here</td></tr>
+  <tr><td class="sr">3</td><td class="k">Footer switch</td><td>Missing preference reads as false</td><td>—</td><td>JUnit that the footer appears only when the preference is true, and always as the last line</td></tr>
+</table>
+
+<h2 class="sec">C · Open questions</h2>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Q</th><th>Question</th><th>Options</th><th>My recommendation</th></tr>
+  <tr><td class="sr">1</td><td class="q">Q1</td><td>Files in the picker again</td><td>(a) yes, with the two-step send &nbsp; (b) keep B4 as agreed — text only, per-file Share pills only</td><td class="rec">(a) — it is what you asked for today, and the pills stay too</td></tr>
+  <tr><td class="sr">2</td><td class="q">Q2</td><td>Footer default</td><td>(a) off &nbsp; (b) on</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">3</td><td class="q">Q3</td><td>Follow-up send after the chooser</td><td>(a) offer it only for known chat apps &nbsp; (b) always offer it &nbsp; (c) never after the chooser</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">4</td><td class="q">Q4</td><td>Snackbar behaviour</td><td>(a) stays until you act &nbsp; (b) 10 s then gone</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">5</td><td class="q">Q5</td><td>Files ticked by default</td><td>(a) unticked &nbsp; (b) ticked &nbsp; (c) remembered per card</td><td class="rec">(a) now, (c) once per-card memory lands</td></tr>
+</table>
+
+<h2 class="sec">D · If accepted</h2>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Field</th><th>Value</th></tr>
+  <tr><td class="sr">1</td><td class="k">Queue</td><td>B5 file names never in the text + two-step file send · B6 optional footer. B5 amends B4: the per-file Share pill stays, the picker regains file rows, the text stays file-free</td></tr>
+  <tr><td class="sr">2</td><td class="k">Release</td><td>Rides with B3, B4, N58, N59 → <b>1.7</b>, versionCode <b>1007000</b></td></tr>
+  <tr><td class="sr">3</td><td class="k">Database</td><td>No schema change — one new preference</td></tr>
+  <tr><td class="sr">4</td><td class="k">Trigger</td><td>Nothing is built until you say <b>build</b> / <b>release</b></td></tr>
+</table>
+
+</div>
+</body>
+</html>

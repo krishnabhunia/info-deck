@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InfoDeck — v1.00 D1 design</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100..900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1C2431; --ink2:#5F6B7A; --hint:#98A2AE;
+    --pri:#34518A; --pri-d:#24406F; --pri-c:#E3EAF7; --on-pri-c:#1E3866;
+    --amber:#9A5B00; --amber-c:#FFF1D6;
+    --ok:#2E7D32; --ok-c:#E6F4E1;
+    --err:#B3261E; --err-c:#FBE3E1;
+    --bg:#F3F5F8; --card:#FFFFFF; --line:#E1E5EB; --outline:#B7BFCC;
+    --page:#E4E7EE;
+    --tag:#1A3E8C; --q:#7A5A00; --q-bg:#FFF3C4; --q-bd:#E2C35C;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--page);font-family:Roboto,"Segoe UI",system-ui,-apple-system,sans-serif;color:var(--ink);padding:26px 18px 70px}
+  .wrap{max-width:1180px;margin:0 auto}
+  header.page h1{font-size:24px;font-weight:800;color:var(--pri-d)}
+  header.page p{font-size:13.5px;color:var(--ink2);margin-top:5px;line-height:1.5}
+  .stamp{display:inline-block;margin:10px 8px 0 0;font-size:12px;font-weight:700;color:#7A2E00;background:#FFE1CC;border:1px solid #E8B08C;border-radius:20px;padding:3px 12px}
+  .stamp.g{color:#1E3866;background:#E3EAF7;border-color:#B4C4E4}
+  h2.sec{font-size:18px;font-weight:800;color:var(--pri-d);margin:38px 0 12px;padding-bottom:6px;border-bottom:2px solid #C9D1DD}
+  .note{font-size:13px;color:var(--ink2);line-height:1.5;margin:6px 0 10px}
+
+  /* ---------- tables ---------- */
+  table.tb{width:100%;border-collapse:collapse;font-size:12.5px;background:#fff;margin:6px 0 4px}
+  table.tb th{background:#E9EEF6;color:var(--pri-d);text-align:left;padding:6px 8px;border:1px solid #BFC9D8;font-size:12px}
+  table.tb td{padding:6px 8px;border:1px solid #D2D9E3;vertical-align:top;line-height:1.45}
+  table.tb .sr{width:1%;white-space:nowrap;text-align:center}
+  table.tb td.k{white-space:nowrap;font-weight:700;color:var(--tag)}
+  table.tb td.q{white-space:nowrap;font-weight:700;color:var(--q)}
+  table.tb td.rec{color:var(--ok);font-weight:600}
+  table.tb tr:nth-child(even) td{background:#FAFBFD}
+  code{font-family:Consolas,Menlo,monospace;font-size:12px;background:#EEF1F5;padding:1px 4px;border-radius:3px}
+
+  /* ---------- palette ---------- */
+  .pal{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+  .sw{display:flex;align-items:center;gap:6px;font-size:12px;background:#fff;border:1px solid #D2D9E3;border-radius:8px;padding:4px 8px}
+  .sw i{width:18px;height:18px;border-radius:5px;border:1px solid rgba(0,0,0,.12)}
+
+  /* ---------- frames grid ---------- */
+  .frames{display:grid;grid-template-columns:repeat(auto-fit,minmax(520px,1fr));gap:34px 28px;margin-top:14px}
+  figure{display:flex;flex-direction:column;align-items:center;gap:8px}
+  figure h3{font-size:15px;font-weight:800;color:var(--pri-d);align-self:flex-start}
+  figure h3 small{font-weight:500;color:var(--ink2);font-size:12.5px;margin-left:6px}
+  figcaption{font-size:12.5px;color:var(--ink2);text-align:center;max-width:520px;line-height:1.45}
+  figure table.tb{font-size:12px}
+  figure table.tb td:nth-child(2){white-space:nowrap}
+  figure.full{grid-column:1 / -1}
+  figure.full h3{align-self:center}
+  figure.full table.tb{max-width:760px}
+
+  /* ---------- callouts ---------- */
+  b.n{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:8px;background:var(--tag);color:#fff;font-size:10px;font-weight:800;line-height:1;flex-shrink:0;font-style:normal}
+  i.q{display:inline-flex;align-items:center;font-style:normal;font-size:10px;font-weight:800;color:var(--q);background:var(--q-bg);border:1px solid var(--q-bd);border-radius:9px;padding:1px 6px;line-height:1.3;flex-shrink:0}
+
+  /* ---------- phone ---------- */
+  .phone{width:378px;height:758px;background:var(--bg);border:9px solid #171A20;border-radius:36px;overflow:hidden;position:relative;box-shadow:0 12px 30px rgba(20,30,50,.20);display:flex;flex-direction:column;flex-shrink:0}
+  .phone.tall{height:1250px}
+  .sb{height:24px;background:var(--pri-d);color:#fff;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:space-between;padding:0 18px;flex-shrink:0}
+  .appbar{height:56px;background:var(--pri);color:#fff;display:flex;align-items:center;padding:0 6px 0 4px;gap:2px;flex-shrink:0}
+  .appbar .t{font-size:17px;font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 6px;line-height:1.2}
+  .appbar .t small{display:block;font-size:11.5px;font-weight:400;opacity:.85}
+  .appbar.pad .t{padding-left:12px}
+  .appbar .t.two{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;font-size:15px;line-height:1.25;overflow:hidden}
+  .ic{width:24px;height:24px;fill:currentColor;flex-shrink:0}
+  .ic.s{width:20px;height:20px}
+  .ib{width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:20px;position:relative;flex-shrink:0}
+  .ib b.n{position:absolute;right:-1px;bottom:-1px}
+  .cnt{position:absolute;top:5px;right:5px;min-width:16px;height:16px;border-radius:8px;background:#FFB84D;color:#1C2431;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 4px}
+  .body{flex:1;overflow:hidden;position:relative;padding:12px 12px 0}
+  .nav{height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .nav i{width:108px;height:4px;border-radius:2px;background:#8B93A0}
+  .fab{position:absolute;right:16px;bottom:16px;height:48px;padding:0 18px 0 14px;border-radius:16px;background:var(--pri-c);color:var(--on-pri-c);font-weight:700;font-size:14px;display:flex;align-items:center;gap:8px;box-shadow:0 4px 12px rgba(0,0,0,.20)}
+  .strip{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink2);padding:0 4px 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .strip span.x{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .strip b{color:var(--ink);font-weight:600}
+  .strip .dot{width:4px;height:4px;border-radius:2px;background:var(--hint)}
+
+  /* decks */
+  .decks{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .deck{background:var(--card);border-radius:14px;padding:12px 12px 10px;position:relative;box-shadow:0 1px 3px rgba(0,0,0,.08);min-height:104px;margin-top:6px}
+  .deck::before,.deck::after{content:"";position:absolute;height:6px;border-radius:6px 6px 0 0;background:#fff;box-shadow:0 -1px 0 rgba(0,0,0,.06)}
+  .deck::before{top:-3px;left:6px;right:6px;opacity:.75}
+  .deck::after{top:-6px;left:12px;right:12px;opacity:.5}
+  .deck .tab{height:6px;border-radius:14px 14px 0 0;margin:-12px -12px 10px}
+  .deck b{display:block;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .deck .m{font-size:12px;color:var(--ink2);margin-top:2px}
+  .deck .r{display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--amber);font-weight:600;margin-top:10px}
+  .deck .r.off{color:var(--hint);font-weight:500}
+  .deck .r .ic{width:14px;height:14px}
+  .deck b.n{position:absolute;right:8px;top:12px}
+  .c-blue{background:#4A6FB0}.c-teal{background:#2E8A86}.c-green{background:#4E9440}.c-amber{background:#D48A18}.c-purple{background:#7B57C0}.c-pink{background:#C2528A}.c-red{background:#C94A42}.c-grey{background:#7B8794}
+
+  /* list items */
+  .li{background:var(--card);border-radius:14px;padding:11px 14px 10px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.08);position:relative}
+  .li .tt{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:22px}
+  .kv{display:flex;gap:6px;font-size:12.5px;color:var(--ink2);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .kv b{color:var(--ink);font-weight:500}
+  .kv .rel{color:var(--ok);font-weight:600}
+  .chip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:12px;background:var(--amber-c);color:var(--amber);margin-top:7px}
+  .chip .ic{width:14px;height:14px}
+  .chip.off{background:#ECEFF3;color:var(--ink2);font-weight:600}
+  .chip.blue{background:var(--pri-c);color:var(--on-pri-c)}
+  .li > b.n{position:absolute;right:10px;top:12px}
+  .chip b.n{position:static;margin-left:2px}
+
+  /* card view */
+  .sec-h{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--pri);margin:12px 4px 6px}
+  .grp{background:var(--card);border-radius:14px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+  .row{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--line);min-height:46px}
+  .row:last-child{border-bottom:0}
+  .row .l{flex:1;min-width:0}
+  .row .l small{display:block;font-size:11.5px;color:var(--ink2)}
+  .row .l b{display:block;font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .row .l b em{font-style:normal;font-size:12px;color:var(--ok);font-weight:600;margin-left:6px}
+  .row .l b em.past{color:var(--ink2)}
+  .row .ic.act{color:var(--ink2);width:20px;height:20px}
+  .bellc{width:32px;height:32px;border-radius:16px;background:var(--amber-c);color:var(--amber);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .bellc .ic{width:18px;height:18px}
+  .sw2{width:40px;height:22px;border-radius:11px;background:var(--pri);position:relative;flex-shrink:0}
+  .sw2::after{content:"";position:absolute;top:3px;right:3px;width:16px;height:16px;border-radius:8px;background:#fff}
+  .sw2.off{background:#C7CDD6}.sw2.off::after{right:auto;left:3px;background:#fff}
+  .meta{font-size:11.5px;color:var(--hint);text-align:center;margin-top:12px}
+  .stat{display:inline-block;font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:9px;background:var(--ok-c);color:var(--ok);white-space:nowrap}
+  .rc{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
+  .row.sch{padding:7px 10px 7px 12px}
+  .row.sch .l b{font-size:13px;font-weight:600}
+  .row.sch .bellc{width:28px;height:28px}
+  .row.sch{gap:8px}
+  .row.sch .l small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  /* editor */
+  .tf{border:1.5px solid var(--outline);border-radius:8px;height:50px;padding:0 12px;position:relative;display:flex;align-items:center;font-size:14.5px;background:transparent;gap:8px}
+  .tf .fl{position:absolute;top:-8px;left:10px;background:var(--bg);padding:0 4px;font-size:11.5px;color:var(--pri);font-weight:600}
+  .tf .v{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tf .ic{color:var(--ink2);width:22px;height:22px}
+  .tf.sm{height:42px;font-size:13px}
+  .tf.sm .fl{top:-7px;font-size:11px}
+  .er{display:flex;align-items:center;gap:6px;margin-bottom:8px;position:relative}
+  .er > b.n{position:absolute;left:-6px;top:-8px}
+  .er .ic.h{color:var(--hint);width:20px;height:20px}
+  .er .ic.x{color:var(--ink2);width:20px;height:20px}
+  .er .tf.name{flex:0 0 104px}
+  .er .tf.val{flex:1;min-width:0}
+  .eh{display:flex;align-items:center;gap:6px;margin:10px 2px 6px}
+  .eh .sec-h{margin:0;flex:1}
+  .eh .add{font-size:12.5px;font-weight:800;color:var(--pri);display:flex;align-items:center;gap:2px}
+  .eh .add .ic{width:16px;height:16px}
+  .sr-row{display:flex;align-items:center;gap:8px;background:var(--card);border-radius:12px;padding:6px 8px 6px 10px;margin-bottom:6px;box-shadow:0 1px 3px rgba(0,0,0,.08);position:relative}
+  .sr-row > b.n{position:absolute;left:-6px;top:-6px}
+  .sr-row .l{flex:1;min-width:0;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sr-row .l small{display:block;font-size:11.5px;color:var(--ink2);font-weight:500}
+  .sr-row .ic{width:20px;height:20px;color:var(--ink2)}
+  .bar{position:absolute;left:0;right:0;bottom:0;padding:10px 12px 10px;background:var(--bg);display:flex;gap:10px}
+  .btn{flex:1;height:50px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14.5px}
+  .btn.out{border:1.5px solid var(--pri);color:var(--pri)}
+  .btn.fill{background:var(--pri);color:#fff}
+  .btn.del{border:1.5px solid var(--err);color:var(--err)}
+  .hint{font-size:11.5px;color:var(--ink2);margin:-4px 0 8px 4px}
+
+  /* sheet */
+  .dim{position:absolute;inset:0;background:rgba(20,26,36,.48)}
+  .sheet{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:22px 22px 0 0;padding:8px 16px 0}
+  .grab{width:32px;height:4px;border-radius:2px;background:#C5CBD3;margin:0 auto 10px}
+  .sheet h4{font-size:17px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+  .sheet .tf .fl{background:#fff}
+  .lab{font-size:12px;font-weight:700;color:var(--ink2);margin:0 0 6px 2px}
+  .two{display:flex;gap:10px}
+  .step{display:flex;align-items:center;border:1.5px solid var(--outline);border-radius:8px;height:50px;overflow:visible;flex:1;position:relative}
+  .step > b.n{position:absolute;right:-6px;top:-8px}
+  .step span:first-child{border-radius:6px 0 0 6px}.step span:last-of-type{border-radius:0 6px 6px 0}
+  .segrow{display:flex;align-items:center;gap:8px}
+  .segrow .seg{flex:1}
+  .step span{width:44px;height:100%;display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--pri);font-weight:700;background:#F3F5F8}
+  .step b{flex:1;text-align:center;font-size:16px;font-weight:700}
+  .seg{display:flex;border:1.5px solid var(--pri);border-radius:22px;overflow:hidden;height:40px}
+  .seg span{flex:1;display:flex;align-items:center;justify-content:center;font-size:13.5px;font-weight:700;color:var(--pri);gap:6px}
+  .seg span+span{border-left:1.5px solid var(--pri)}
+  .seg .on{background:var(--pri-c);color:var(--on-pri-c)}
+  .prev{background:var(--amber-c);border-radius:12px;padding:10px 12px;display:flex;gap:10px;align-items:center;color:#6E4200;font-size:13px;font-weight:700;line-height:1.35}
+  .prev .ic{width:22px;height:22px;color:var(--amber)}
+  .sbs{height:34px;margin:8px -16px 0;border-top:1px dashed #C9D1DD;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--hint)}
+  .swatches{display:flex;gap:10px;margin:2px 0 4px 2px}
+  .swatches i{width:30px;height:30px;border-radius:15px;display:flex;align-items:center;justify-content:center;color:#fff}
+  .swatches i .ic{width:18px;height:18px}
+  .timechip{display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--outline);border-radius:8px;height:44px;padding:0 12px;font-size:16px;font-weight:700}
+  .timechip .ic{width:20px;height:20px;color:var(--ink2)}
+
+  /* upcoming */
+  .mh{font-size:11.5px;font-weight:800;color:var(--ink2);margin:8px 4px 6px;text-transform:uppercase;letter-spacing:.06em}
+  .ur{display:flex;gap:10px;background:#fff;border-radius:12px;padding:7px 10px 7px 8px;margin-bottom:6px;align-items:center;box-shadow:0 1px 3px rgba(0,0,0,.08);position:relative}
+  .dc{width:44px;text-align:center;flex-shrink:0}
+  .dc i{display:block;font-style:normal;font-size:10.5px;color:var(--hint);font-weight:600}
+  .dc b{display:block;font-size:19px;line-height:20px;color:var(--pri);font-weight:800}
+  .dc small{display:block;font-size:10.5px;color:var(--ink2);text-transform:uppercase;font-weight:700}
+  .ur .l{flex:1;min-width:0}
+  .ur .l b{display:block;font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ur .l small{display:block;font-size:11.5px;color:var(--ink2);line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .cd{font-size:11.5px;font-weight:700;color:var(--amber);background:var(--amber-c);border-radius:10px;padding:2px 8px;white-space:nowrap}
+
+  /* settings */
+  .sr2{display:flex;align-items:center;gap:10px;min-height:46px;padding:6px 12px;border-bottom:1px solid var(--line)}
+  .sr2:last-child{border-bottom:0}
+  .sr2 .l{flex:1;min-width:0}
+  .sr2 .l b{display:block;font-size:14px;font-weight:500}
+  .sr2 .l small{display:block;font-size:11.5px;color:var(--ink2)}
+  .sr2 .val{font-size:13px;color:var(--ink2);white-space:nowrap}
+  .sr2 .ic.ch{color:var(--hint);width:20px;height:20px}
+  .sr2 .ok{color:var(--ok);font-weight:700;font-size:12.5px;display:flex;align-items:center;gap:4px}
+  .sr2 .ok .ic{width:18px;height:18px}
+  .sr2 .warn{color:var(--amber);font-weight:700;font-size:12.5px;display:flex;align-items:center;gap:4px}
+  .sr2 .warn .ic{width:18px;height:18px}
+  .mini{height:32px;padding:0 12px;border-radius:16px;border:1.5px solid var(--pri);color:var(--pri);font-size:12.5px;font-weight:700;display:flex;align-items:center}
+  .mini.fill{background:var(--pri);color:#fff}
+  .about{background:var(--card);border-radius:14px;padding:12px 14px;font-size:13px;line-height:1.55;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+  .about b{font-size:14.5px}
+  .about a{color:var(--pri);text-decoration:underline;overflow-wrap:anywhere}
+  .about .v{color:var(--ink2);font-size:12.5px;margin-top:4px}
+
+  /* notification */
+  .shade{position:absolute;inset:0;background:rgba(15,20,30,.58)}
+  .nstack{position:absolute;left:10px;right:10px;top:8px;display:flex;flex-direction:column;gap:8px}
+  .notif{background:#fff;border-radius:18px;padding:11px 14px 8px;box-shadow:0 8px 24px rgba(0,0,0,.28)}
+  .notif .hd{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink2)}
+  .notif .hd .ico{width:16px;height:16px;border-radius:4px;background:var(--pri);display:inline-block}
+  .notif .tt{font-size:14.5px;font-weight:700;margin-top:6px}
+  .notif .tx{font-size:13px;color:var(--ink);margin-top:2px;line-height:1.4}
+  .notif .acts{display:flex;gap:18px;margin-top:8px;font-size:13px;font-weight:800;color:var(--pri)}
+  .notif.compact .tt{font-size:13.5px}
+  .empty{text-align:center;color:#fff;font-size:13px;opacity:.9;padding:10px 24px 0;line-height:1.5}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a.996.996 0 0 0 0-1.41l-2.34-2.34a.996.996 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"/></symbol>
+  <symbol id="i-drag" viewBox="0 0 24 24"><path d="M11 18c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm-2-8c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0-6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6 4c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="M10 6 8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></symbol>
+  <symbol id="i-filter" viewBox="0 0 24 24"><path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></symbol>
+  <symbol id="i-tick" viewBox="0 0 24 24"><path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></symbol>
+  <symbol id="i-alarm" viewBox="0 0 24 24"><path d="M22 5.72l-4.6-3.86-1.29 1.53 4.6 3.86L22 5.72zM7.88 3.39 6.6 1.86 2 5.71l1.29 1.53 4.59-3.85zM12.5 8H11v6l4.75 2.85.75-1.23-4-2.37V8zM12 4c-4.97 0-9 4.03-9 9s4.02 9 9 9c4.97 0 9-4.03 9-9s-4.03-9-9-9zm0 16c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M16.59 8.59 12 13.17 7.41 8.59 6 10l6 6 6-6z"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></symbol>
+  <symbol id="i-share" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></symbol>
+</svg>
+
+<div class="wrap">
+<header class="page">
+  <h1>InfoDeck — v1.00 · D1 design</h1>
+  <p>New Android app (Kotlin / Jetpack Compose, minSdk 26 / target 34). Decks of information cards; each card = <b>Label</b> + <b>Data variables</b> (alphanumeric) + <b>Date variables</b> + <b>Schedulers</b> that ring relative to a chosen date variable. Working name <b>InfoDeck</b> — see Q1. Mock date is <b>Tue 18-Aug-2026</b>; every relative day count in the frames is computed from that.</p>
+  <span class="stamp">DESIGN ONLY · nothing queued · nothing built</span>
+  <span class="stamp g">Reply by tag: “S5.4 → slider”, “Q3 → one each”, or “defaults” = all recommended</span>
+</header>
+
+<h2 class="sec">A · Reading this file</h2>
+<table class="tb">
+  <tr><th class="sr">SrNo.</th><th>Mark</th><th>Meaning</th></tr>
+  <tr><td class="sr">1</td><td><b class="n">3</b>&nbsp; navy number on a frame</td><td>Element tag. Referenced in the legend under each frame as <b>S&lt;frame&gt;.&lt;n&gt;</b>, e.g. <b>S5.4</b> = frame S5, element 4.</td></tr>
+  <tr><td class="sr">2</td><td><i class="q">Q3</i>&nbsp; amber tag</td><td>The drawing at that spot depends on an open question in section C7. Answer changes the drawing.</td></tr>
+  <tr><td class="sr">3</td><td>Frame S4 / S9 marked “expanded”</td><td>Drawn taller than a real screen so every row is visible; on device the content scrolls and the bottom bar stays pinned.</td></tr>
+  <tr><td class="sr">4</td><td>Palette</td><td>App theme proposed for <code>Theme.kt</code>: <span class="pal" style="display:inline-flex;margin:0"><span class="sw"><i style="background:#34518A"></i>primary #34518A</span><span class="sw"><i style="background:#24406F"></i>status bar #24406F</span><span class="sw"><i style="background:#E3EAF7"></i>primary container #E3EAF7</span><span class="sw"><i style="background:#FFF1D6"></i>ring chip #FFF1D6 / #9A5B00</span><span class="sw"><i style="background:#E6F4E1"></i>ok #E6F4E1 / #2E7D32</span><span class="sw"><i style="background:#FBE3E1"></i>danger #FBE3E1 / #B3261E</span><span class="sw"><i style="background:#F3F5F8"></i>background #F3F5F8</span></span> Deck tab colours (8): blue · teal · green · amber · purple · pink · red · grey. Dark theme derived from the same scheme.</td></tr>
+  <tr><td class="sr">5</td><td>Conventions carried over</td><td>Editor chrome = Cancel (outlined) + Save (filled) + Delete slot when editing, equal width, 50 dp · every bottom sheet keeps the SheetBottomSpace rule (max(25 % height, nav-bar + 24 dp)) · dropdowns for discrete choices, never continuous sliders · dates everywhere in <b>dd-MMM-yyyy</b> · About Me block standard and always expanded.</td></tr>
+</table>
+
+<h2 class="sec">B · Screens</h2>
+<div class="frames">
+
+<!-- ================= S1 HOME ================= -->
+<figure>
+  <h3>S1 · Home — Decks<small>entry screen</small></h3>
+  <div class="phone">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="appbar pad">
+      <div class="t">InfoDeck <b class="n" style="vertical-align:2px">1</b> <i class="q" style="vertical-align:2px">Q1</i></div>
+      <div class="ib"><svg class="ic"><use href="#i-search"/></svg><b class="n">2</b></div>
+      <div class="ib"><svg class="ic"><use href="#i-bell"/></svg><span class="cnt">2</span><b class="n">3</b></div>
+      <div class="ib"><svg class="ic"><use href="#i-gear"/></svg><b class="n">4</b></div>
+    </div>
+    <div class="body">
+      <div class="strip"><b class="n">5</b><span class="x"><b>6 decks</b> · <b>23 cards</b> · Next ring <b>Tue 25-Aug</b> · Passport</span></div>
+      <div class="decks">
+        <div class="deck"><div class="tab c-blue"></div><b>Insurance</b><b class="n">6</b><div class="m">4 cards</div><div class="r"><svg class="ic"><use href="#i-alarm"/></svg>Next 11-Sep-2026</div></div>
+        <div class="deck"><div class="tab c-teal"></div><b>Vehicle</b><div class="m">3 cards</div><div class="r"><svg class="ic"><use href="#i-alarm"/></svg>Next 20-Oct-2026</div></div>
+        <div class="deck"><div class="tab c-green"></div><b>Identity Docs</b><div class="m">5 cards</div><div class="r"><svg class="ic"><use href="#i-alarm"/></svg>Next 25-Aug-2026</div></div>
+        <div class="deck"><div class="tab c-amber"></div><b>Warranties</b><div class="m">6 cards</div><div class="r"><svg class="ic"><use href="#i-alarm"/></svg>Next 05-Nov-2026</div></div>
+        <div class="deck"><div class="tab c-purple"></div><b>Subscriptions</b><div class="m">2 cards</div><div class="r"><svg class="ic"><use href="#i-alarm"/></svg>Next 01-Oct-2026</div></div>
+        <div class="deck"><div class="tab c-pink"></div><b>Bank &amp; Cards</b><div class="m">3 cards</div><div class="r off"><svg class="ic"><use href="#i-alarm"/></svg>No reminders</div></div>
+      </div>
+      <div class="fab"><svg class="ic"><use href="#i-plus"/></svg>New deck<b class="n">7</b></div>
+    </div>
+    <div class="nav"><i></i></div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">Tag</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="k">S1.1</td><td>App title</td><td>Working name; see Q1.</td></tr>
+    <tr><td class="k">S1.2</td><td>Search</td><td>Searches card labels, data names, data values and date names across all decks; results grouped by deck; tap opens S3.</td></tr>
+    <tr><td class="k">S1.3</td><td>Upcoming (bell)</td><td>Opens S6. Badge = rings due in the next 30 days.</td></tr>
+    <tr><td class="k">S1.4</td><td>Settings</td><td>Opens S9.</td></tr>
+    <tr><td class="k">S1.5</td><td>Summary strip</td><td>Deck count · card count · next ring (card + date). Hidden when there are no decks.</td></tr>
+    <tr><td class="k">S1.6</td><td>Deck tile</td><td>Colour tab + stacked-card edge (deck colour is user-chosen, S8). Shows card count and the earliest ring inside the deck. Tap → S2. Long-press → Rename · Colour · Delete (delete confirms with card count).</td></tr>
+    <tr><td class="k">S1.7</td><td>New deck FAB</td><td>Opens the New deck sheet (S8). Empty state (no decks) shows one centred line “Create your first deck” + the same FAB.</td></tr>
+  </table>
+</figure>
+
+<!-- ================= S2 DECK ================= -->
+<figure>
+  <h3>S2 · Deck — cards list<small>“Insurance”</small></h3>
+  <div class="phone">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="appbar">
+      <div class="ib"><svg class="ic"><use href="#i-back"/></svg><b class="n">1</b></div>
+      <div class="t">Insurance <b class="n" style="vertical-align:2px">2</b><small>4 cards · sorted by next ring</small></div>
+      <div class="ib"><svg class="ic"><use href="#i-search"/></svg><b class="n">3</b></div>
+      <div class="ib"><svg class="ic"><use href="#i-more"/></svg><b class="n">4</b></div>
+    </div>
+    <div class="body">
+      <div class="li"><b class="n">5</b><div class="tt">Car Insurance — HDFC Ergo</div>
+        <div class="kv">Policy No <b>HDFC-2024-88213</b></div>
+        <div class="kv">Policy Expiry <b>11-Oct-2026</b><span class="rel">in 54 days</span></div>
+        <span class="chip"><svg class="ic"><use href="#i-alarm"/></svg>Rings 11-Sep-2026 · in 24 days <b class="n" style="margin-left:2px">6</b></span></div>
+      <div class="li"><div class="tt">Bike Insurance — ICICI Lombard</div>
+        <div class="kv">Policy No <b>3005/PL/9921</b></div>
+        <div class="kv">Policy Expiry <b>15-Oct-2026</b><span class="rel">in 58 days</span></div>
+        <span class="chip"><svg class="ic"><use href="#i-alarm"/></svg>Rings 30-Sep-2026 · in 43 days</span></div>
+      <div class="li"><div class="tt">Health Insurance — Star Health</div>
+        <div class="kv">Policy No <b>SH/2025/44710</b></div>
+        <div class="kv">Policy Expiry <b>28-Feb-2027</b><span class="rel">in 194 days</span></div>
+        <span class="chip"><svg class="ic"><use href="#i-alarm"/></svg>Rings 30-Dec-2026 · in 134 days</span></div>
+      <div class="li"><div class="tt">Home Insurance — SBI General</div>
+        <div class="kv">Policy No <b>SBIG-HM-77120</b></div>
+        <div class="kv">Sum insured <b>₹25,00,000</b></div>
+        <span class="chip off"><svg class="ic"><use href="#i-alarm"/></svg>No reminder</span></div>
+      <div class="fab"><svg class="ic"><use href="#i-plus"/></svg>New card<b class="n">7</b></div>
+    </div>
+    <div class="nav"><i></i></div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">Tag</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="k">S2.1</td><td>Back</td><td>Returns to S1.</td></tr>
+    <tr><td class="k">S2.2</td><td>Deck title + subtitle</td><td>Card count and the current sort.</td></tr>
+    <tr><td class="k">S2.3</td><td>Search in deck</td><td>Same search as S1.2, limited to this deck.</td></tr>
+    <tr><td class="k">S2.4</td><td>Overflow</td><td>Sort (Next ring · A–Z · Recently updated · Manual) · Rename · Colour · Delete deck.</td></tr>
+    <tr><td class="k">S2.5</td><td>Card item</td><td>Label + first two variables as preview (data first, then dates with a relative-day count; overdue dates show in red). Tap → S3. Long-press → Move to deck · Duplicate · Delete.</td></tr>
+    <tr><td class="k">S2.6</td><td>Ring chip</td><td>Earliest enabled scheduler of the card with its countdown; grey “No reminder” when the card has none.</td></tr>
+    <tr><td class="k">S2.7</td><td>New card FAB</td><td>Opens S4 empty, deck pre-selected.</td></tr>
+  </table>
+</figure>
+
+<!-- ================= S3 CARD VIEW ================= -->
+<figure>
+  <h3>S3 · Card view<small>read-only</small></h3>
+  <div class="phone">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="appbar">
+      <div class="ib"><svg class="ic"><use href="#i-back"/></svg></div>
+      <div class="t two">Car Insurance — HDFC Ergo <b class="n" style="vertical-align:1px">1</b></div>
+      <div class="ib"><svg class="ic"><use href="#i-edit"/></svg><b class="n">2</b></div>
+      <div class="ib"><svg class="ic"><use href="#i-more"/></svg><b class="n">3</b></div>
+    </div>
+    <div class="body">
+      <span class="chip blue" style="margin:0 0 2px 2px"><svg class="ic"><use href="#i-back"/></svg>Insurance <b class="n" style="margin-left:2px">4</b></span>
+      <div class="sec-h">Data <b class="n">5</b></div>
+      <div class="grp">
+        <div class="row"><div class="l"><small>Policy No</small><b>HDFC-2024-88213</b></div><svg class="ic act"><use href="#i-copy"/></svg><b class="n">6</b></div>
+        <div class="row"><div class="l"><small>Vehicle</small><b>WB 24 AB 1234</b></div><svg class="ic act"><use href="#i-copy"/></svg></div>
+        <div class="row"><div class="l"><small>Premium</small><b>₹8,450 / year</b></div><svg class="ic act"><use href="#i-copy"/></svg></div>
+        <div class="row"><div class="l"><small>Agent</small><b>Rajesh Nag · 98300 12345</b></div><svg class="ic act"><use href="#i-copy"/></svg></div>
+      </div>
+      <div class="sec-h">Dates <b class="n">7</b></div>
+      <div class="grp">
+        <div class="row"><div class="l"><small>Policy Start</small><b>12-Oct-2025 <em class="past">310 days ago</em></b></div><svg class="ic act"><use href="#i-copy"/></svg></div>
+        <div class="row"><div class="l"><small>Policy Expiry</small><b>11-Oct-2026 <em>in 54 days</em></b></div><svg class="ic act"><use href="#i-copy"/></svg></div>
+      </div>
+      <div class="sec-h">Schedulers <b class="n">8</b> <i class="q">Q7</i></div>
+      <div class="grp">
+        <div class="row sch"><div class="bellc"><svg class="ic"><use href="#i-alarm"/></svg></div><div class="l"><b>30 days before Policy Expiry</b><small>Fri 11-Sep-2026 · 09:00 · in 24 d</small></div><div class="rc"><div class="sw2"></div><span class="stat">Scheduled</span></div><b class="n">9</b></div>
+        <div class="row sch"><div class="bellc"><svg class="ic"><use href="#i-alarm"/></svg></div><div class="l"><b>Same day · Policy Expiry</b><small>Sun 11-Oct-2026 · 09:00 · in 54 d</small></div><div class="rc"><div class="sw2"></div><span class="stat">Scheduled</span></div></div>
+      </div>
+      <div class="meta">Created 10-Oct-2025 · Updated 02-Aug-2026 <b class="n" style="vertical-align:1px">10</b></div>
+    </div>
+    <div class="nav"><i></i></div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">Tag</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="k">S3.1</td><td>Card label</td><td>Ellipsised in the bar; full label is the first line of “Share as text”.</td></tr>
+    <tr><td class="k">S3.2</td><td>Edit</td><td>Opens S4 with this card.</td></tr>
+    <tr><td class="k">S3.3</td><td>Overflow</td><td>Share as text (plain-text dump of label + variables, never the schedulers) · Duplicate · Move to deck · Delete (confirm).</td></tr>
+    <tr><td class="k">S3.4</td><td>Deck chip</td><td>Tap → back to S2 of that deck.</td></tr>
+    <tr><td class="k">S3.5</td><td>Data section</td><td>Name over value, in the order set in S4. Hidden if the card has no data variables.</td></tr>
+    <tr><td class="k">S3.6</td><td>Copy</td><td>Copies the value only; snackbar “Copied Policy No”. Long-press a value copies “name: value”.</td></tr>
+    <tr><td class="k">S3.7</td><td>Dates section</td><td>dd-MMM-yyyy + relative count: green “in N days” (future), grey “N days ago” (past), red “overdue N days” when a scheduler exists on a past date.</td></tr>
+    <tr><td class="k">S3.8</td><td>Schedulers section</td><td>Rule in words + computed ring moment. Status chip: Scheduled · Snoozed until … · Rang · Done · Past (won't ring) · Off. See Q7 for repeat.</td></tr>
+    <tr><td class="k">S3.9</td><td>Enable switch</td><td>Off = keeps the rule but cancels the ring; status shows Off. Tap the row → S5 to edit.</td></tr>
+    <tr><td class="k">S3.10</td><td>Meta line</td><td>Created / updated stamps, dd-MMM-yyyy.</td></tr>
+  </table>
+</figure>
+
+<!-- ================= S4 CARD EDITOR ================= -->
+<figure>
+  <h3>S4 · Card editor<small>full-screen · expanded</small></h3>
+  <div class="phone" style="height:812px">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="appbar">
+      <div class="ib"><svg class="ic"><use href="#i-close"/></svg><b class="n">1</b></div>
+      <div class="t">Edit card</div>
+    </div>
+    <div class="body">
+      <div class="tf" style="margin-top:6px"><span class="fl">Label name</span><span class="v">Car Insurance — HDFC Ergo</span><b class="n">2</b><i class="q">Q2</i></div>
+      <div class="tf sm" style="margin-top:14px"><span class="fl">Deck</span><span class="v">Insurance</span><svg class="ic"><use href="#i-down"/></svg><b class="n">3</b></div>
+
+      <div class="eh"><div class="sec-h">Data <i class="q">Q3</i></div><span class="add"><svg class="ic"><use href="#i-plus"/></svg>Add <b class="n" style="margin-left:4px">4</b></span></div>
+      <div class="er"><svg class="ic h"><use href="#i-drag"/></svg><div class="tf sm name"><span class="fl">Name</span><span class="v">Policy No</span></div><div class="tf sm val"><span class="fl">Value</span><span class="v">HDFC-2024-88213</span></div><svg class="ic x"><use href="#i-close"/></svg><b class="n">5</b></div>
+      <div class="er"><svg class="ic h"><use href="#i-drag"/></svg><div class="tf sm name"><span class="fl">Name</span><span class="v">Vehicle</span></div><div class="tf sm val"><span class="fl">Value</span><span class="v">WB 24 AB 1234</span></div><svg class="ic x"><use href="#i-close"/></svg></div>
+      <div class="er"><svg class="ic h"><use href="#i-drag"/></svg><div class="tf sm name"><span class="fl">Name</span><span class="v">Premium</span></div><div class="tf sm val"><span class="fl">Value</span><span class="v">₹8,450 / year</span></div><svg class="ic x"><use href="#i-close"/></svg></div>
+      <div class="hint">Value: any text, up to 500 characters <i class="q">Q4</i></div>
+
+      <div class="eh"><div class="sec-h">Dates</div><span class="add"><svg class="ic"><use href="#i-plus"/></svg>Add <b class="n" style="margin-left:4px">6</b></span></div>
+      <div class="er"><svg class="ic h"><use href="#i-drag"/></svg><div class="tf sm name"><span class="fl">Name</span><span class="v">Policy Start</span></div><div class="tf sm val"><span class="fl">Date</span><span class="v">12-Oct-2025</span><svg class="ic"><use href="#i-cal"/></svg></div><svg class="ic x"><use href="#i-close"/></svg><b class="n">7</b></div>
+      <div class="er"><svg class="ic h"><use href="#i-drag"/></svg><div class="tf sm name"><span class="fl">Name</span><span class="v">Policy Expiry</span></div><div class="tf sm val"><span class="fl">Date</span><span class="v">11-Oct-2026</span><svg class="ic"><use href="#i-cal"/></svg></div><svg class="ic x"><use href="#i-close"/></svg></div>
+
+      <div class="eh"><div class="sec-h">Schedulers</div><span class="add"><svg class="ic"><use href="#i-plus"/></svg>Add <b class="n" style="margin-left:4px">8</b></span></div>
+      <div class="sr-row"><div class="bellc"><svg class="ic" style="color:var(--amber)"><use href="#i-alarm"/></svg></div><div class="l">30 days before Policy Expiry<small>Fri 11-Sep-2026 · 09:00 · tap to edit</small></div><svg class="ic"><use href="#i-close"/></svg><b class="n">9</b></div>
+      <div class="sr-row"><div class="bellc"><svg class="ic" style="color:var(--amber)"><use href="#i-alarm"/></svg></div><div class="l">Same day · Policy Expiry<small>Sun 11-Oct-2026 · 09:00 · tap to edit</small></div><svg class="ic"><use href="#i-close"/></svg></div>
+
+      <div class="bar"><div class="btn out">Cancel</div><div class="btn fill">Save</div><div class="btn del">Delete</div><b class="n" style="position:absolute;right:6px;top:2px">10</b></div>
+    </div>
+    <div class="nav"><i></i></div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">Tag</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="k">S4.1</td><td>Close</td><td>Same as Cancel. With unsaved changes → “Discard changes?” dialog (leave-guard, also on system back).</td></tr>
+    <tr><td class="k">S4.2</td><td>Label name</td><td>Required, ≤ 60 chars. Save disabled while empty. See Q2.</td></tr>
+    <tr><td class="k">S4.3</td><td>Deck</td><td>Dropdown of decks; pre-selected from S2. Changing it moves the card on Save.</td></tr>
+    <tr><td class="k">S4.4</td><td>Add data variable</td><td>Appends an empty Name + Value row and focuses Name. Rows reorder by drag handle. See Q3.</td></tr>
+    <tr><td class="k">S4.5</td><td>Data row</td><td>Name ≤ 40, Value ≤ 500 chars (Q4). ✕ removes the row (no confirm — undo via Cancel).</td></tr>
+    <tr><td class="k">S4.6</td><td>Add date variable</td><td>Appends a Name + Date row; the Date field opens the Material date picker (dd-MMM-yyyy shown).</td></tr>
+    <tr><td class="k">S4.7</td><td>Date row</td><td>✕ on a date that has schedulers → confirm “2 schedulers use this date and will be deleted”.</td></tr>
+    <tr><td class="k">S4.8</td><td>Add scheduler</td><td>Opens S5. Disabled with helper “Add a date first” when the card has no dates.</td></tr>
+    <tr><td class="k">S4.9</td><td>Scheduler row</td><td>Rule + computed ring moment (recomputed live when its date changes). Tap the row → S5 to edit; ✕ removes.</td></tr>
+    <tr><td class="k">S4.10</td><td>Bottom bar</td><td>Cancel · Save · Delete (Delete only when editing an existing card), equal width, 50 dp, pinned above the keyboard.</td></tr>
+  </table>
+</figure>
+
+<!-- ================= S5 SCHEDULER SHEET ================= -->
+<figure>
+  <h3>S5 · Scheduler sheet<small>over S4</small></h3>
+  <div class="phone">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="appbar"><div class="ib"><svg class="ic"><use href="#i-close"/></svg></div><div class="t">Edit card</div></div>
+    <div class="body" style="padding:12px 12px 0">
+      <div class="tf" style="margin-top:6px"><span class="fl">Label name</span><span class="v">Car Insurance — HDFC Ergo</span></div>
+      <div class="dim"></div>
+      <div class="sheet">
+        <div class="grab"></div>
+        <h4>Add scheduler <b class="n">1</b></h4>
+        <div class="tf"><span class="fl">Based on</span><span class="v">Policy Expiry</span><svg class="ic"><use href="#i-down"/></svg><b class="n">2</b></div>
+        <div class="two" style="margin-top:20px">
+          <div class="tf" style="flex:1"><span class="fl">When to ring</span><span class="v">Days</span><svg class="ic"><use href="#i-down"/></svg><b class="n">3</b></div>
+          <div class="step"><span>−</span><b>30</b><span>+</span><b class="n">4</b></div>
+        </div>
+        <div class="hint" style="margin:5px 0 12px 2px">Amount 1 – 450 days</div>
+        <div class="segrow"><div class="seg"><span class="on"><svg class="ic s"><use href="#i-tick"/></svg>Before</span><span>After</span></div><b class="n">5</b><i class="q">Q5</i></div>
+        <div class="two" style="margin-top:14px;align-items:center">
+          <div class="lab" style="margin:0;flex:1">Ring at</div>
+          <div class="timechip"><svg class="ic"><use href="#i-clock"/></svg>09:00</div><b class="n">6</b>
+        </div>
+        <div class="prev" style="margin-top:12px"><svg class="ic"><use href="#i-alarm"/></svg><span>Rings Fri 11-Sep-2026 · 09:00 · in 24 days</span><b class="n">7</b></div>
+        <div style="display:flex;gap:10px;margin-top:14px"><div class="btn out">Cancel</div><div class="btn fill">Save</div><b class="n" style="align-self:center">8</b></div>
+        <div class="sbs">sheet bottom space · max(25 % height, nav-bar + 24 dp)</div>
+      </div>
+    </div>
+    <div class="nav"><i></i></div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">Tag</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="k">S5.1</td><td>Sheet title</td><td>“Add scheduler” / “Edit scheduler”. Modal bottom sheet, windowInsets bottom = 0, SheetBottomSpace rule.</td></tr>
+    <tr><td class="k">S5.2</td><td>Based on</td><td>Dropdown of this card's date variables (name + current date). Default = first date.</td></tr>
+    <tr><td class="k">S5.3</td><td>Unit</td><td>Dropdown: Same day · Days · Weeks · Months · Years. Selecting Same day hides S5.4 and S5.5.</td></tr>
+    <tr><td class="k">S5.4</td><td>Amount</td><td>Stepper with typed entry. Range by unit — Days 1–450 · Weeks 1–60 · Months 1–60 · Years 1–20; out-of-range input clamps; helper line shows the range. Default 1.</td></tr>
+    <tr><td class="k">S5.5</td><td>Before / After</td><td>Direction relative to the date. Default Before. See Q5.</td></tr>
+    <tr><td class="k">S5.6</td><td>Ring at</td><td>Time picker; default = Settings › Default ring time (09:00).</td></tr>
+    <tr><td class="k">S5.7</td><td>Preview</td><td>Live computed ring moment + countdown. If already in the past it turns red: “This moment has passed — it will not ring”; Save still allowed (status Past).</td></tr>
+    <tr><td class="k">S5.8</td><td>Buttons</td><td>Cancel · Save; a Delete slot appears when editing (three equal-width, 50 dp).</td></tr>
+  </table>
+</figure>
+
+<!-- ================= S6 UPCOMING ================= -->
+<figure>
+  <h3>S6 · Upcoming<small>all rings, all decks</small></h3>
+  <div class="phone">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="appbar">
+      <div class="ib"><svg class="ic"><use href="#i-back"/></svg></div>
+      <div class="t">Upcoming <b class="n" style="vertical-align:2px">1</b></div>
+      <div class="ib"><svg class="ic"><use href="#i-filter"/></svg><b class="n">2</b></div>
+    </div>
+    <div class="body">
+      <div class="segrow" style="margin:0 0 6px"><div class="seg"><span class="on"><svg class="ic s"><use href="#i-tick"/></svg>Upcoming</span><span>History</span></div><b class="n">3</b></div>
+      <div class="mh">August 2026 <b class="n">4</b></div>
+      <div class="ur"><div class="dc"><b>25</b><small>Tue</small><i>09:00</i></div><div class="l"><b>Passport</b><small>Identity Docs · 1 year before Expiry</small></div><span class="cd">in 7 d</span><b class="n" style="position:absolute;right:-2px;top:-4px">5</b></div>
+      <div class="mh">September 2026</div>
+      <div class="ur"><div class="dc"><b>11</b><small>Fri</small><i>09:00</i></div><div class="l"><b>Car Insurance — HDFC Ergo</b><small>Insurance · 30 days before Policy Expiry</small></div><span class="cd">in 24 d</span></div>
+      <div class="ur"><div class="dc"><b>30</b><small>Wed</small><i>09:00</i></div><div class="l"><b>Bike Insurance — ICICI Lombard</b><small>Insurance · 15 days before Policy Expiry</small></div><span class="cd">in 43 d</span></div>
+      <div class="mh">October 2026</div>
+      <div class="ur"><div class="dc"><b>01</b><small>Thu</small><i>08:00</i></div><div class="l"><b>Netflix</b><small>Subscriptions · Same day · Renewal</small></div><span class="cd">in 44 d</span></div>
+      <div class="ur"><div class="dc"><b>11</b><small>Sun</small><i>09:00</i></div><div class="l"><b>Car Insurance — HDFC Ergo</b><small>Insurance · Same day · Policy Expiry</small></div><span class="cd">in 54 d</span></div>
+      <div class="mh">November 2026</div>
+      <div class="ur"><div class="dc"><b>05</b><small>Thu</small><i>09:00</i></div><div class="l"><b>AC — Voltas 1.5 T</b><small>Warranties · 1 month before Warranty end</small></div><span class="cd">in 79 d</span></div>
+    </div>
+    <div class="nav"><i></i></div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">Tag</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="k">S6.1</td><td>Title</td><td>Reached from the bell on S1 and from the notification group summary.</td></tr>
+    <tr><td class="k">S6.2</td><td>Filter</td><td>Limit to one deck (dropdown); “All decks” by default.</td></tr>
+    <tr><td class="k">S6.3</td><td>Upcoming / History</td><td>History = rings that already fired, newest first, with the action taken (Done · Snoozed · Dismissed) and “late” marker if it fired after boot. Capped at 500 entries.</td></tr>
+    <tr><td class="k">S6.4</td><td>Month group</td><td>Chronological, grouped by month. Snoozed rings appear at their snoozed-until moment.</td></tr>
+    <tr><td class="k">S6.5</td><td>Ring row</td><td>Day · weekday · ring time · card label · deck · rule · countdown. Tap → S3. Off / Past rules are not listed.</td></tr>
+  </table>
+</figure>
+
+
+<!-- ================= S7 RING ================= -->
+<figure>
+  <h3>S7 · The ring<small>notification shade</small></h3>
+  <div class="phone">
+    <div class="sb"><span>9:00</span><span>▲ ▮ 87 %</span></div>
+    <div class="appbar pad"><div class="t">InfoDeck</div><div class="ib"><svg class="ic"><use href="#i-search"/></svg></div><div class="ib"><svg class="ic"><use href="#i-bell"/></svg></div><div class="ib"><svg class="ic"><use href="#i-gear"/></svg></div></div>
+    <div class="body">
+      <div class="decks" style="opacity:.6">
+        <div class="deck"><div class="tab c-blue"></div><b>Insurance</b><div class="m">4 cards</div></div>
+        <div class="deck"><div class="tab c-teal"></div><b>Vehicle</b><div class="m">3 cards</div></div>
+      </div>
+      <div class="shade"></div>
+      <div class="nstack">
+      <div class="notif">
+        <div class="hd"><span class="ico"></span>InfoDeck · now <b class="n" style="margin-left:auto">1</b> <i class="q">Q6</i></div>
+        <div class="tt">Car Insurance — HDFC Ergo <b class="n" style="vertical-align:1px">2</b></div>
+        <div class="tx">30 days before Policy Expiry · expires Sun 11-Oct-2026<br>Insurance · Policy No HDFC-2024-88213</div>
+        <div class="acts"><span>Done</span><span>Snooze 1 h</span><span>Open</span><b class="n" style="margin-left:auto">3</b></div>
+      </div>
+      <div class="notif compact">
+        <div class="hd"><span class="ico"></span>InfoDeck · now</div>
+        <div class="tt">Passport <b class="n" style="vertical-align:1px">4</b></div>
+        <div class="tx">1 year before Expiry · expires Wed 25-Aug-2027 · Identity Docs</div>
+        <div class="acts"><span>Done</span><span>Snooze 1 h</span><span>Open</span></div>
+      </div>
+      <div class="notif compact" style="padding-bottom:11px">
+        <div class="hd"><span class="ico"></span>InfoDeck <b class="n" style="margin-left:auto">5</b></div>
+        <div class="tt" style="font-weight:600">2 reminders</div>
+      </div>
+      <div class="empty">Heads-up notification with sound + vibration from Settings.<br>Tap the body → S3 of that card.<br>Same-minute rings stack under one “InfoDeck” summary.</div>
+      </div>
+    </div>
+    <div class="nav"><i></i></div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">Tag</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="k">S7.1</td><td>Channel</td><td>“Reminders” channel, high importance; sound + vibrate per S9.1. See Q6 for alarm-style instead.</td></tr>
+    <tr><td class="k">S7.2</td><td>Title / text</td><td>Card label · rule in words · the underlying date · deck · first data variable (helps act without opening).</td></tr>
+    <tr><td class="k">S7.3</td><td>Actions</td><td>Done → status Done, logged. Snooze → re-rings after Settings › Snooze length, status “Snoozed until …”. Open → S3. Swipe-away = Dismissed (logged, no re-ring).</td></tr>
+    <tr><td class="k">S7.4</td><td>Second ring</td><td>Each scheduler gets its own notification (id = scheduler id) so none overwrite each other.</td></tr>
+    <tr><td class="k">S7.5</td><td>Group summary</td><td>Auto summary “N reminders” when two or more are showing; tap → S6.</td></tr>
+  </table>
+</figure>
+
+<!-- ================= S8 NEW DECK ================= -->
+<figure>
+  <h3>S8 · New deck sheet<small>over S1</small></h3>
+  <div class="phone">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="appbar pad"><div class="t">InfoDeck</div><div class="ib"><svg class="ic"><use href="#i-search"/></svg></div><div class="ib"><svg class="ic"><use href="#i-bell"/></svg><span class="cnt">2</span></div><div class="ib"><svg class="ic"><use href="#i-gear"/></svg></div></div>
+    <div class="body">
+      <div class="strip"><span class="x"><b>6 decks</b> · <b>23 cards</b> · Next ring <b>Tue 25-Aug</b> · Passport</span></div>
+      <div class="decks">
+        <div class="deck"><div class="tab c-blue"></div><b>Insurance</b><div class="m">4 cards</div><div class="r"><svg class="ic"><use href="#i-alarm"/></svg>Next 11-Sep-2026</div></div>
+        <div class="deck"><div class="tab c-teal"></div><b>Vehicle</b><div class="m">3 cards</div><div class="r"><svg class="ic"><use href="#i-alarm"/></svg>Next 20-Oct-2026</div></div>
+        <div class="deck"><div class="tab c-green"></div><b>Identity Docs</b><div class="m">5 cards</div><div class="r"><svg class="ic"><use href="#i-alarm"/></svg>Next 25-Aug-2026</div></div>
+        <div class="deck"><div class="tab c-amber"></div><b>Warranties</b><div class="m">6 cards</div><div class="r"><svg class="ic"><use href="#i-alarm"/></svg>Next 05-Nov-2026</div></div>
+      </div>
+      <div class="dim"></div>
+      <div class="sheet">
+        <div class="grab"></div>
+        <h4>New deck <b class="n">1</b></h4>
+        <div class="tf"><span class="fl">Deck name</span><span class="v">Medical</span><b class="n">2</b></div>
+        <div class="lab" style="margin-top:16px">Colour <b class="n" style="vertical-align:1px">3</b></div>
+        <div class="swatches">
+          <i class="c-blue"></i><i class="c-teal"></i><i class="c-green"></i><i class="c-amber"></i><i class="c-purple"></i><i class="c-pink"></i><i class="c-red"><svg class="ic"><use href="#i-tick"/></svg></i><i class="c-grey"></i>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:18px"><div class="btn out">Cancel</div><div class="btn fill">Save</div><b class="n" style="align-self:center">4</b></div>
+        <div class="sbs">sheet bottom space · max(25 % height, nav-bar + 24 dp)</div>
+      </div>
+    </div>
+    <div class="nav"><i></i></div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">Tag</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="k">S8.1</td><td>Sheet</td><td>Same sheet for New deck and Rename / Colour (title changes; Delete slot appears when editing).</td></tr>
+    <tr><td class="k">S8.2</td><td>Deck name</td><td>Required, ≤ 40 chars, unique (case-insensitive) — inline error “A deck with this name exists”.</td></tr>
+    <tr><td class="k">S8.3</td><td>Colour</td><td>8 fixed tab colours; default = next unused colour.</td></tr>
+    <tr><td class="k">S8.4</td><td>Buttons</td><td>Cancel · Save (+ Delete when editing), equal width, 50 dp.</td></tr>
+  </table>
+</figure>
+
+<!-- ================= S9 SETTINGS ================= -->
+<figure class="full">
+  <h3>S9 · Settings<small>expanded</small></h3>
+  <div class="phone tall">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="appbar"><div class="ib"><svg class="ic"><use href="#i-back"/></svg></div><div class="t">Settings</div></div>
+    <div class="body">
+      <div class="sec-h" style="margin-top:0">Reminders <b class="n">1</b></div>
+      <div class="grp">
+        <div class="sr2"><div class="l"><b>Default ring time</b><small>Used by every new scheduler</small></div><span class="val">09:00</span><svg class="ic ch"><use href="#i-chev"/></svg></div>
+        <div class="sr2"><div class="l"><b>Sound</b><small>Reminder channel</small></div><span class="val">Default</span><svg class="ic ch"><use href="#i-chev"/></svg></div>
+        <div class="sr2"><div class="l"><b>Vibrate</b></div><div class="sw2"></div></div>
+        <div class="sr2"><div class="l"><b>Snooze length</b><small>Snooze action on the notification</small></div><span class="val">1 hour</span><svg class="ic ch"><use href="#i-chev"/></svg></div>
+        <div class="sr2"><div class="l"><b>Test ring</b><small>Fires a sample notification now</small></div><span class="mini">Ring now</span><b class="n">2</b></div>
+      </div>
+      <div class="sec-h">Permissions <b class="n">3</b></div>
+      <div class="grp">
+        <div class="sr2"><div class="l"><b>Notifications</b></div><span class="ok"><svg class="ic"><use href="#i-check"/></svg>Granted</span></div>
+        <div class="sr2"><div class="l"><b>Exact alarms</b><small>Needed to ring at the exact minute</small></div><span class="warn"><svg class="ic"><use href="#i-warn"/></svg>Not allowed</span><span class="mini fill">Allow</span></div>
+      </div>
+      <div class="sec-h">Appearance <b class="n">4</b></div>
+      <div class="grp">
+        <div class="sr2"><div class="l"><b>Theme</b></div><span class="val">System</span><svg class="ic ch"><use href="#i-chev"/></svg></div>
+        <div class="sr2"><div class="l"><b>Deck layout</b></div><span class="val">Grid</span><svg class="ic ch"><use href="#i-chev"/></svg></div>
+      </div>
+      <div class="sec-h">Data <b class="n">5</b> <i class="q">Q8</i></div>
+      <div class="grp">
+        <div class="sr2"><div class="l"><b>Backup to file</b><small>JSON · decks, cards, schedulers, settings</small></div><svg class="ic ch"><use href="#i-chev"/></svg></div>
+        <div class="sr2"><div class="l"><b>Restore from file</b><small>Replace or merge, asked before restoring</small></div><svg class="ic ch"><use href="#i-chev"/></svg></div>
+        <div class="sr2"><div class="l"><b>Last backup</b></div><span class="val">Never</span></div>
+      </div>
+      <div class="sec-h">Security <b class="n">6</b> <i class="q">Q9</i></div>
+      <div class="grp">
+        <div class="sr2"><div class="l"><b>App lock</b><small>Fingerprint / device PIN on open</small></div><div class="sw2 off"></div></div>
+      </div>
+      <div class="sec-h">Diagnostics <b class="n">7</b></div>
+      <div class="grp">
+        <div class="sr2"><div class="l"><b>Error Logs</b><small>Logger.e entries · view, share, clear</small></div><span class="val">12</span><svg class="ic ch"><use href="#i-chev"/></svg></div>
+      </div>
+      <div class="sec-h">Reset <b class="n">8</b></div>
+      <div class="grp">
+        <div class="sr2"><div class="l"><b style="color:var(--err)">Reset all data</b><small>Deletes every deck, card and scheduler; settings kept</small></div><svg class="ic ch"><use href="#i-chev"/></svg></div>
+      </div>
+      <div class="sec-h">About Me <b class="n">9</b></div>
+      <div class="about">
+        <b>Krishna Dipayan Bhunia</b><br>
+        Suggestion / Feedback / Bugs / Error →<br><a>kri.subsc@gmail.com</a><br>
+        LinkedIn: <a>https://www.linkedin.com/in/krishnabhunia/</a><br>
+        Facebook: <a>https://www.facebook.com/kdbhunia/</a>
+        <div class="v">Version 1.00 · Released dd-MMM-yyyy</div>
+      </div>
+    </div>
+    <div class="nav"><i></i></div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">Tag</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="k">S9.1</td><td>Reminders</td><td>Default ring time (time picker), Sound (system ringtone picker for the channel), Vibrate switch, Snooze length dropdown (10 min · 30 min · 1 hour · 3 hours · Tomorrow at default time).</td></tr>
+    <tr><td class="k">S9.2</td><td>Test ring</td><td>Posts a real notification through the same channel — device check for sound/vibrate/permission.</td></tr>
+    <tr><td class="k">S9.3</td><td>Permissions</td><td>Live status rows. Notifications → system request; Exact alarms → opens the system “Alarms &amp; reminders” page. Without exact alarms the app still rings, but with an inexact (few-minute) window — the row says so.</td></tr>
+    <tr><td class="k">S9.4</td><td>Appearance</td><td>Theme System / Light / Dark; Deck layout Grid / List (list = one deck per row, same content).</td></tr>
+    <tr><td class="k">S9.5</td><td>Data</td><td>Backup writes one JSON file via the system file picker; Restore reads it back (Replace all / Merge by id). Shows last-backup date. See Q8.</td></tr>
+    <tr><td class="k">S9.6</td><td>Security</td><td>App lock via BiometricPrompt (device credential fallback). Off by default. See Q9.</td></tr>
+    <tr><td class="k">S9.7</td><td>Error Logs</td><td>Standard Error Logs page (list, share as text, clear) — every guard / swallowed failure lands here (three-companions rule).</td></tr>
+    <tr><td class="k">S9.8</td><td>Reset</td><td>Typed confirmation (“RESET”), then wipes data and cancels all alarms. Settings and About stay.</td></tr>
+    <tr><td class="k">S9.9</td><td>About Me</td><td>Standard block, always expanded: name · e-mail (tappable, opens mail) · LinkedIn · Facebook · live version + release date dd-MMM-yyyy.</td></tr>
+  </table>
+</figure>
+
+</div><!-- /frames -->
+
+<h2 class="sec">C · Spec behind the frames</h2>
+
+<h3 style="font-size:15px;color:var(--pri-d);margin-top:14px">C1 · Data model (Room, schema v1)</h3>
+<table class="tb">
+  <tr><th class="sr">SrNo.</th><th>Entity</th><th>Fields</th><th>Rules</th></tr>
+  <tr><td class="sr">1</td><td><b>Deck</b></td><td>id · name (≤ 40, unique) · colour (1 of 8) · sortOrder · createdAt · updatedAt</td><td>Delete cascades to cards (confirm shows card count).</td></tr>
+  <tr><td class="sr">2</td><td><b>Card</b></td><td>id · deckId · label (≤ 60, required) · sortOrder · createdAt · updatedAt</td><td>“Label” = card name (Q2). Move = change deckId.</td></tr>
+  <tr><td class="sr">3</td><td><b>DataVar</b></td><td>id · cardId · name (≤ 40) · value (≤ 500, text) · order</td><td>Zero or more per card (Q3). Any characters (Q4).</td></tr>
+  <tr><td class="sr">4</td><td><b>DateVar</b></td><td>id · cardId · name (≤ 40) · date (epoch-day, no time) · order</td><td>Zero or more per card (Q3). Delete cascades to its schedulers after confirm.</td></tr>
+  <tr><td class="sr">5</td><td><b>Scheduler</b></td><td>id · cardId · dateVarId · unit {SAME_DAY, DAYS, WEEKS, MONTHS, YEARS} · amount · direction {BEFORE, AFTER} · ringTime (HH:mm) · enabled · status {SCHEDULED, SNOOZED, RANG, DONE, PAST, OFF} · snoozedUntil · lastFiredAt</td><td>Ring moment is <b>derived</b> every time (never trusted from storage) — recomputed on save, boot, time change, app open, daily sweep.</td></tr>
+  <tr><td class="sr">6</td><td><b>RingLog</b></td><td>id · schedulerId · cardLabel · deckName · ruleText · firedAt · action {DONE, SNOOZED, DISMISSED} · actedAt · late</td><td>Feeds S6 › History; capped at 500 (oldest trimmed).</td></tr>
+  <tr><td class="sr">7</td><td><b>Settings</b> (DataStore)</td><td>defaultRingTime · soundUri · vibrate · snoozeMinutes · theme · deckLayout · appLock · lastBackupAt</td><td>Reset keeps these.</td></tr>
+</table>
+
+<h3 style="font-size:15px;color:var(--pri-d);margin-top:20px">C2 · Scheduler rules (“when to ring”)</h3>
+<table class="tb">
+  <tr><th class="sr">SrNo.</th><th>Unit</th><th>Amount range</th><th>Ring date (java.time)</th><th>Example · base = Policy Expiry 11-Oct-2026</th></tr>
+  <tr><td class="sr">1</td><td>Same day</td><td>—</td><td>base</td><td>Sun 11-Oct-2026</td></tr>
+  <tr><td class="sr">2</td><td>Days</td><td>1 – 450</td><td>base.minusDays(n) / plusDays(n)</td><td>30 before → Fri 11-Sep-2026</td></tr>
+  <tr><td class="sr">3</td><td>Weeks</td><td>1 – 60</td><td>base.minusWeeks(n) / plusWeeks(n)</td><td>2 before → Sun 27-Sep-2026</td></tr>
+  <tr><td class="sr">4</td><td>Months</td><td>1 – 60</td><td>base.minusMonths(n) / plusMonths(n) — clamps to month end</td><td>1 before → Fri 11-Sep-2026; 31-Mar minus 1 month → 28-Feb</td></tr>
+  <tr><td class="sr">5</td><td>Years</td><td>1 – 20</td><td>base.minusYears(n) / plusYears(n) — 29-Feb → 28-Feb</td><td>1 after Policy Start 12-Oct-2025 → Mon 12-Oct-2026</td></tr>
+  <tr><td class="sr">6</td><td>Ring moment</td><td>00:00 – 23:59</td><td>LocalDateTime(ringDate, ringTime) in the device zone; DST-safe</td><td>Default 09:00 from Settings</td></tr>
+  <tr><td class="sr">7</td><td>Out of range</td><td>—</td><td>Typed value clamps to the unit's bounds; changing unit keeps the amount if valid, else clamps</td><td>500 days → 450; 30 weeks → Years → 20</td></tr>
+  <tr><td class="sr">8</td><td>Moment already passed</td><td>—</td><td>Status Past — never fires; red preview in S5, red status in S3; editing the date recomputes and can revive it</td><td>—</td></tr>
+  <tr><td class="sr">9</td><td>Date variable edited</td><td>—</td><td>Every scheduler on that date recomputes; a Done/Rang scheduler whose new moment is in the future returns to Scheduled</td><td>Expiry moved to 2027 → rule rings again</td></tr>
+</table>
+
+<h3 style="font-size:15px;color:var(--pri-d);margin-top:20px">C3 · Ring engine</h3>
+<table class="tb">
+  <tr><th class="sr">SrNo.</th><th>Aspect</th><th>Design</th></tr>
+  <tr><td class="sr">1</td><td>Alarm</td><td>One AlarmManager exact alarm (setExactAndAllowWhileIdle) for the earliest due ring only; when it fires, the next one is planned. Falls back to setAndAllowWhileIdle when exact alarms are not permitted (S9.3 says so).</td></tr>
+  <tr><td class="sr">2</td><td>Re-planning</td><td>On BOOT_COMPLETED, TIME_SET, TIMEZONE_CHANGED, app open, every save, and a daily WorkManager sweep at 00:05 (belt and braces).</td></tr>
+  <tr><td class="sr">3</td><td>Missed while phone off</td><td>Fires at the next re-plan, marked “late” in History; never silently dropped.</td></tr>
+  <tr><td class="sr">4</td><td>Permissions</td><td>POST_NOTIFICATIONS (13+), SCHEDULE_EXACT_ALARM (12+), RECEIVE_BOOT_COMPLETED, VIBRATE, USE_BIOMETRIC (only if Q9 = yes). No internet permission unless Q8 = cloud.</td></tr>
+  <tr><td class="sr">5</td><td>Notification</td><td>Channel “Reminders” (high). One notification per scheduler + auto group summary. Actions Done · Snooze · tap-to-open (S7).</td></tr>
+  <tr><td class="sr">6</td><td>Failure paths</td><td>Every scheduling call guarded; failures → Logger.e → Error Logs; a failed alarm plan is retried on the next re-plan trigger.</td></tr>
+</table>
+
+<h3 style="font-size:15px;color:var(--pri-d);margin-top:20px">C4 · Settings &amp; defaults</h3>
+<table class="tb">
+  <tr><th class="sr">SrNo.</th><th>Setting</th><th>Default</th><th>Options</th></tr>
+  <tr><td class="sr">1</td><td>Default ring time</td><td>09:00</td><td>Any time (picker)</td></tr>
+  <tr><td class="sr">2</td><td>Sound</td><td>System default notification</td><td>Ringtone picker (channel)</td></tr>
+  <tr><td class="sr">3</td><td>Vibrate</td><td>On</td><td>On / Off</td></tr>
+  <tr><td class="sr">4</td><td>Snooze length</td><td>1 hour</td><td>10 min · 30 min · 1 hour · 3 hours · Tomorrow at default time</td></tr>
+  <tr><td class="sr">5</td><td>Theme</td><td>System</td><td>System / Light / Dark</td></tr>
+  <tr><td class="sr">6</td><td>Deck layout</td><td>Grid</td><td>Grid / List</td></tr>
+  <tr><td class="sr">7</td><td>App lock (Q9)</td><td>Off</td><td>Off / On (biometric or device credential)</td></tr>
+  <tr><td class="sr">8</td><td>Backup / Restore (Q8)</td><td>—</td><td>JSON file via system picker; Restore = Replace all / Merge</td></tr>
+  <tr><td class="sr">9</td><td>Error Logs · Reset · About Me</td><td>—</td><td>Standard blocks as in your other apps</td></tr>
+</table>
+
+<h3 style="font-size:15px;color:var(--pri-d);margin-top:20px">C5 · Tech stack &amp; project defaults</h3>
+<table class="tb">
+  <tr><th class="sr">SrNo.</th><th>Item</th><th>Proposal</th></tr>
+  <tr><td class="sr">1</td><td>Package</td><td><code>com.krishna.infodeck</code> (Q1)</td></tr>
+  <tr><td class="sr">2</td><td>Language / UI</td><td>Kotlin · Jetpack Compose · Material 3 · single Activity, Navigation-Compose</td></tr>
+  <tr><td class="sr">3</td><td>SDK / build</td><td>minSdk 26 · targetSdk 34 · Gradle 8.7 · JDK 21 (same environment as Remindly / Kalam)</td></tr>
+  <tr><td class="sr">4</td><td>Storage</td><td>Room 2.6 (schema v1) · DataStore for settings · kotlinx-serialization for backup JSON</td></tr>
+  <tr><td class="sr">5</td><td>Reminders</td><td>AlarmManager exact + BootReceiver + WorkManager daily sweep (C3)</td></tr>
+  <tr><td class="sr">6</td><td>Versioning (Q10)</td><td>Remindly lockstep: versionName 1.00 → versionCode 100, 1.01 → 101 …</td></tr>
+  <tr><td class="sr">7</td><td>Keystore</td><td>New permanent keystore under <code>/mnt/user-data/outputs/infodeck/</code>, alias <code>infodeck</code>, created at first build; SHA-1 reported in the release note</td></tr>
+  <tr><td class="sr">8</td><td>Tests (three companions)</td><td>JUnit: RingCalculator (all units, before/after, month-end &amp; leap clamps, past detection, range clamps), backup round-trip, deck-name uniqueness, search matcher · Device checklist: notification, exact vs inexact ring, boot re-plan, snooze, time-zone change</td></tr>
+  <tr><td class="sr">9</td><td>Outputs</td><td><code>/mnt/user-data/outputs/infodeck/</code> — APK, source zip, BACKLOG.md, design files <code>infodeck-x.D{n}-design.html</code></td></tr>
+</table>
+
+<h3 style="font-size:15px;color:var(--pri-d);margin-top:20px">C6 · Not in 1.00 (say if any should move in)</h3>
+<table class="tb">
+  <tr><th class="sr">SrNo.</th><th>Left out</th><th>Why</th></tr>
+  <tr><td class="sr">1</td><td>Cloud sync</td><td>Sensitive personal data; local + file backup first (Q8).</td></tr>
+  <tr><td class="sr">2</td><td>Repeating rings (yearly renewals)</td><td>Not in your list; one-shot per rule (Q7).</td></tr>
+  <tr><td class="sr">3</td><td>Attachments / photos, other field types (number, phone, URL, password)</td><td>Only alphanumeric text + date were specified.</td></tr>
+  <tr><td class="sr">4</td><td>Sharing to another person, home-screen widget, tags across decks</td><td>Scope control for v1.00.</td></tr>
+</table>
+
+<h3 style="font-size:15px;color:var(--pri-d);margin-top:20px">C7 · Open questions — answer by number, or “defaults” for every recommended value</h3>
+<table class="tb">
+  <tr><th class="sr">Q</th><th>Question</th><th>Options</th><th>Recommended (= drawn)</th></tr>
+  <tr><td class="q">Q1</td><td>App name and package</td><td>InfoDeck / <code>com.krishna.infodeck</code> · or give me the name you want</td><td class="rec">InfoDeck</td></tr>
+  <tr><td class="q">Q2</td><td>What is a “label”?</td><td>(a) the card's name, as drawn · (b) a tag chip on the card, separate from the name · (c) the per-variable name only</td><td class="rec">(a)</td></tr>
+  <tr><td class="q">Q3</td><td>How many variables per card?</td><td>(a) any number of data + date variables, as drawn · (b) exactly one data + one date per card</td><td class="rec">(a)</td></tr>
+  <tr><td class="q">Q4</td><td>“Alphanumeric” for data values</td><td>(a) any text allowed (letters, digits, symbols, spaces), as drawn · (b) strict A–Z a–z 0–9 only</td><td class="rec">(a)</td></tr>
+  <tr><td class="q">Q5</td><td>Ring direction</td><td>(a) Before / After toggle, default Before, as drawn · (b) Before only · (c) After only</td><td class="rec">(a)</td></tr>
+  <tr><td class="q">Q6</td><td>How loud is a “ring”?</td><td>(a) high-priority notification with sound + vibration, as drawn · (b) alarm-style full-screen that keeps sounding until dismissed</td><td class="rec">(a)</td></tr>
+  <tr><td class="q">Q7</td><td>Repeat</td><td>(a) one-shot per rule, as drawn · (b) add an optional “repeat every year” switch to S5</td><td class="rec">(a) for 1.00</td></tr>
+  <tr><td class="q">Q8</td><td>Storage</td><td>(a) local Room + JSON backup/restore, as drawn · (b) Firestore sync (asia-south1) like Remindly</td><td class="rec">(a)</td></tr>
+  <tr><td class="q">Q9</td><td>App lock</td><td>(a) include, off by default, as drawn · (b) drop from 1.00</td><td class="rec">(a)</td></tr>
+  <tr><td class="q">Q10</td><td>Versioning</td><td>(a) lockstep 1.00 = 100 · (b) Kalam style</td><td class="rec">(a)</td></tr>
+</table>
+<p class="note" style="margin-top:14px">Next step after your corrections/approval: I create <code>BACKLOG.md</code> for InfoDeck with this design as the v1.00 spec (each item carrying the three companions — exception handling, Logger.e logging, tests). Nothing is built until you say <b>build</b> / <b>release</b>.</p>
+</div>
+</body>
+</html>

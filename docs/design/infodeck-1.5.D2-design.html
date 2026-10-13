@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InfoDeck — v1.5 D2 design · sharing attached files</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100..900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#131A26; --ink2:#5A6675; --hint:#96A0AF;
+    --indigo:#3B5BDB; --indigo-c:#E8ECFD;
+    --teal:#0E9384; --teal-c:#DDF3F0;
+    --violet:#7A5AF8; --violet-c:#EEE9FE;
+    --green:#12A150; --green-c:#DFF5E8;
+    --amber:#B76E00; --amber-c:#FDF0DA;
+    --rose:#E5484D; --rose-c:#FDE7E8;
+    --purple:#9333EA; --purple-c:#F3E8FE;
+    --sky:#0284C7; --sky-c:#E0F2FE;
+    --slate:#64748B; --slate-c:#EEF1F5;
+    --bg:#F6F8FC; --line:#E9EDF4; --outline:#C6CEDC;
+    --page:#E3E7F0; --tag:#22337F; --q:#7A5A00; --q-bg:#FFF3C4; --q-bd:#E2C35C;
+    --pri-d:#1E357F;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--page);font-family:Roboto,"Segoe UI",system-ui,sans-serif;color:var(--ink);padding:26px 18px 70px}
+  .wrap{max-width:1180px;margin:0 auto}
+  header.page h1{font-size:24px;font-weight:800;color:var(--pri-d)}
+  header.page p{font-size:13.5px;color:var(--ink2);margin-top:5px;line-height:1.55}
+  .stamp{display:inline-block;margin:10px 8px 0 0;font-size:12px;font-weight:700;color:#7A2E00;background:#FFE1CC;border:1px solid #E8B08C;border-radius:20px;padding:3px 12px}
+  .stamp.g{color:#22337F;background:var(--indigo-c);border-color:#B9C3F5}
+  .stamp.r{color:#8A1F19;background:var(--rose-c);border-color:#E7ADA8}
+  h2.sec{font-size:18px;font-weight:800;color:var(--pri-d);margin:38px 0 12px;padding-bottom:6px;border-bottom:2px solid #C9D1DD}
+  h3.sub{font-size:15px;color:var(--pri-d);margin-top:20px}
+  .warn-box{background:#FFF6E5;border:1px solid #E8C98C;border-radius:10px;padding:12px 14px;font-size:13.5px;line-height:1.55;margin:10px 0 4px}
+  .warn-box b{color:#7A4A00}
+  .idea-box{background:var(--indigo-c);border:1px solid #B9C3F5;border-radius:10px;padding:12px 14px;font-size:13.5px;line-height:1.55;margin:10px 0 4px}
+  .idea-box b{color:var(--pri-d)}
+  .rej-box{background:var(--rose-c);border:1px solid #E7ADA8;border-radius:10px;padding:12px 14px;font-size:13.5px;line-height:1.55;margin:10px 0 4px}
+  .rej-box b{color:#8A1F19}
+
+  table.tb{width:100%;border-collapse:collapse;font-size:12.5px;background:#fff;margin:6px 0 4px}
+  table.tb th{background:#E9EDF8;color:var(--pri-d);text-align:left;padding:6px 8px;border:1px solid #BFC9D8;font-size:12px}
+  table.tb td{padding:6px 8px;border:1px solid #D2D9E3;vertical-align:top;line-height:1.45}
+  table.tb .sr{width:1%;white-space:nowrap;text-align:center}
+  table.tb td.k{white-space:nowrap;font-weight:700;color:var(--tag)}
+  table.tb td.q{white-space:nowrap;font-weight:700;color:var(--q)}
+  table.tb td.rec{color:var(--green);font-weight:600}
+  table.tb td.new{white-space:nowrap;font-weight:700;color:var(--green)}
+  table.tb td.del{white-space:nowrap;font-weight:700;color:var(--rose)}
+  table.tb tr:nth-child(even) td{background:#FAFBFD}
+  code{font-family:Consolas,Menlo,monospace;font-size:12px;background:#EEF1F5;padding:1px 4px;border-radius:3px}
+
+  .frames{display:grid;grid-template-columns:repeat(auto-fit,minmax(520px,1fr));gap:34px 28px;margin-top:14px}
+  figure{display:flex;flex-direction:column;align-items:center;gap:8px}
+  figure h3{font-size:15px;font-weight:800;color:var(--pri-d);align-self:flex-start}
+  figure h3 small{font-weight:500;color:var(--ink2);font-size:12.5px;margin-left:6px}
+  figure table.tb{font-size:12px}
+  figure.full{grid-column:1 / -1}
+  figure.full h3{align-self:center}
+  figure.full table.tb{max-width:880px}
+  .duo{display:flex;gap:26px;justify-content:center;flex-wrap:wrap}
+
+  b.n{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:8px;background:var(--tag);color:#fff;font-size:10px;font-weight:800;flex-shrink:0;font-style:normal}
+  b.n.d{background:var(--rose)}
+  b.n.g{background:var(--green)}
+  i.q{display:inline-flex;font-style:normal;font-size:10px;font-weight:800;color:var(--q);background:var(--q-bg);border:1px solid var(--q-bd);border-radius:9px;padding:1px 6px}
+
+  .phone{width:378px;height:790px;background:var(--bg);border:9px solid #12151C;border-radius:38px;overflow:hidden;position:relative;box-shadow:0 16px 38px rgba(20,30,50,.22);display:flex;flex-direction:column;flex-shrink:0}
+  .sb{height:22px;color:var(--ink2);font-size:10.5px;font-weight:700;display:flex;align-items:center;justify-content:space-between;padding:0 16px;flex-shrink:0;background:#fff}
+  .nbar{height:48px;background:#fff;display:flex;align-items:center;gap:2px;padding:0 6px 0 12px;flex-shrink:0}
+  .nbar b.t{font-size:16.5px;font-weight:800;letter-spacing:-.3px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .nbar .ib{width:38px;height:38px;border-radius:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .hair{height:3px;background:linear-gradient(90deg,var(--indigo),var(--violet) 45%,var(--teal));flex-shrink:0}
+  .ic{width:21px;height:21px;fill:currentColor;flex-shrink:0}
+  .ic.s{width:17px;height:17px}
+  .ic.xs{width:13px;height:13px}
+  .body{flex:1;overflow:hidden;position:relative;padding:8px 12px 0}
+
+  .dim{position:absolute;inset:0;background:rgba(12,18,30,.5);z-index:2}
+  .sheet{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:24px 24px 0 0;padding:10px 16px 0;max-height:95%;z-index:3}
+  .grab{width:36px;height:4px;border-radius:2px;background:#D3D9E4;margin:0 auto 12px}
+  .sheet h4{font-size:17px;font-weight:800;margin-bottom:6px;display:flex;align-items:center;gap:9px}
+  .lab{font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--indigo);margin:13px 0 7px 2px;display:flex;align-items:center;gap:6px}
+  .lab .r{margin-left:auto;font-size:11px;font-weight:800;text-transform:none;letter-spacing:0;color:var(--ink2)}
+  .lab.pur{color:var(--purple)}
+  .chk{width:20px;height:20px;border-radius:6px;border:2px solid var(--outline);flex-shrink:0}
+  .chk.on{background:var(--indigo);border-color:var(--indigo);display:flex;align-items:center;justify-content:center}
+  .chk.on .ic{width:13px;height:13px;color:#fff}
+  .frow{display:flex;align-items:center;gap:11px;padding:8px 2px;border-bottom:1px solid var(--line);min-height:44px}
+  .frow:last-of-type{border-bottom:0}
+  .frow .l{flex:1;min-width:0}
+  .frow .l .k{font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--indigo)}
+  .frow .l .v{font-size:13.5px;font-weight:700;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .frow .l .sub{font-size:11px;color:var(--ink2);margin-top:1px}
+  .ftile{width:36px;height:42px;border-radius:8px;display:flex;align-items:flex-end;justify-content:center;font-size:8.5px;font-weight:800;color:#fff;padding-bottom:4px;flex-shrink:0}
+  .ftile.pdf{background:linear-gradient(160deg,#F0736F,#C0392F)}
+  .ftile.doc{background:linear-gradient(160deg,#5A8AE0,#20509E)}
+  .ftile.zip{background:linear-gradient(160deg,#B15BF2,#7A2FBF)}
+  .ftile.txt{background:linear-gradient(160deg,#8B98AB,#4E5A6B)}
+  .seg{display:flex;background:#EFF2F8;border-radius:14px;padding:4px;gap:4px;margin-top:4px}
+  .seg span{flex:1;text-align:center;font-size:11.5px;font-weight:700;color:var(--ink2);padding:8px 4px;border-radius:11px;display:flex;align-items:center;justify-content:center;gap:5px}
+  .seg span .ic{width:14px;height:14px}
+  .seg span.on{background:#fff;color:var(--purple);box-shadow:0 2px 6px rgba(25,40,80,.14)}
+  .prev{background:#0F1522;color:#D8E2F2;border-radius:12px;padding:10px 12px;font-family:Consolas,Menlo,monospace;font-size:10.5px;line-height:1.55;white-space:pre-wrap;position:relative}
+  .prev .plab{position:absolute;right:10px;top:7px;font-size:8.5px;font-weight:800;color:#7C89A3;letter-spacing:.06em;font-family:Roboto,sans-serif}
+  .note{border-radius:12px;padding:9px 11px;display:flex;gap:8px;align-items:flex-start;font-size:11px;line-height:1.45;margin-top:10px}
+  .note.warn{background:var(--amber-c);color:#7A4A00}
+  .note.err{background:var(--rose-c);color:#8A1F19}
+  .note.ok{background:var(--green-c);color:#0B6B36}
+  .note .ic{width:15px;height:15px;flex-shrink:0;margin-top:1px}
+  .btnrow{display:flex;gap:9px;margin-top:12px}
+  .abtn{flex:1;height:50px;border-radius:14px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:13.5px;font-weight:800}
+  .abtn.cancel{border:1.5px solid var(--outline);color:var(--ink2);background:#fff}
+  .abtn.go{background:linear-gradient(140deg,#3CC272,#12A150);color:#fff;flex:1.4}
+  .sbs{height:30px;margin:12px -16px 0;border-top:1px dashed #C9D1DD;display:flex;align-items:center;justify-content:center;font-size:10.5px;color:var(--hint)}
+  .apps{display:flex;gap:10px;margin:4px 0 6px}
+  .app{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px}
+  .app .ico{width:50px;height:50px;border-radius:16px;display:flex;align-items:center;justify-content:center;color:#fff;position:relative}
+  .app span{font-size:10px;font-weight:700;color:var(--ink2);text-align:center;line-height:1.25}
+  .app .badge{position:absolute;bottom:-3px;right:-3px;width:19px;height:19px;border-radius:10px;display:flex;align-items:center;justify-content:center;border:2px solid #fff}
+  .scard{background:#fff;border-radius:14px;box-shadow:0 2px 8px rgba(25,40,80,.07);overflow:hidden}
+  .srow{display:flex;align-items:center;gap:11px;padding:9px 12px;min-height:50px;border-bottom:1px solid var(--line)}
+  .srow:last-child{border-bottom:0}
+  .srow .tile{width:34px;height:34px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .srow .l{flex:1;min-width:0}
+  .srow .l b{display:block;font-size:13.5px;font-weight:700}
+  .srow .l small{display:block;font-size:11px;color:var(--ink2);margin-top:1px}
+  .srow .val{font-size:12px;font-weight:800;white-space:nowrap}
+  .prog{height:6px;border-radius:3px;background:#DDE3EE;overflow:hidden;margin-top:7px}
+  .prog i{display:block;height:100%;background:linear-gradient(90deg,var(--purple),var(--violet))}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></symbol>
+  <symbol id="i-share" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 1 0-3-3c0 .24.04.47.09.7L8.04 9.81A2.99 2.99 0 0 0 3 12a3 3 0 0 0 5.04 2.19l7.12 4.16c-.05.21-.08.43-.08.65a2.92 2.92 0 1 0 2.92-2.92z"/></symbol>
+  <symbol id="i-tick" viewBox="0 0 24 24"><path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></symbol>
+  <symbol id="i-zip" viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2zm-8 3h2v2h-2V9zm0 4h2v2h-2v-2zm0 4h2v2h-2v-2z"/></symbol>
+  <symbol id="i-attach" viewBox="0 0 24 24"><path d="M16.5 6v11.5a4 4 0 0 1-8 0V5a2.5 2.5 0 0 1 5 0v10.5a1 1 0 0 1-2 0V6H10v9.5a2.5 2.5 0 0 0 5 0V5a4 4 0 0 0-8 0v12.5a5.5 5.5 0 0 0 11 0V6h-1.5z"/></symbol>
+  <symbol id="i-mask" viewBox="0 0 24 24"><path d="M12 6.5c3.79 0 7.17 2.13 8.82 5.5-.32.64-.71 1.24-1.15 1.79l1.42 1.42A12.03 12.03 0 0 0 23 12c-1.73-4.39-6-7.5-11-7.5-1.2 0-2.36.18-3.45.51l1.63 1.63c.6-.09 1.2-.14 1.82-.14zM2.71 3.16 1.29 4.57l2.47 2.47A11.8 11.8 0 0 0 1 12c1.73 4.39 6 7.5 11 7.5 1.79 0 3.49-.4 5.01-1.12l3.42 3.42 1.41-1.41L2.71 3.16z"/></symbol>
+  <symbol id="i-wa" viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .1-1.7-.1-.4-.1-.9-.3-1.5-.6-2.7-1.2-4.4-3.9-4.5-4.1-.1-.2-1.1-1.4-1.1-2.7 0-1.3.7-1.9.9-2.2.2-.2.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 1.9c.1.2.1.4 0 .6l-.3.4-.4.4c-.1.1-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.1 1 2.1 1.3 2.4 1.4.3.1.5.1.6-.1l.9-1c.2-.2.4-.2.6-.1l2 .9c.2.1.4.2.4.3.1.2.1.7-.1 1.3z"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24"><path d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z"/></symbol>
+  <symbol id="i-sms" viewBox="0 0 24 24"><path d="M20 2H4a2 2 0 0 0-2 2v18l4-4h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zM7 9h2v2H7V9zm4 0h2v2h-2V9zm4 0h2v2h-2V9z"/></symbol>
+  <symbol id="i-apps" viewBox="0 0 24 24"><path d="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm0 6h4v-4h-4v4z"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z"/></symbol>
+  <symbol id="i-db" viewBox="0 0 24 24"><path d="M12 2C7.58 2 4 3.79 4 6s3.58 4 8 4 8-1.79 8-4-3.58-4-8-4zM4 8v4c0 2.21 3.58 4 8 4s8-1.79 8-4V8c0 2.21-3.58 4-8 4S4 10.21 4 8zm0 6v4c0 2.21 3.58 4 8 4s8-1.79 8-4v-4c0 2.21-3.58 4-8 4s-8-1.79-8-4z"/></symbol>
+</svg>
+
+<div class="wrap">
+<header class="page">
+  <h1>InfoDeck — v1.5 · D2 design</h1>
+  <p>Attaching the card's files to a share. The plumbing already exists — the FileProvider is declared and already carries the QR image — so this is mostly a picker, a choice between <b>attach</b> and <b>bundle as .zip</b>, and being honest about the two things that can bite: apps that drop your text, and masking that the attachment quietly undoes.</p>
+  <span class="stamp">DESIGN ONLY · nothing built · no version bump</span>
+  <span class="stamp g">Reply by tag: “S1.3 → zip always”, “Q4 → b”, or “defaults” = all recommended</span>
+  <span class="stamp r">The per-app behaviour in §C2 is unverified on device — see the note there</span>
+</header>
+
+<h2 class="sec">A · Screens</h2>
+<div class="frames">
+
+<!-- S1 -->
+<figure>
+  <h3>S1 · Files join the picker<small>per-file ticks, and how they travel</small></h3>
+  <div class="phone" style="height:1030px">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="nbar"><b class="t">Car Insurance — HDFC Ergo</b>
+      <span class="ib" style="background:var(--green-c);color:var(--green)"><svg class="ic s"><use href="#i-share"/></svg></span></div>
+    <div class="hair"></div>
+    <div class="body"><div class="dim"></div>
+      <div class="sheet">
+        <div class="grab"></div>
+        <h4><svg class="ic" style="color:var(--green)"><use href="#i-share"/></svg>What to share</h4>
+
+        <div class="lab">Data <span class="r">3 of 4</span></div>
+        <div class="frow"><span class="chk on"><svg class="ic"><use href="#i-tick"/></svg></span>
+          <div class="l"><div class="k">Policy No</div><div class="v">HD-2291-KX-2026</div></div></div>
+        <div class="frow"><span class="chk on"><svg class="ic"><use href="#i-tick"/></svg></span>
+          <div class="l"><div class="k">Registration</div><div class="v">WB 24 AB 1234</div></div></div>
+
+        <div class="lab pur"><svg class="ic xs"><use href="#i-attach"/></svg>Files <span class="r">2 of 3 · 4.1 MB</span></div>
+        <div class="frow"><span class="chk on"><svg class="ic"><use href="#i-tick"/></svg></span>
+          <span class="ftile pdf">PDF</span>
+          <div class="l"><div class="v">Policy document.pdf</div><div class="sub">1.8 MB · added 18-Aug-2026</div></div>
+          <b class="n" style="position:absolute;right:6px">1</b></div>
+        <div class="frow"><span class="chk on"><svg class="ic"><use href="#i-tick"/></svg></span>
+          <span class="ftile doc">DOC</span>
+          <div class="l"><div class="v">Claim form.docx</div><div class="sub">2.3 MB · added 02-Aug-2026</div></div></div>
+        <div class="frow"><span class="chk"></span>
+          <span class="ftile pdf">PDF</span>
+          <div class="l"><div class="v">Old policy 2024.pdf</div><div class="sub">3.9 MB · added 11-Oct-2024</div></div></div>
+
+        <div class="lab pur">How the files travel</div>
+        <div class="seg">
+          <span class="on"><svg class="ic"><use href="#i-attach"/></svg>Attach both</span>
+          <span><svg class="ic"><use href="#i-zip"/></svg>Bundle as .zip</span>
+        </div>
+        <b class="n g" style="position:relative;top:-16px;left:2px">2</b>
+
+        <div class="note warn"><svg class="ic"><use href="#i-warn"/></svg>
+          <div>Some apps keep only the attachment and drop the message. InfoDeck copies the text to your clipboard as it sends, so you can paste it if that happens.</div></div>
+        <b class="n" style="position:relative;top:-24px;left:300px">3</b>
+
+        <div class="lab">Preview</div>
+        <div class="prev"><span class="plab">WHAT THEY GET</span>Car Insurance — HDFC Ergo
+
+Policy No: HD-2291-KX-2026
+Registration: WB 24 AB 1234
+Policy Expiry: 11-Oct-2026
+
+Shared from InfoDeck
+
++ Policy document.pdf  (1.8 MB)
++ Claim form.docx      (2.3 MB)<b class="n" style="position:absolute;right:6px;bottom:6px">4</b></div>
+
+        <div class="btnrow">
+          <span class="abtn cancel"><svg class="ic"><use href="#i-close"/></svg>Cancel</span>
+          <span class="abtn go"><svg class="ic"><use href="#i-share"/></svg>Next</span>
+        </div>
+        <div class="sbs">bottom clearance = max(25 % screen height, nav bar + 24 dp)</div>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="new">One tick per file</td><td>Same picker, same mental model as the data variables. Size and date on every row, running total in the header <i class="q">Q1</i></td></tr>
+    <tr><td class="sr">2</td><td class="new">Attach · or bundle</td><td><b>Attach</b> sends the text plus the files as separate attachments. <b>Bundle</b> makes one <code>.zip</code> containing a <code>.txt</code> of the card and every ticked file — nothing can be separated or dropped. Appears only when at least one file is ticked <i class="q">Q2</i></td></tr>
+    <tr><td class="sr">3</td><td class="k">The honest warning</td><td>Written into the sheet, with the clipboard as the safety net rather than a promise I cannot keep</td></tr>
+    <tr><td class="sr">4</td><td class="new">Preview lists the attachments</td><td>Names and sizes below the text, so “what they get” means everything, not just words</td></tr>
+    <tr><td class="sr">5</td><td class="k">Default ticks</td><td>Files start <b>unticked</b> — a share is usually a quick answer, not the whole folder <i class="q">Q3</i></td></tr>
+  </table>
+</figure>
+
+<!-- S2 -->
+<figure>
+  <h3>S2 · The trap worth naming<small>masking and attachments disagree</small></h3>
+  <div class="phone" style="height:760px">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="nbar"><b class="t">Car Insurance — HDFC Ergo</b></div>
+    <div class="hair"></div>
+    <div class="body"><div class="dim"></div>
+      <div class="sheet">
+        <div class="grab"></div>
+        <h4><svg class="ic" style="color:var(--green)"><use href="#i-share"/></svg>What to share</h4>
+
+        <div class="lab">Data</div>
+        <div class="frow"><span class="chk on"><svg class="ic"><use href="#i-tick"/></svg></span>
+          <div class="l"><div class="k">Policy No · masked</div><div class="v">HD-2***********</div></div>
+          <span style="width:32px;height:32px;border-radius:11px;background:var(--rose-c);color:var(--rose);display:flex;align-items:center;justify-content:center"><svg class="ic s"><use href="#i-mask"/></svg></span>
+          <b class="n d" style="position:absolute;right:6px">1</b></div>
+
+        <div class="lab pur"><svg class="ic xs"><use href="#i-attach"/></svg>Files</div>
+        <div class="frow"><span class="chk on"><svg class="ic"><use href="#i-tick"/></svg></span>
+          <span class="ftile pdf">PDF</span>
+          <div class="l"><div class="v">Policy document.pdf</div><div class="sub">1.8 MB</div></div></div>
+
+        <div class="note err"><svg class="ic"><use href="#i-warn"/></svg>
+          <div><b>You masked Policy No, but the attached PDF probably still shows it.</b> Masking hides a value in the message — it cannot edit a document. Send the text only, or accept that the file reveals it.</div></div>
+        <b class="n d" style="position:relative;top:-40px;left:300px">2</b>
+
+        <div class="lab">Your choices</div>
+        <div class="scard">
+          <div class="srow"><span class="tile" style="background:var(--green-c);color:var(--green)"><svg class="ic s"><use href="#i-tick"/></svg></span>
+            <div class="l"><b>Send text only</b><small>Untick the file — the mask holds</small></div></div>
+          <div class="srow"><span class="tile" style="background:var(--amber-c);color:var(--amber)"><svg class="ic s"><use href="#i-attach"/></svg></span>
+            <div class="l"><b>Send both anyway</b><small>You know the file shows it</small></div></div>
+          <div class="srow"><span class="tile" style="background:var(--rose-c);color:var(--rose)"><svg class="ic s"><use href="#i-mask"/></svg></span>
+            <div class="l"><b>Drop the mask</b><small>Share the value openly, since the file does</small></div>
+            <b class="n" style="position:absolute;right:12px;top:6px">3</b></div>
+        </div>
+
+        <div class="btnrow">
+          <span class="abtn cancel"><svg class="ic"><use href="#i-close"/></svg>Cancel</span>
+          <span class="abtn go"><svg class="ic"><use href="#i-share"/></svg>Next</span>
+        </div>
+        <div class="sbs">bottom clearance = max(25 % screen height, nav bar + 24 dp)</div>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="k">Masked value</td><td>Shown masked in the text exactly as in 1.5</td></tr>
+    <tr><td class="sr">2</td><td class="del">The warning</td><td>Fires whenever a <b>masked field</b> and a <b>ticked file</b> appear together. It never blocks you — it just refuses to let the mask look like protection it is not <i class="q">Q4</i></td></tr>
+    <tr><td class="sr">3</td><td class="new">Three honest ways out</td><td>Untick the file, send anyway, or drop the mask. InfoDeck cannot redact a PDF and does not pretend to</td></tr>
+    <tr><td class="sr">4</td><td class="k">Why this matters</td><td>Masking was added so you could prove a policy exists without handing over its number. An attachment silently undoes that</td></tr>
+  </table>
+</figure>
+
+<!-- S3 -->
+<figure>
+  <h3>S3 · Send with — what each app can carry<small>and where files are impossible</small></h3>
+  <div class="phone" style="height:760px">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="nbar"><b class="t">Car Insurance — HDFC Ergo</b></div>
+    <div class="hair"></div>
+    <div class="body"><div class="dim"></div>
+      <div class="sheet">
+        <div class="grab"></div>
+        <h4><svg class="ic" style="color:var(--green)"><use href="#i-share"/></svg>Send with</h4>
+        <div style="font-size:12px;color:var(--ink2);margin-bottom:10px">4 fields · 2 files · 4.1 MB</div>
+
+        <div class="apps">
+          <div class="app"><span class="ico" style="background:#25D366"><svg class="ic"><use href="#i-wa"/></svg>
+            <span class="badge" style="background:var(--amber)"><svg class="ic xs" style="color:#fff"><use href="#i-warn"/></svg></span></span>
+            <span>WhatsApp<br><b style="color:var(--amber);font-size:9px">text may drop</b></span></div>
+          <div class="app"><span class="ico" style="background:#EA4335"><svg class="ic"><use href="#i-mail"/></svg>
+            <span class="badge" style="background:var(--green)"><svg class="ic xs" style="color:#fff"><use href="#i-tick"/></svg></span></span>
+            <span>Gmail<br><b style="color:var(--green);font-size:9px">both fine</b></span></div>
+          <div class="app" style="opacity:.45"><span class="ico" style="background:#1E88E5"><svg class="ic"><use href="#i-sms"/></svg>
+            <span class="badge" style="background:var(--rose)"><svg class="ic xs" style="color:#fff"><use href="#i-close"/></svg></span></span>
+            <span>SMS<br><b style="color:var(--rose);font-size:9px">no files</b></span></div>
+          <div class="app"><span class="ico" style="background:#546E7A"><svg class="ic"><use href="#i-mail"/></svg></span>
+            <span>Email<br><b style="color:var(--green);font-size:9px">both fine</b></span></div>
+          <b class="n" style="position:relative;top:-52px;left:-6px">1</b>
+        </div>
+
+        <div class="note warn" style="margin-top:14px"><svg class="ic"><use href="#i-warn"/></svg>
+          <div>4.1 MB is comfortable. Most mail refuses over about 25 MB — InfoDeck warns before sending, never after.</div></div>
+        <b class="n" style="position:relative;top:-30px;left:300px">2</b>
+
+        <div class="lab">Or keep it as a file</div>
+        <div class="scard">
+          <div class="srow"><span class="tile" style="background:var(--purple-c);color:var(--purple)"><svg class="ic s"><use href="#i-zip"/></svg></span>
+            <div class="l"><b>Export everything as .zip</b><small>InfoDeck-CarInsurance-20Aug2026.zip · 4.2 MB</small></div>
+            <b class="n g" style="position:absolute;right:12px;top:6px">3</b></div>
+          <div class="srow"><span class="tile" style="background:var(--slate-c);color:var(--slate)"><svg class="ic s"><use href="#i-file"/></svg></span>
+            <div class="l"><b>Export text only</b><small>InfoDeck-CarInsurance-20Aug2026.txt</small></div></div>
+          <div class="srow"><span class="tile" style="background:var(--teal-c);color:var(--teal)"><svg class="ic s"><use href="#i-copy"/></svg></span>
+            <div class="l"><b>Copy text</b><small>Files cannot go on the clipboard</small></div></div>
+          <div class="srow"><span class="tile" style="background:var(--indigo-c);color:var(--indigo)"><svg class="ic s"><use href="#i-apps"/></svg></span>
+            <div class="l"><b>All other apps…</b><small>The usual Android chooser, files included</small></div></div>
+        </div>
+
+        <div class="btnrow">
+          <span class="abtn cancel"><svg class="ic"><use href="#i-back"/></svg>Back</span>
+          <span class="abtn go"><svg class="ic"><use href="#i-share"/></svg>Send</span>
+        </div>
+        <div class="sbs">bottom clearance = max(25 % screen height, nav bar + 24 dp)</div>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="new">A badge per app</td><td>Green both fine · amber text may drop · red files impossible. SMS greys out entirely once a file is ticked, instead of failing silently <i class="q">Q5</i></td></tr>
+    <tr><td class="sr">2</td><td class="new">Size warning first</td><td>Above 25 MB the sheet says so before you pick an app, and suggests the zip or a link-style export instead</td></tr>
+    <tr><td class="sr">3</td><td class="new">Export everything</td><td>The <code>.txt</code> and every ticked file in one zip, written wherever you choose</td></tr>
+    <tr><td class="sr">4</td><td class="k">Clipboard</td><td>Text only — Android clipboards do not carry documents. Said plainly on the row</td></tr>
+  </table>
+</figure>
+
+<!-- S4 -->
+<figure>
+  <h3>S4 · What the bundle contains<small>and when things go wrong</small></h3>
+  <div class="phone" style="height:800px">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="nbar"><b class="t">Bundle and failures</b></div>
+    <div class="hair"></div>
+    <div class="body">
+      <div class="lab pur">Inside the zip</div>
+      <div class="scard">
+        <div class="srow"><span class="ftile zip" style="width:30px;height:36px">ZIP</span>
+          <div class="l"><b>InfoDeck-CarInsurance-20Aug2026.zip</b><small>3 items · 4.2 MB</small></div></div>
+        <div class="srow" style="padding-left:26px"><span class="ftile txt" style="width:26px;height:32px">TXT</span>
+          <div class="l"><b>Car Insurance — HDFC Ergo.txt</b><small>the same text you previewed</small></div>
+          <b class="n" style="position:absolute;right:12px;top:6px">1</b></div>
+        <div class="srow" style="padding-left:26px"><span class="ftile pdf" style="width:26px;height:32px">PDF</span>
+          <div class="l"><b>Policy document.pdf</b><small>1.8 MB</small></div></div>
+        <div class="srow" style="padding-left:26px"><span class="ftile doc" style="width:26px;height:32px">DOC</span>
+          <div class="l"><b>Claim form.docx</b><small>2.3 MB</small></div></div>
+      </div>
+
+      <div class="lab">While it packs</div>
+      <div class="scard"><div class="srow">
+        <span class="tile" style="background:var(--purple-c);color:var(--purple)"><svg class="ic s"><use href="#i-zip"/></svg></span>
+        <div class="l"><b>Packing 2 of 3</b><small>Claim form.docx</small>
+          <div class="prog"><i style="width:62%"></i></div></div>
+        <b class="n" style="position:absolute;right:12px;top:6px">2</b></div></div>
+
+      <div class="lab dz" style="color:var(--rose)">When something is missing</div>
+      <div class="scard">
+        <div class="srow"><span class="tile" style="background:var(--rose-c);color:var(--rose)"><svg class="ic s"><use href="#i-warn"/></svg></span>
+          <div class="l"><b>Old policy 2024.pdf is gone</b><small>Removed outside InfoDeck. Sent the other two</small></div>
+          <span class="val" style="color:var(--rose)">Skipped</span>
+          <b class="n d" style="position:absolute;right:12px;top:6px">3</b></div>
+        <div class="srow"><span class="tile" style="background:var(--amber-c);color:var(--amber)"><svg class="ic s"><use href="#i-warn"/></svg></span>
+          <div class="l"><b>28.4 MB is over Gmail's limit</b><small>Try the zip, or send fewer files</small></div>
+          <span class="val" style="color:var(--amber)">Too big</span></div>
+        <div class="srow"><span class="tile" style="background:var(--rose-c);color:var(--rose)"><svg class="ic s"><use href="#i-close"/></svg></span>
+          <div class="l"><b>Could not build the zip</b><small>Nothing was sent and no half-file is left behind</small></div>
+          <span class="val" style="color:var(--rose)">Failed</span></div>
+      </div>
+
+      <div class="note ok" style="margin-top:14px"><svg class="ic"><use href="#i-tick"/></svg>
+        <div>The zip lives in the app's cache and is deleted once the share returns. Your originals are never moved or renamed.</div></div>
+      <b class="n g" style="position:relative;top:-30px;left:300px">4</b>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="new">The text rides inside</td><td>A <code>.txt</code> of the card sits next to the documents, so the message survives even when an app drops <code>EXTRA_TEXT</code></td></tr>
+    <tr><td class="sr">2</td><td class="k">Packing is visible</td><td>With a cancel; a cancelled zip leaves nothing behind</td></tr>
+    <tr><td class="sr">3</td><td class="del">Missing files are skipped, loudly</td><td>The send still goes, minus that file, and says which one. Better than a broken intent</td></tr>
+    <tr><td class="sr">4</td><td class="k">Cache, not storage</td><td>The zip is temporary; originals are untouched</td></tr>
+  </table>
+</figure>
+
+</div><!-- /frames -->
+
+<h2 class="sec">B · Specification</h2>
+
+<h3 class="sub">C1 · The two ways files travel</h3>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Mode</th><th>Mechanism</th><th>Strength</th><th>Weakness</th></tr>
+  <tr><td class="sr">1</td><td class="k">Attach</td><td>One file → <code>ACTION_SEND</code> + <code>EXTRA_STREAM</code>; several → <code>ACTION_SEND_MULTIPLE</code>, both through the existing FileProvider</td><td class="rec">Native, one tap, files arrive as files</td><td>Some apps keep the attachment and drop the text</td></tr>
+  <tr><td class="sr">2</td><td class="k">Bundle</td><td>A <code>.zip</code> holding a <code>.txt</code> of the card plus every ticked file, sent as a single attachment</td><td class="rec">Nothing can be separated or dropped; one item to forward</td><td>The receiver has to unzip; no preview in chat</td></tr>
+  <tr><td class="sr">3</td><td class="rec">Default</td><td colspan="3">Attach when one file is ticked, offer Bundle from two upwards; the choice is remembered per card <i class="q">Q2</i></td></tr>
+</table>
+
+<h3 class="sub">C2 · Per-app behaviour — labelled honestly</h3>
+<div class="warn-box"><b>Unverified on device.</b> How each app treats text sent alongside a document is that app's behaviour, not InfoDeck's code. I can prove what intent we fire; I cannot prove what WhatsApp does with it from this container. The table is my best expectation, the app shows it as a badge rather than a promise, and the clipboard fallback means the text is never actually lost. If your phone behaves differently, tell me and the badge changes.</div>
+<table class="tb">
+  <tr><th class="sr">#</th><th>App</th><th>Files</th><th>Text with files</th><th>What InfoDeck does</th></tr>
+  <tr><td class="sr">1</td><td class="k">WhatsApp</td><td class="rec">Yes</td><td>Often dropped for documents</td><td>Amber badge, text copied to the clipboard as it sends</td></tr>
+  <tr><td class="sr">2</td><td class="k">Gmail</td><td class="rec">Yes</td><td class="rec">Kept, in the body</td><td>Green badge, subject filled with the card name</td></tr>
+  <tr><td class="sr">3</td><td class="k">Email (default app)</td><td class="rec">Yes</td><td class="rec">Kept</td><td>Green badge</td></tr>
+  <tr><td class="sr">4</td><td class="k">SMS</td><td class="del">No — Android cannot</td><td>Text only</td><td>Greyed out entirely once a file is ticked</td></tr>
+  <tr><td class="sr">5</td><td class="k">Chooser</td><td class="rec">Yes</td><td>Depends on what you pick</td><td>No badge, no promise</td></tr>
+</table>
+
+<h3 class="sub">C3 · Rules</h3>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Rule</th><th>Detail</th></tr>
+  <tr><td class="sr">1</td><td class="k">Per-file ticks</td><td>Every file is its own row with size and date; files start unticked <i class="q">Q3</i></td></tr>
+  <tr><td class="sr">2</td><td class="k">MIME</td><td>Taken from the stored file — <code>application/pdf</code>, the DOCX type, and so on; a mixed selection sends as <code>*/*</code></td></tr>
+  <tr><td class="sr">3</td><td class="k">URIs</td><td>Always through the FileProvider with a read grant; the app's own paths are never exposed</td></tr>
+  <tr><td class="sr">4</td><td class="k">Missing file</td><td>Dropped from the send, named in a message; the rest still goes</td></tr>
+  <tr><td class="sr">5</td><td class="k">Size</td><td>Warned above 25 MB before an app is chosen <i class="q">Q6</i></td></tr>
+  <tr><td class="sr">6</td><td class="k">Zip</td><td>Written to cache, deleted when the share returns; cancelling leaves nothing</td></tr>
+  <tr><td class="sr">7</td><td class="k">Masking</td><td>Masked field + ticked file → the warning in S2. Never blocked, never hidden</td></tr>
+  <tr><td class="sr">8</td><td class="k">Many cards</td><td>Selection-mode shares with files always bundle — a dozen loose attachments is not a share <i class="q">Q7</i></td></tr>
+</table>
+
+<h3 class="sub">C4 · Three companions</h3>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Item</th><th>Exception handling</th><th>Logger.e</th><th>Tests</th></tr>
+  <tr><td class="sr">1</td><td class="k">Attach files</td><td>URIs built only through the FileProvider; a missing or unreadable file is removed from the list before the intent is built; a failed grant falls back to text-only rather than a dead intent</td><td>logs a missing file, a failed URI grant and every dropped attachment</td><td>JUnit on MIME resolution per extension, single-vs-multiple selection, and the missing-file pruning</td></tr>
+  <tr><td class="sr">2</td><td class="k">Zip bundle</td><td>Built in cache with a temporary name and renamed on success, so a failure leaves no half file; cancel deletes it; entry names de-duplicated when two files share a name</td><td>logs a zip failure with the entry that broke it</td><td>JUnit on entry naming, duplicate names, the embedded <code>.txt</code> contents and the size total</td></tr>
+  <tr><td class="sr">3</td><td class="k">Masking conflict</td><td>The rule is pure — masked count &gt; 0 and ticked files &gt; 0 → warn</td><td>—</td><td>JUnit over all four combinations of masked/unmasked and files/no files</td></tr>
+  <tr><td class="sr">4</td><td class="k">Per-app badges</td><td>An unknown package gets no badge rather than a wrong one</td><td>logs an unknown package reaching the badge map</td><td>JUnit that every offered target maps to exactly one badge, and that SMS is excluded whenever a file is ticked</td></tr>
+</table>
+
+<h2 class="sec">C · Open questions</h2>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Q</th><th>Question</th><th>Options</th><th>My recommendation</th></tr>
+  <tr><td class="sr">1</td><td class="q">Q1</td><td>File selection</td><td>(a) per-file ticks &nbsp; (b) one “attach all files” switch</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">2</td><td class="q">Q2</td><td>Attach vs bundle</td><td>(a) both, chosen per share &nbsp; (b) always attach &nbsp; (c) always zip</td><td class="rec">(a) — attach by default, zip offered from two files up</td></tr>
+  <tr><td class="sr">3</td><td class="q">Q3</td><td>Files ticked by default</td><td>(a) unticked &nbsp; (b) ticked &nbsp; (c) remember per card</td><td class="rec">(a), moving to (c) once per-card memory exists</td></tr>
+  <tr><td class="sr">4</td><td class="q">Q4</td><td>Masking conflict</td><td>(a) warn, allow &nbsp; (b) block the send &nbsp; (c) say nothing</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">5</td><td class="q">Q5</td><td>Per-app badges</td><td>(a) show them &nbsp; (b) no badges, one general warning</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">6</td><td class="q">Q6</td><td>Size warning threshold</td><td>(a) 25 MB &nbsp; (b) 10 MB &nbsp; (c) none</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">7</td><td class="q">Q7</td><td>Several cards with files</td><td>(a) always one zip &nbsp; (b) loose attachments</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">8</td><td class="q">Q8</td><td>Merge card + PDFs into one PDF</td><td>(a) not now &nbsp; (b) yes, its own round later</td><td class="rec">(a) — it needs a PDF library and a design of its own</td></tr>
+</table>
+
+<h2 class="sec">D · If accepted</h2>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Field</th><th>Value</th></tr>
+  <tr><td class="sr">1</td><td class="k">Queue</td><td>N57 file sharing — per-file ticks, attach or bundle, badges, size warning, masking conflict, missing-file pruning</td></tr>
+  <tr><td class="sr">2</td><td class="k">Release</td><td>Rides with N53–N56 → <b>1.6</b>, versionCode <b>1006000</b></td></tr>
+  <tr><td class="sr">3</td><td class="k">Database</td><td>No schema change</td></tr>
+  <tr><td class="sr">4</td><td class="k">Manifest</td><td>Nothing new — the FileProvider is already declared and already carries the QR image</td></tr>
+  <tr><td class="sr">5</td><td class="k">Trigger</td><td>Nothing is built until you say <b>build</b> / <b>release</b></td></tr>
+</table>
+
+</div>
+</body>
+</html>

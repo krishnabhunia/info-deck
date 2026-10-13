@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InfoDeck — v1.6 D1 design · About Me to standard, per-file Share</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100..900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#131A26; --ink2:#5A6675; --hint:#96A0AF;
+    --indigo:#3B5BDB; --indigo-c:#E8ECFD; --indigo-on:#2B44A8;
+    --teal:#0E9384; --teal-c:#DDF3F0;
+    --violet:#7A5AF8; --violet-c:#EEE9FE;
+    --green:#12A150; --green-c:#DFF5E8;
+    --amber:#B76E00; --amber-c:#FDF0DA;
+    --rose:#E5484D; --rose-c:#FDE7E8;
+    --purple:#9333EA; --purple-c:#F3E8FE;
+    --sky:#0284C7; --sky-c:#E0F2FE;
+    --slate:#64748B; --slate-c:#EEF1F5;
+    --bg:#F6F8FC; --line:#E9EDF4; --outline:#C6CEDC;
+    --page:#E3E7F0; --tag:#22337F; --q:#7A5A00; --q-bg:#FFF3C4; --q-bd:#E2C35C;
+    --pri-d:#1E357F;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--page);font-family:Roboto,"Segoe UI",system-ui,sans-serif;color:var(--ink);padding:26px 18px 70px}
+  .wrap{max-width:1180px;margin:0 auto}
+  header.page h1{font-size:24px;font-weight:800;color:var(--pri-d)}
+  header.page p{font-size:13.5px;color:var(--ink2);margin-top:5px;line-height:1.55}
+  .stamp{display:inline-block;margin:10px 8px 0 0;font-size:12px;font-weight:700;color:#7A2E00;background:#FFE1CC;border:1px solid #E8B08C;border-radius:20px;padding:3px 12px}
+  .stamp.g{color:#22337F;background:var(--indigo-c);border-color:#B9C3F5}
+  .stamp.r{color:#8A1F19;background:var(--rose-c);border-color:#E7ADA8}
+  h2.sec{font-size:18px;font-weight:800;color:var(--pri-d);margin:38px 0 12px;padding-bottom:6px;border-bottom:2px solid #C9D1DD}
+  h3.sub{font-size:15px;color:var(--pri-d);margin-top:20px}
+  .rej-box{background:var(--rose-c);border:1px solid #E7ADA8;border-radius:10px;padding:12px 14px;font-size:13.5px;line-height:1.55;margin:10px 0 4px}
+  .rej-box b{color:#8A1F19}
+  .warn-box{background:#FFF6E5;border:1px solid #E8C98C;border-radius:10px;padding:12px 14px;font-size:13.5px;line-height:1.55;margin:10px 0 4px}
+  .warn-box b{color:#7A4A00}
+  .idea-box{background:var(--indigo-c);border:1px solid #B9C3F5;border-radius:10px;padding:12px 14px;font-size:13.5px;line-height:1.55;margin:10px 0 4px}
+  .idea-box b{color:var(--pri-d)}
+
+  table.tb{width:100%;border-collapse:collapse;font-size:12.5px;background:#fff;margin:6px 0 4px}
+  table.tb th{background:#E9EDF8;color:var(--pri-d);text-align:left;padding:6px 8px;border:1px solid #BFC9D8;font-size:12px}
+  table.tb td{padding:6px 8px;border:1px solid #D2D9E3;vertical-align:top;line-height:1.45}
+  table.tb .sr{width:1%;white-space:nowrap;text-align:center}
+  table.tb td.k{white-space:nowrap;font-weight:700;color:var(--tag)}
+  table.tb td.q{white-space:nowrap;font-weight:700;color:var(--q)}
+  table.tb td.rec{color:var(--green);font-weight:600}
+  table.tb td.new{white-space:nowrap;font-weight:700;color:var(--green)}
+  table.tb td.del{white-space:nowrap;font-weight:700;color:var(--rose)}
+  table.tb tr:nth-child(even) td{background:#FAFBFD}
+  code{font-family:Consolas,Menlo,monospace;font-size:12px;background:#EEF1F5;padding:1px 4px;border-radius:3px}
+
+  .frames{display:grid;grid-template-columns:repeat(auto-fit,minmax(520px,1fr));gap:34px 28px;margin-top:14px}
+  figure{display:flex;flex-direction:column;align-items:center;gap:8px}
+  figure h3{font-size:15px;font-weight:800;color:var(--pri-d);align-self:flex-start}
+  figure h3 small{font-weight:500;color:var(--ink2);font-size:12.5px;margin-left:6px}
+  figure table.tb{font-size:12px}
+  figure.full{grid-column:1 / -1}
+  figure.full h3{align-self:center}
+  figure.full table.tb{max-width:880px}
+  .duo{display:flex;gap:26px;justify-content:center;flex-wrap:wrap}
+
+  b.n{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:8px;background:var(--tag);color:#fff;font-size:10px;font-weight:800;flex-shrink:0;font-style:normal}
+  b.n.d{background:var(--rose)}
+  b.n.g{background:var(--green)}
+  i.q{display:inline-flex;font-style:normal;font-size:10px;font-weight:800;color:var(--q);background:var(--q-bg);border:1px solid var(--q-bd);border-radius:9px;padding:1px 6px}
+
+  .phone{width:378px;height:790px;background:var(--bg);border:9px solid #12151C;border-radius:38px;overflow:hidden;position:relative;box-shadow:0 16px 38px rgba(20,30,50,.22);display:flex;flex-direction:column;flex-shrink:0}
+  .sb{height:22px;color:var(--ink2);font-size:10.5px;font-weight:700;display:flex;align-items:center;justify-content:space-between;padding:0 16px;flex-shrink:0;background:#fff}
+  .nbar{height:48px;background:#fff;display:flex;align-items:center;gap:2px;padding:0 6px 0 12px;flex-shrink:0}
+  .nbar b.t{font-size:16.5px;font-weight:800;letter-spacing:-.3px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .nbar .ib{width:38px;height:38px;border-radius:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .hair{height:3px;background:linear-gradient(90deg,var(--indigo),var(--violet) 45%,var(--teal));flex-shrink:0}
+  .ic{width:21px;height:21px;fill:currentColor;flex-shrink:0}
+  .ic.s{width:17px;height:17px}
+  .ic.xs{width:13px;height:13px}
+  .body{flex:1;overflow:hidden;position:relative;padding:8px 12px 0}
+
+  /* ---- About Me card, ultra-compact-B ---- */
+  .about{background:#fff;border-radius:15px;box-shadow:0 2px 8px rgba(25,40,80,.07);overflow:hidden;position:relative}
+  .about .head{height:34px;background:var(--indigo-c);display:flex;align-items:center;padding:0 12px;font-size:12px;font-weight:800;color:var(--indigo-on);letter-spacing:.02em}
+  .about .idrow{display:flex;align-items:center;gap:10px;padding:9px 12px}
+  .about .av{width:34px;height:34px;border-radius:17px;background:var(--indigo);color:#fff;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .about .who{flex:1;min-width:0}
+  .about .who b{display:block;font-size:14px;font-weight:800;line-height:1.2}
+  .about .who small{display:block;font-size:11px;color:var(--ink2)}
+  .about .soc{width:30px;height:30px;border-radius:15px;background:var(--indigo-c);color:var(--indigo);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .about .chips{display:flex;gap:5px;padding:0 12px 3px;align-items:center;flex-wrap:nowrap}
+  .about .chip{height:28px;padding:0 9px;border-radius:14px;background:#EFF2F8;font-size:11px;font-weight:700;color:var(--ink2);display:flex;align-items:center;white-space:nowrap}
+  .about .chip.on{background:var(--indigo);color:#fff}
+  .about .chip.send{background:var(--indigo);color:#fff;gap:4px;padding:0 11px;margin-left:auto}
+  .about .cap{font-size:10px;color:var(--hint);padding:3px 12px 0}
+  .about .foot{text-align:center;padding:8px 12px 10px;border-top:1px solid var(--line);margin-top:6px}
+  .about .foot b{display:block;font-size:11.5px;font-weight:800;color:var(--ink2)}
+  .about .foot small{display:block;font-size:11px;color:var(--hint);margin-top:1px}
+
+  /* wrong version */
+  .old{background:#fff;border-radius:15px;box-shadow:0 2px 8px rgba(25,40,80,.07);padding:14px;position:relative}
+  .old .lbl{font-size:10.5px;font-weight:800;color:var(--indigo);letter-spacing:.06em;margin-bottom:8px}
+  .old p{font-size:13px;margin-bottom:4px}
+  .old a{font-size:13px;color:var(--indigo);text-decoration:underline;display:block;margin-bottom:3px;word-break:break-all}
+  .strike{position:absolute;right:8px;top:8px;background:var(--rose);color:#fff;font-size:9px;font-weight:800;border-radius:8px;padding:2px 7px}
+
+  .lab{font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--indigo);margin:13px 0 7px 3px;display:flex;align-items:center;gap:6px}
+  .lab .r{margin-left:auto;text-transform:none;letter-spacing:0;font-size:11px;color:var(--ink2)}
+  .scard{background:#fff;border-radius:15px;box-shadow:0 2px 8px rgba(25,40,80,.07);overflow:hidden}
+  .srow{display:flex;align-items:center;gap:11px;padding:10px 12px;min-height:52px;border-bottom:1px solid var(--line)}
+  .srow:last-child{border-bottom:0}
+  .srow .tile{width:36px;height:36px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .srow .l{flex:1;min-width:0}
+  .srow .l b{display:block;font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .srow .l small{display:block;font-size:11px;color:var(--ink2);margin-top:1px}
+  .srow .val{font-size:12px;font-weight:800;white-space:nowrap}
+  .sharebtn{display:flex;align-items:center;gap:4px;height:32px;padding:0 11px;border-radius:16px;background:var(--green-c);color:#0B6B36;font-size:11.5px;font-weight:800;flex-shrink:0}
+  .ghost{width:32px;height:32px;border-radius:11px;background:var(--slate-c);color:var(--slate);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
+  .mail{background:#fff;border-radius:14px;box-shadow:0 2px 8px rgba(25,40,80,.07);overflow:hidden}
+  .mail .mh{padding:9px 12px;border-bottom:1px solid var(--line);font-size:12px}
+  .mail .mh span{color:var(--hint);font-size:10.5px;font-weight:800;letter-spacing:.05em;display:block}
+  .mail .mb{padding:10px 12px;font-family:Consolas,Menlo,monospace;font-size:10.5px;line-height:1.6;white-space:pre-wrap;color:var(--ink2)}
+  .cursor{display:inline-block;width:2px;height:12px;background:var(--indigo);vertical-align:-2px}
+
+  .dim{position:absolute;inset:0;background:rgba(12,18,30,.5);z-index:2}
+  .sheet{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:24px 24px 0 0;padding:10px 16px 0;max-height:94%;z-index:3}
+  .grab{width:36px;height:4px;border-radius:2px;background:#D3D9E4;margin:0 auto 12px}
+  .sheet h4{font-size:17px;font-weight:800;margin-bottom:6px;display:flex;align-items:center;gap:9px}
+  .frow{display:flex;align-items:center;gap:11px;padding:8px 2px;border-bottom:1px solid var(--line);min-height:44px}
+  .frow:last-of-type{border-bottom:0}
+  .frow .l{flex:1;min-width:0}
+  .frow .l .k{font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--indigo)}
+  .frow .l .v{font-size:13.5px;font-weight:700;margin-top:1px}
+  .chk{width:20px;height:20px;border-radius:6px;border:2px solid var(--outline);flex-shrink:0}
+  .chk.on{background:var(--indigo);border-color:var(--indigo);display:flex;align-items:center;justify-content:center}
+  .chk.on .ic{width:13px;height:13px;color:#fff}
+  .prev{background:#0F1522;color:#D8E2F2;border-radius:12px;padding:10px 12px;font-family:Consolas,Menlo,monospace;font-size:10.5px;line-height:1.55;white-space:pre-wrap;position:relative}
+  .prev .plab{position:absolute;right:10px;top:7px;font-size:8.5px;font-weight:800;color:#7C89A3;letter-spacing:.06em;font-family:Roboto,sans-serif}
+  .btnrow{display:flex;gap:9px;margin-top:12px}
+  .abtn{flex:1;height:50px;border-radius:14px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:13.5px;font-weight:800}
+  .abtn.cancel{border:1.5px solid var(--outline);color:var(--ink2);background:#fff}
+  .abtn.go{background:linear-gradient(140deg,#3CC272,#12A150);color:#fff;flex:1.4}
+  .sbs{height:30px;margin:12px -16px 0;border-top:1px dashed #C9D1DD;display:flex;align-items:center;justify-content:center;font-size:10.5px;color:var(--hint)}
+  .flow{display:flex;flex-direction:column;gap:8px}
+  .fbox{border-radius:12px;padding:10px 12px;font-size:11.5px;line-height:1.45;position:relative}
+  .fbox b{display:block;font-size:12px;font-weight:800;margin-bottom:2px}
+  .fbox.ok{background:var(--green-c);color:#0B6B36}
+  .fbox.bad{background:var(--rose-c);color:#8A1F19}
+  .fbox.mid{background:var(--amber-c);color:#7A4A00}
+  .fbox.n{background:#fff;box-shadow:0 2px 7px rgba(25,40,80,.07)}
+  .arrow{text-align:center;color:var(--hint);font-size:13px;font-weight:800}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></symbol>
+  <symbol id="i-share" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 1 0-3-3c0 .24.04.47.09.7L8.04 9.81A2.99 2.99 0 0 0 3 12a3 3 0 0 0 5.04 2.19l7.12 4.16c-.05.21-.08.43-.08.65a2.92 2.92 0 1 0 2.92-2.92z"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24"><path d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z"/></symbol>
+  <symbol id="i-in" viewBox="0 0 24 24"><path d="M4.98 3.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM3 9h4v12H3V9zm7 0h3.8v1.7h.05c.53-1 1.83-2.05 3.76-2.05 4.02 0 4.76 2.5 4.76 5.76V21h-4v-5.7c0-1.36-.03-3.1-1.9-3.1-1.9 0-2.2 1.47-2.2 3v5.8h-4V9z"/></symbol>
+  <symbol id="i-fb" viewBox="0 0 24 24"><path d="M22 12a10 10 0 1 0-11.56 9.88v-6.99H7.9V12h2.54V9.8c0-2.5 1.49-3.89 3.77-3.89 1.09 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56V12h2.78l-.45 2.89h-2.33v6.99A10 10 0 0 0 22 12z"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></symbol>
+  <symbol id="i-tick" viewBox="0 0 24 24"><path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></symbol>
+  <symbol id="i-open" viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></symbol>
+  <symbol id="i-qr" viewBox="0 0 24 24"><path d="M3 11h8V3H3v8zm2-6h4v4H5V5zM3 21h8v-8H3v8zm2-6h4v4H5v-4zM13 3v8h8V3h-8zm6 6h-4V5h4v4zm0 10h2v2h-2zM13 13h2v2h-2zm2 2h2v2h-2zm-2 2h2v2h-2zm2 2h2v2h-2zm2-2h2v2h-2zm0-4h2v2h-2zm2 2h2v2h-2z"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z"/></symbol>
+  <symbol id="i-bug" viewBox="0 0 24 24"><path d="M20 8h-2.81a6 6 0 0 0-1.82-1.96L17 4.41 15.59 3l-2.17 2.17a6 6 0 0 0-2.83 0L8.41 3 7 4.41l1.62 1.63A6 6 0 0 0 6.81 8H4v2h2.09c-.05.33-.09.66-.09 1v1H4v2h2v1c0 .34.04.67.09 1H4v2h2.81a6 6 0 0 0 10.38 0H20v-2h-2.09c.05-.33.09-.66.09-1v-1h2v-2h-2v-1c0-.34-.04-.67-.09-1H20V8z"/></symbol>
+</svg>
+
+<div class="wrap">
+<header class="page">
+  <h1>InfoDeck — v1.6 · D1 design</h1>
+  <p>Two bug fixes. <b>1)</b> About Me in 1.6 ignores the project standard almost entirely — this rebuilds it as <b>ultra-compact-B</b>, four rows, seven pieces of information, two-line footer, and the full mail pre-fill. <b>2)</b> Sharing goes back to <b>text only</b>, exactly as in 1.5, and every file row gains its own <b>Share</b> button.</p>
+  <span class="stamp">DESIGN ONLY · nothing built · no version bump</span>
+  <span class="stamp g">Reply by tag: “S1.3 → smaller”, “Q2 → b”, or “defaults” = all recommended</span>
+  <span class="stamp r">Bug 2 root cause named in S6 — I got the MIME type wrong</span>
+</header>
+
+<div class="rej-box"><b>What 1.6 actually shipped for About Me, checked in the source:</b> a plain card with the name, a dead line reading “Suggestion / Feedback / Bugs / Error →”, the e-mail as an underlined link with <b>no subject or body pre-fill</b>, LinkedIn and Facebook printed as <b>full URLs on their own rows</b>, no avatar, no “Developer” caption, no accent header strip, no feedback chips, no ✉ Send chip — and the whole card sits <b>inside the collapsible “Diagnostics and About” group</b>, when the standard says it must never be collapsible and must sit last, outside the accordion. Eight breaches. Every one is fixed below.</div>
+
+<h2 class="sec">A · Screens</h2>
+<div class="frames">
+
+<!-- S1 -->
+<figure class="full">
+  <h3>S1 · About Me — what shipped, and what the standard says<small>bug 1</small></h3>
+  <div class="duo">
+    <div class="phone" style="height:600px">
+      <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+      <div class="nbar"><b class="t">1.6 as shipped</b></div>
+      <div class="hair"></div>
+      <div class="body">
+        <div class="lab" style="color:var(--rose)">Inside “Diagnostics and About”, collapsible</div>
+        <div class="old">
+          <span class="strike">8 breaches</span>
+          <div class="lbl">ABOUT ME</div>
+          <p style="font-weight:700">Krishna Dipayan Bhunia</p>
+          <p style="color:var(--ink2)">Suggestion / Feedback / Bugs / Error →</p>
+          <a>kri.subsc@gmail.com</a>
+          <a>LinkedIn: https://www.linkedin.com/in/krishnabhunia/</a>
+          <a>Facebook: https://www.facebook.com/kdbhunia/</a>
+          <p style="color:var(--ink2);font-size:12px;margin-top:6px">InfoDeck 1.6 · Released on 20-Aug-2026</p>
+        </div>
+        <b class="n d" style="position:relative;left:300px;top:-124px">1</b>
+        <div class="lab" style="color:var(--rose);margin-top:0">Missing</div>
+        <div class="scard">
+          <div class="srow"><span class="tile" style="background:var(--rose-c);color:var(--rose)"><svg class="ic s"><use href="#i-close"/></svg></span>
+            <div class="l"><b>Header strip · avatar · caption</b></div></div>
+          <div class="srow"><span class="tile" style="background:var(--rose-c);color:var(--rose)"><svg class="ic s"><use href="#i-close"/></svg></span>
+            <div class="l"><b>Feedback chips and the ✉ Send chip</b></div></div>
+          <div class="srow"><span class="tile" style="background:var(--rose-c);color:var(--rose)"><svg class="ic s"><use href="#i-close"/></svg></span>
+            <div class="l"><b>Subject and body pre-fill on the mail</b></div></div>
+          <div class="srow"><span class="tile" style="background:var(--rose-c);color:var(--rose)"><svg class="ic s"><use href="#i-close"/></svg></span>
+            <div class="l"><b>Two-line footer · social icon buttons</b></div>
+            <b class="n d" style="position:absolute;right:12px;top:6px">2</b></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="phone" style="height:600px">
+      <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+      <div class="nbar"><b class="t">Proposed — ultra-compact-B</b></div>
+      <div class="hair"></div>
+      <div class="body">
+        <div class="lab" style="color:var(--green)">Last in Settings, never collapsible</div>
+        <div class="about">
+          <div class="head">About Me</div>
+          <div class="idrow">
+            <span class="av">KB</span>
+            <span class="who"><b>Krishna Dipayan Bhunia</b><small>Developer</small></span>
+            <span class="soc"><svg class="ic s"><use href="#i-in"/></svg></span>
+            <span class="soc"><svg class="ic s"><use href="#i-fb"/></svg></span>
+            <b class="n g" style="position:absolute;left:6px;top:38px">3</b>
+          </div>
+          <div class="chips">
+            <span class="chip">Suggestion</span>
+            <span class="chip on">Feedback</span>
+            <span class="chip">Bug</span>
+            <span class="chip">Error</span>
+            <span class="chip send"><svg class="ic xs"><use href="#i-mail"/></svg>Send</span>
+          </div>
+          <div class="cap">✉ opens your mail app · kri.subsc@gmail.com</div>
+          <div class="foot">
+            <b>InfoDeck · 1.7</b>
+            <small>Released on 21-Aug-2026</small>
+          </div>
+          <b class="n g" style="position:absolute;left:6px;bottom:34px">4</b>
+        </div>
+
+        <div class="lab" style="margin-top:14px">Four rows, seven pieces</div>
+        <div class="scard">
+          <div class="srow"><span class="tile" style="background:var(--indigo-c);color:var(--indigo)"><svg class="ic s"><use href="#i-tick"/></svg></span>
+            <div class="l"><b>Header strip</b><small>~34 dp, light tint of the app accent</small></div></div>
+          <div class="srow"><span class="tile" style="background:var(--indigo-c);color:var(--indigo)"><svg class="ic s"><use href="#i-tick"/></svg></span>
+            <div class="l"><b>Identity + socials on one row</b><small>avatar, name, caption, two circular buttons</small></div></div>
+          <div class="srow"><span class="tile" style="background:var(--indigo-c);color:var(--indigo)"><svg class="ic s"><use href="#i-tick"/></svg></span>
+            <div class="l"><b>Chips + ✉ Send merged</b><small>e-mail address on the caption line</small></div></div>
+          <div class="srow"><span class="tile" style="background:var(--indigo-c);color:var(--indigo)"><svg class="ic s"><use href="#i-tick"/></svg></span>
+            <div class="l"><b>Two-line footer</b><small>release date always on its own line</small></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="del">Full URLs printed</td><td>The standard says the addresses are never printed inline — they become the two circular icon buttons</td></tr>
+    <tr><td class="sr">2</td><td class="del">Dead text line</td><td>“Suggestion / Feedback / Bugs / Error →” was a label, not a control. It becomes four real chips, Feedback selected by default</td></tr>
+    <tr><td class="sr">3</td><td class="new">Identity row</td><td>34 dp “KB” avatar in the accent, name bold, “Developer” caption, LinkedIn and Facebook right-aligned as 30 dp circular buttons</td></tr>
+    <tr><td class="sr">4</td><td class="new">Two-line footer</td><td><code>InfoDeck · 1.7</code> then <code>Released on 21-Aug-2026</code> — the date always on its own line, both read live from BuildConfig <i class="q">Q1</i></td></tr>
+    <tr><td class="sr">5</td><td class="k">Accent</td><td>InfoDeck's accent becomes <b>#3B5BDB</b>, the indigo the app already uses everywhere else <i class="q">Q2</i></td></tr>
+  </table>
+</figure>
+
+<!-- S2 -->
+<figure>
+  <h3>S2 · The mail that opens<small>bug 1 · subject and body pre-filled</small></h3>
+  <div class="phone" style="height:770px">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="nbar"><div class="ib" style="color:var(--slate)"><svg class="ic s"><use href="#i-back"/></svg></div>
+      <b class="t">Compose</b>
+      <span class="ib" style="background:var(--indigo-c);color:var(--indigo)"><svg class="ic s"><use href="#i-share"/></svg></span></div>
+    <div class="hair"></div>
+    <div class="body">
+      <div class="mail">
+        <div class="mh"><span>TO</span>kri.subsc@gmail.com</div>
+        <div class="mh"><span>SUBJECT</span>[InfoDeck 1.7] Bug</div>
+        <div class="mb"><span class="cursor"></span>
+
+────────────────────────
+App: InfoDeck
+Version: 1.7 (1007000)
+Report type: Bug
+Date: 21-Aug-2026 09:41 IST
+Device: samsung SM-M526B
+Android: 13 (API 33)
+Locale: en_IN
+
+If you have a screenshot, please attach it.</div>
+      </div>
+      <b class="n" style="position:absolute;right:20px;top:60px">1</b>
+      <b class="n" style="position:absolute;right:20px;top:140px">2</b>
+
+      <div class="lab">Rules</div>
+      <div class="scard">
+        <div class="srow"><span class="tile" style="background:var(--green-c);color:var(--green)"><svg class="ic s"><use href="#i-tick"/></svg></span>
+          <div class="l"><b>Everything is read live</b><small>BuildConfig, android.os.Build and the clock — never hardcoded</small></div></div>
+        <div class="srow"><span class="tile" style="background:var(--green-c);color:var(--green)"><svg class="ic s"><use href="#i-tick"/></svg></span>
+          <div class="l"><b>Subject follows the chip</b><small>Bug · Feedback · Suggestion · Error</small></div></div>
+        <div class="srow"><span class="tile" style="background:var(--rose-c);color:var(--rose)"><svg class="ic s"><use href="#i-close"/></svg></span>
+          <div class="l"><b>No personal or sensitive data</b><small>no accounts, no location, no device IDs, no card content</small></div>
+          <b class="n d" style="position:absolute;right:12px;top:6px">3</b></div>
+        <div class="srow"><span class="tile" style="background:var(--amber-c);color:var(--amber)"><svg class="ic s"><use href="#i-warn"/></svg></span>
+          <div class="l"><b>A screenshot cannot auto-attach</b><small>mailto: carries no files — so the body asks for one instead</small></div></div>
+        <div class="srow"><span class="tile" style="background:var(--slate-c);color:var(--slate)"><svg class="ic s"><use href="#i-copy"/></svg></span>
+          <div class="l"><b>If no mail app answers</b><small>caught, logged, and the address shown so you can copy it</small></div>
+          <b class="n" style="position:absolute;right:12px;top:6px">4</b></div>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="new">Subject</td><td><code>[&lt;AppName&gt; &lt;versionName&gt;] &lt;ChosenType&gt;</code> — “[InfoDeck 1.7] Bug”</td></tr>
+    <tr><td class="sr">2</td><td class="new">Body</td><td>Blank space with the cursor at the top, a separator, then the context block. You write first, the facts are already there</td></tr>
+    <tr><td class="sr">3</td><td class="k">Nothing sensitive</td><td>Nine values, all environmental. No card ever appears in a feedback mail</td></tr>
+    <tr><td class="sr">4</td><td class="new">Guarded</td><td><code>ActivityNotFoundException</code> is caught, logged with Logger.e, and the address is shown copyable — 1.6 swallowed the failure silently <i class="q">Q3</i></td></tr>
+  </table>
+</figure>
+
+<!-- S3 -->
+<figure>
+  <h3>S3 · Where About Me sits<small>bug 1 · last, and outside the accordion</small></h3>
+  <div class="phone" style="height:800px">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="nbar"><b class="t">Settings</b>
+      <span class="ib" style="background:var(--indigo-c);color:var(--indigo)"><svg class="ic s"><use href="#i-share"/></svg></span></div>
+    <div class="hair"></div>
+    <div class="body">
+      <div class="scard">
+        <div class="srow"><span class="tile" style="background:var(--sky-c);color:var(--sky)"><svg class="ic s"><use href="#i-file"/></svg></span>
+          <div class="l"><b>Organise</b><small>Categories 5 · Tags 9</small></div><span class="val" style="color:var(--hint)">▾</span></div>
+        <div class="srow"><span class="tile" style="background:var(--indigo-c);color:var(--indigo)"><svg class="ic s"><use href="#i-open"/></svg></span>
+          <div class="l"><b>Look and feel</b><small>Text Comfortable · theme System</small></div><span class="val" style="color:var(--hint)">▾</span></div>
+        <div class="srow"><span class="tile" style="background:var(--amber-c);color:var(--amber)"><svg class="ic s"><use href="#i-warn"/></svg></span>
+          <div class="l"><b>Reminders</b><small>Ring 09:00 · snooze 1 h</small></div><span class="val" style="color:var(--hint)">▾</span></div>
+        <div class="srow"><span class="tile" style="background:var(--teal-c);color:var(--teal)"><svg class="ic s"><use href="#i-copy"/></svg></span>
+          <div class="l"><b>Data and backup</b><small>Last backup 20-Aug-2026</small></div><span class="val" style="color:var(--hint)">▾</span></div>
+        <div class="srow"><span class="tile" style="background:var(--slate-c);color:var(--slate)"><svg class="ic s"><use href="#i-bug"/></svg></span>
+          <div class="l"><b>Diagnostics</b><small>0 error logs</small></div><span class="val" style="color:var(--hint)">▾</span>
+          <b class="n" style="position:absolute;right:12px;top:6px">1</b></div>
+        <div class="srow"><span class="tile" style="background:var(--rose-c);color:var(--rose)"><svg class="ic s"><use href="#i-warn"/></svg></span>
+          <div class="l"><b>Danger zone</b><small>Put settings back · Erase everything</small></div><span class="val" style="color:var(--hint)">▾</span></div>
+      </div>
+
+      <div style="margin-top:14px">
+        <div class="about">
+          <div class="head">About Me</div>
+          <div class="idrow">
+            <span class="av">KB</span>
+            <span class="who"><b>Krishna Dipayan Bhunia</b><small>Developer</small></span>
+            <span class="soc"><svg class="ic s"><use href="#i-in"/></svg></span>
+            <span class="soc"><svg class="ic s"><use href="#i-fb"/></svg></span>
+          </div>
+          <div class="chips">
+            <span class="chip">Suggestion</span><span class="chip on">Feedback</span>
+            <span class="chip">Bug</span><span class="chip">Error</span>
+            <span class="chip send"><svg class="ic xs"><use href="#i-mail"/></svg>Send</span>
+          </div>
+          <div class="cap">✉ opens your mail app · kri.subsc@gmail.com</div>
+          <div class="foot"><b>InfoDeck · 1.7</b><small>Released on 21-Aug-2026</small></div>
+        </div>
+        <b class="n g" style="position:relative;left:300px;top:-150px">2</b>
+      </div>
+
+      <div class="lab" style="margin-top:8px">Card rules</div>
+      <div class="scard">
+        <div class="srow"><div class="l"><b>Never collapsible · no expander</b><small>always fully expanded</small></div></div>
+        <div class="srow"><div class="l"><b>Sits last</b><small>after Danger zone, outside the accordion</small></div>
+          <b class="n" style="position:absolute;right:12px;top:6px">3</b></div>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="del">“Diagnostics and About” splits</td><td>The group keeps the error logs and becomes just <b>Diagnostics</b>. About Me leaves the accordion entirely</td></tr>
+    <tr><td class="sr">2</td><td class="new">Outside, below, always open</td><td>No header to tap, no chevron, no state to remember</td></tr>
+    <tr><td class="sr">3</td><td class="k">After Danger zone</td><td>Last thing on the page, exactly as the standard says</td></tr>
+    <tr><td class="sr">4</td><td class="k">Every other app</td><td>The same card, only the accent changes — Remindly #3F51B5, Contact Cleaner #00796B, Kalam #B45309, ChargeWatch #2E7D32</td></tr>
+  </table>
+</figure>
+
+<!-- S4 -->
+<figure class="full">
+  <h3>S4 · Sharing goes back to text only<small>bug 2</small></h3>
+  <div class="duo">
+    <div class="phone" style="height:640px">
+      <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+      <div class="nbar"><b class="t">1.6 — files in the picker</b></div>
+      <div class="hair"></div>
+      <div class="body"><div class="dim"></div>
+        <div class="sheet" style="max-height:88%">
+          <div class="grab"></div>
+          <h4>What to share</h4>
+          <div class="frow"><span class="chk on"><svg class="ic"><use href="#i-tick"/></svg></span>
+            <div class="l"><div class="k">Policy No</div><div class="v">HD-2291-KX-2026</div></div></div>
+          <div class="frow" style="opacity:.5"><span class="chk on"><svg class="ic"><use href="#i-tick"/></svg></span>
+            <div class="l"><div class="k">Policy document.pdf - 1.8 MB</div><div class="v">ticked, but never arrived</div></div>
+            <span class="strike" style="position:static">bug</span></div>
+          <div style="background:#EFF2F8;border-radius:14px;padding:4px;display:flex;gap:4px;margin-top:10px;opacity:.5">
+            <div style="flex:1;text-align:center;padding:8px;border-radius:11px;background:#fff;font-size:11.5px;font-weight:700;color:var(--purple)">Attach</div>
+            <div style="flex:1;text-align:center;padding:8px;font-size:11.5px;font-weight:700;color:var(--ink2)">Bundle as .zip</div>
+          </div>
+          <div style="font-size:11px;color:var(--rose);margin-top:10px;font-weight:600">All of this is removed — see S6 for why it did not work</div>
+          <b class="n d" style="position:absolute;right:16px;top:16px">1</b>
+        </div>
+      </div>
+    </div>
+
+    <div class="phone" style="height:640px">
+      <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+      <div class="nbar"><b class="t">Proposed — as 1.5, text only</b></div>
+      <div class="hair"></div>
+      <div class="body"><div class="dim"></div>
+        <div class="sheet" style="max-height:88%">
+          <div class="grab"></div>
+          <h4><svg class="ic" style="color:var(--green)"><use href="#i-share"/></svg>What to share</h4>
+          <div class="frow"><span class="chk on"><svg class="ic"><use href="#i-tick"/></svg></span>
+            <div class="l"><div class="k">Card name</div><div class="v">Car Insurance — HDFC Ergo</div></div></div>
+          <div class="frow"><span class="chk on"><svg class="ic"><use href="#i-tick"/></svg></span>
+            <div class="l"><div class="k">Policy No</div><div class="v">HD-2291-KX-2026</div></div></div>
+          <div class="frow"><span class="chk on"><svg class="ic"><use href="#i-tick"/></svg></span>
+            <div class="l"><div class="k">Policy Expiry ★</div><div class="v">11-Oct-2026</div></div></div>
+          <div style="font-size:11px;color:var(--ink2);margin-top:10px">Files are not listed here any more. Each file has its own Share button on the card <i class="q">Q4</i></div>
+          <div class="lab" style="margin-top:10px">Preview</div>
+          <div class="prev"><span class="plab">WHAT THEY SEE</span>Car Insurance — HDFC Ergo
+
+Policy No: HD-2291-KX-2026
+Policy Expiry: 11-Oct-2026
+
+Shared from InfoDeck</div>
+          <div class="btnrow">
+            <span class="abtn cancel"><svg class="ic"><use href="#i-close"/></svg>Cancel</span>
+            <span class="abtn go"><svg class="ic"><use href="#i-share"/></svg>Next</span>
+          </div>
+          <b class="n g" style="position:absolute;right:16px;top:16px">2</b>
+        </div>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="del">Removed from 1.6</td><td>File rows in the picker, the Attach/Bundle switch, the per-app badges, the 25 MB warning and the masking-conflict warning — all of it went with the combined share</td></tr>
+    <tr><td class="sr">2</td><td class="rec">Back to what worked</td><td>The 1.5 picker, unchanged: fields, presets, masking, preview, then Send with. Text every time, no surprises</td></tr>
+    <tr><td class="sr">3</td><td class="k">SMS returns</td><td>With no files in play, SMS is a normal target again</td></tr>
+    <tr><td class="sr">4</td><td class="k">The zip</td><td>Kept in the code but unreachable for now — if you ever want “send everything”, it is one switch away <i class="q">Q6</i></td></tr>
+  </table>
+</figure>
+
+<!-- S5 -->
+<figure>
+  <h3>S5 · A Share button on every file<small>bug 2 · what you asked for</small></h3>
+  <div class="phone" style="height:960px">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="nbar"><b class="t">Car Insurance — HDFC Ergo</b>
+      <span class="ib" style="background:var(--green-c);color:var(--green)"><svg class="ic s"><use href="#i-share"/></svg></span></div>
+    <div class="hair"></div>
+    <div class="body">
+      <div class="lab">Files <span class="r">3 · 8.0 MB</span></div>
+      <div class="scard">
+        <div class="srow">
+          <span class="tile" style="background:var(--purple-c);color:var(--purple)"><svg class="ic s"><use href="#i-file"/></svg></span>
+          <div class="l"><b>Policy document.pdf</b><small>1.8 MB · 18-Aug-2026</small></div>
+          <span class="ghost"><svg class="ic s"><use href="#i-open"/></svg></span>
+          <span class="sharebtn"><svg class="ic xs"><use href="#i-share"/></svg>Share</span>
+          <b class="n g" style="position:absolute;right:12px;top:4px">1</b>
+        </div>
+        <div class="srow">
+          <span class="tile" style="background:var(--purple-c);color:var(--purple)"><svg class="ic s"><use href="#i-file"/></svg></span>
+          <div class="l"><b>Claim form.docx</b><small>2.3 MB · 02-Aug-2026</small></div>
+          <span class="ghost"><svg class="ic s"><use href="#i-open"/></svg></span>
+          <span class="sharebtn"><svg class="ic xs"><use href="#i-share"/></svg>Share</span>
+        </div>
+        <div class="srow">
+          <span class="tile" style="background:var(--purple-c);color:var(--purple)"><svg class="ic s"><use href="#i-file"/></svg></span>
+          <div class="l"><b>Old policy 2024.pdf</b><small>3.9 MB · 11-Oct-2024</small></div>
+          <span class="ghost"><svg class="ic s"><use href="#i-open"/></svg></span>
+          <span class="sharebtn"><svg class="ic xs"><use href="#i-share"/></svg>Share</span>
+        </div>
+      </div>
+
+      <div class="lab">What the button does</div>
+      <div class="scard">
+        <div class="srow"><span class="tile" style="background:var(--green-c);color:var(--green)"><svg class="ic s"><use href="#i-tick"/></svg></span>
+          <div class="l"><b>Sends that one file</b><small>with its real type — application/pdf, not a guess</small></div>
+          <b class="n" style="position:absolute;right:12px;top:6px">2</b></div>
+        <div class="srow"><span class="tile" style="background:var(--green-c);color:var(--green)"><svg class="ic s"><use href="#i-tick"/></svg></span>
+          <div class="l"><b>Straight to the Android chooser</b><small>every app that can open a PDF appears</small></div></div>
+        <div class="srow"><span class="tile" style="background:var(--slate-c);color:var(--slate)"><svg class="ic s"><use href="#i-copy"/></svg></span>
+          <div class="l"><b>No text rides along</b><small>so nothing can be silently dropped</small></div></div>
+        <div class="srow"><span class="tile" style="background:var(--rose-c);color:var(--rose)"><svg class="ic s"><use href="#i-warn"/></svg></span>
+          <div class="l"><b>Missing file</b><small>says “that file is no longer on this phone” instead of failing quietly</small></div></div>
+      </div>
+
+      <div class="lab">Also on the file viewer</div>
+      <div class="scard">
+        <div class="srow"><span class="tile" style="background:var(--purple-c);color:var(--purple)"><svg class="ic s"><use href="#i-share"/></svg></span>
+          <div class="l"><b>Share from the preview</b><small>the same button, once a file is open</small></div>
+          <b class="n" style="position:absolute;right:12px;top:6px">3</b></div>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="new">Green Share pill per row</td><td>Sits beside the existing Open button. Green, because green means share everywhere in the app now</td></tr>
+    <tr><td class="sr">2</td><td class="new">Correct MIME</td><td>This is the part 1.6 got wrong — see S6. One file, its true type, no wildcard</td></tr>
+    <tr><td class="sr">3</td><td class="k">Consistent</td><td>Share appears wherever a file does <i class="q">Q5</i></td></tr>
+    <tr><td class="sr">4</td><td class="k">Several files at once</td><td>Not offered for now. If you want it later it belongs in selection mode, not here <i class="q">Q6</i></td></tr>
+  </table>
+</figure>
+
+<!-- S6 -->
+<figure>
+  <h3>S6 · Why the combined share failed<small>bug 2 · the honest diagnosis</small></h3>
+  <div class="phone" style="height:860px">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="nbar"><b class="t">What 1.6 did</b></div>
+    <div class="hair"></div>
+    <div class="body">
+      <div class="flow">
+        <div class="fbox n"><b>You ticked a field and a file</b>Text built, file resolved on disk, URI made through the FileProvider — all correct</div>
+        <div class="arrow">▼</div>
+        <div class="fbox bad"><b>The intent was built with type <code>*/*</code></b>InfoDeck already had <code>FileShare.commonMime()</code>, which returns <code>application/pdf</code> — and I never called it. The intent went out with the wildcard
+          <b class="n d" style="position:absolute;right:8px;top:8px">1</b></div>
+        <div class="arrow">▼</div>
+        <div class="fbox bad"><b>Plus an explicit package</b>WhatsApp and Gmail were addressed directly. A wildcard type with a fixed package often matches no activity at all</div>
+        <div class="arrow">▼</div>
+        <div class="fbox mid"><b>My own catch block fired</b>It caught the failure and fell back to a <b>text-only</b> chooser — which is exactly what you saw: the message went, the file did not
+          <b class="n" style="position:absolute;right:8px;top:8px">2</b></div>
+      </div>
+
+      <div class="lab" style="color:var(--green)">What the fix is</div>
+      <div class="scard">
+        <div class="srow"><span class="tile" style="background:var(--green-c);color:var(--green)"><svg class="ic s"><use href="#i-tick"/></svg></span>
+          <div class="l"><b>Real MIME, always</b><small>application/pdf, the DOCX type, image/png</small></div></div>
+        <div class="srow"><span class="tile" style="background:var(--green-c);color:var(--green)"><svg class="ic s"><use href="#i-tick"/></svg></span>
+          <div class="l"><b>No package pinning for files</b><small>the chooser resolves it properly</small></div></div>
+        <div class="srow"><span class="tile" style="background:var(--green-c);color:var(--green)"><svg class="ic s"><use href="#i-tick"/></svg></span>
+          <div class="l"><b>A fallback must say so</b><small>if it degrades to text only, you get told, not fooled</small></div>
+          <b class="n g" style="position:absolute;right:12px;top:6px">3</b></div>
+      </div>
+
+      <div class="lab">And what I cannot promise</div>
+      <div class="scard">
+        <div class="srow"><span class="tile" style="background:var(--amber-c);color:var(--amber)"><svg class="ic s"><use href="#i-warn"/></svg></span>
+          <div class="l"><b>Text with a document</b><small>Even with the right type, some apps still drop the message. That is theirs, not ours — which is exactly why one file per button is the sturdier design</small></div>
+          <b class="n" style="position:absolute;right:12px;top:6px">4</b></div>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="del">The actual bug</td><td>A wildcard MIME where a real one existed. The helper was written and tested — and then not used at the one place that mattered</td></tr>
+    <tr><td class="sr">2</td><td class="del">The catch block hid it</td><td>Falling back to text-only made a hard failure look like a quiet success. That is worse than crashing</td></tr>
+    <tr><td class="sr">3</td><td class="new">Rule from now on</td><td>A degraded send must tell you it degraded</td></tr>
+    <tr><td class="sr">4</td><td class="k">Unverified on device</td><td>How each app treats text sent with a document still cannot be proven from my side. Your instruction — one file, one button — removes the question entirely</td></tr>
+  </table>
+</figure>
+
+</div><!-- /frames -->
+
+<h2 class="sec">B · Specification</h2>
+
+<h3 class="sub">C1 · About Me — the seven pieces, four rows</h3>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Row</th><th>Holds</th></tr>
+  <tr><td class="sr">1</td><td class="k">Header strip</td><td>“About Me”, ~34 dp, light tint of the accent</td></tr>
+  <tr><td class="sr">2</td><td class="k">Identity</td><td>34 dp “KB” avatar in the accent · <b>Krishna Dipayan Bhunia</b> · caption “Developer” · LinkedIn and Facebook as 30 dp circular icon buttons, right-aligned</td></tr>
+  <tr><td class="sr">3</td><td class="k">Chips + Send</td><td>Suggestion · <b>Feedback</b> (default) · Bug · Error, plus a filled ✉ Send chip on the same row; caption underneath reads “✉ opens your mail app · kri.subsc@gmail.com”</td></tr>
+  <tr><td class="sr">4</td><td class="k">Footer</td><td>Two centred lines — <code>InfoDeck · &lt;version&gt;</code> then <code>Released on dd-MMM-yyyy</code></td></tr>
+  <tr><td class="sr">5</td><td class="k">Card rules</td><td>Never collapsible, no expander, always fully expanded, sits last in Settings, not part of the accordion</td></tr>
+  <tr><td class="sr">6</td><td class="k">Never printed</td><td>Full URLs, mobile number, and the old gmail address</td></tr>
+</table>
+
+<h3 class="sub">C2 · Mail pre-fill</h3>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Part</th><th>Value</th></tr>
+  <tr><td class="sr">1</td><td class="k">To</td><td>kri.subsc@gmail.com</td></tr>
+  <tr><td class="sr">2</td><td class="k">Subject</td><td><code>[InfoDeck &lt;versionName&gt;] &lt;ChosenType&gt;</code></td></tr>
+  <tr><td class="sr">3</td><td class="k">Body</td><td>Blank line for you · separator · App · Version + versionCode · Report type · Date-time with timezone · Manufacturer + model · Android version + API · Locale · a line asking for a screenshot</td></tr>
+  <tr><td class="sr">4</td><td class="k">Sources</td><td>BuildConfig, android.os.Build, the system clock — read at tap time</td></tr>
+  <tr><td class="sr">5</td><td class="k">Never included</td><td>Account e-mails, location, device or advertising IDs, any card content</td></tr>
+  <tr><td class="sr">6</td><td class="k">Guard</td><td>ActivityNotFoundException → Logger.e → a message showing the address, copyable</td></tr>
+</table>
+
+<h3 class="sub">C3 · Sharing after the fix</h3>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Surface</th><th>1.6</th><th>Proposed</th></tr>
+  <tr><td class="sr">1</td><td class="k">Share picker</td><td class="del">fields + files + Attach/Bundle</td><td class="rec">fields only, exactly as 1.5</td></tr>
+  <tr><td class="sr">2</td><td class="k">Send with</td><td class="del">badges, SMS hidden, size warning</td><td class="rec">the four apps, SMS included again</td></tr>
+  <tr><td class="sr">3</td><td class="k">File row</td><td class="del">Open only</td><td class="rec"><b>Open + Share</b>, per file</td></tr>
+  <tr><td class="sr">4</td><td class="k">File share intent</td><td class="del"><code>*/*</code> with a pinned package</td><td class="rec"><code>ACTION_SEND</code>, the file's real MIME, system chooser</td></tr>
+  <tr><td class="sr">5</td><td class="k">Silent degrade</td><td class="del">fell back to text-only quietly</td><td class="rec">any fallback is announced</td></tr>
+  <tr><td class="sr">6</td><td class="k">Zip bundler</td><td>used</td><td>kept in code, unreachable <i class="q">Q6</i></td></tr>
+</table>
+
+<h3 class="sub">C4 · Three companions</h3>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Item</th><th>Exception handling</th><th>Logger.e</th><th>Tests</th></tr>
+  <tr><td class="sr">1</td><td class="k">About Me</td><td>Version, date and device values are read defensively — a missing value renders “unknown” rather than crashing the card; social and mail taps are each guarded</td><td>logs a failed mail intent, a failed link open and any missing BuildConfig value</td><td>JUnit on the subject string for all four chip types, the body block's nine lines, the two-line footer format, and that no sensitive key ever appears in the body</td></tr>
+  <tr><td class="sr">2</td><td class="k">Per-file Share</td><td>Missing file is reported, never sent; URI only through the FileProvider; no package pinning</td><td>logs a missing file, a failed grant, and any degrade to text-only</td><td>JUnit that the intent MIME equals <code>FileShare.mime(name)</code> for every supported extension, and that a missing file yields a message rather than an intent</td></tr>
+  <tr><td class="sr">3</td><td class="k">Picker revert</td><td>File fields can no longer enter the selection, so the masking conflict cannot arise from the picker</td><td>—</td><td>JUnit that no FILE field is ever produced for the picker, and the 1.5 text tests all still pass</td></tr>
+</table>
+
+<h2 class="sec">C · Open questions</h2>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Q</th><th>Question</th><th>Options</th><th>My recommendation</th></tr>
+  <tr><td class="sr">1</td><td class="q">Q1</td><td>Footer wording</td><td>(a) <code>InfoDeck · 1.7</code> / <code>Released on 21-Aug-2026</code> &nbsp; (b) app name and version on separate lines too</td><td class="rec">(a) — the standard</td></tr>
+  <tr><td class="sr">2</td><td class="q">Q2</td><td>InfoDeck's accent colour</td><td>(a) indigo #3B5BDB, matching the app &nbsp; (b) a different hue so About Me stands apart</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">3</td><td class="q">Q3</td><td>If no mail app answers</td><td>(a) message with a copyable address &nbsp; (b) copy silently and say so</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">4</td><td class="q">Q4</td><td>Files in the share picker</td><td>(a) removed entirely &nbsp; (b) kept as a “also attach” option</td><td class="rec">(a) — your instruction, and the sturdier design</td></tr>
+  <tr><td class="sr">5</td><td class="q">Q5</td><td>Share button placement</td><td>(a) on the file row, beside Open &nbsp; (b) only inside the file preview</td><td class="rec">(a), and also in the preview</td></tr>
+  <tr><td class="sr">6</td><td class="q">Q6</td><td>“Share all files” / the zip</td><td>(a) not now, keep the code dormant &nbsp; (b) delete the bundler &nbsp; (c) offer it in selection mode</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">7</td><td class="q">Q7</td><td>Should the other apps' About Me be corrected too?</td><td>(a) yes, each at its next release &nbsp; (b) InfoDeck only for now</td><td class="rec">(a) — it is a project-wide standard</td></tr>
+</table>
+
+<h2 class="sec">D · If accepted</h2>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Field</th><th>Value</th></tr>
+  <tr><td class="sr">1</td><td class="k">Queue</td><td>B1 About Me rebuilt to ultra-compact-B with the full mail pre-fill and correct placement · B2 share reverted to text-only plus a per-file Share button with the correct MIME</td></tr>
+  <tr><td class="sr">2</td><td class="k">Release</td><td><b>1.7</b>, versionCode <b>1007000</b>, <code>InfoDeck-1.7.apk</code></td></tr>
+  <tr><td class="sr">3</td><td class="k">Database</td><td>No schema change</td></tr>
+  <tr><td class="sr">4</td><td class="k">Trigger</td><td>Nothing is built until you say <b>build</b> / <b>release</b></td></tr>
+</table>
+
+</div>
+</body>
+</html>

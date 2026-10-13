@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InfoDeck — v1.00 D2 design · categories, grouping, sorting, filters</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100..900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1C2431; --ink2:#5F6B7A; --hint:#98A2AE;
+    --pri:#34518A; --pri-d:#24406F; --pri-c:#E3EAF7; --on-pri-c:#1E3866;
+    --amber:#9A5B00; --amber-c:#FFF1D6;
+    --ok:#2E7D32; --ok-c:#E6F4E1;
+    --err:#B3261E; --err-c:#FBE3E1;
+    --bg:#F3F5F8; --card:#FFFFFF; --line:#E1E5EB; --outline:#B7BFCC;
+    --page:#E4E7EE; --tag:#1A3E8C; --q:#7A5A00; --q-bg:#FFF3C4; --q-bd:#E2C35C;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--page);font-family:Roboto,"Segoe UI",system-ui,-apple-system,sans-serif;color:var(--ink);padding:26px 18px 70px}
+  .wrap{max-width:1180px;margin:0 auto}
+  header.page h1{font-size:24px;font-weight:800;color:var(--pri-d)}
+  header.page p{font-size:13.5px;color:var(--ink2);margin-top:5px;line-height:1.5}
+  .stamp{display:inline-block;margin:10px 8px 0 0;font-size:12px;font-weight:700;color:#7A2E00;background:#FFE1CC;border:1px solid #E8B08C;border-radius:20px;padding:3px 12px}
+  .stamp.g{color:#1E3866;background:#E3EAF7;border-color:#B4C4E4}
+  h2.sec{font-size:18px;font-weight:800;color:var(--pri-d);margin:38px 0 12px;padding-bottom:6px;border-bottom:2px solid #C9D1DD}
+  h3.sub{font-size:15px;color:var(--pri-d);margin-top:20px}
+  .note{font-size:13px;color:var(--ink2);line-height:1.5;margin:6px 0 10px}
+  .warn-box{background:#FFF6E5;border:1px solid #E8C98C;border-radius:10px;padding:12px 14px;font-size:13.5px;line-height:1.55;margin:10px 0 4px}
+  .warn-box b{color:#7A4A00}
+
+  table.tb{width:100%;border-collapse:collapse;font-size:12.5px;background:#fff;margin:6px 0 4px}
+  table.tb th{background:#E9EEF6;color:var(--pri-d);text-align:left;padding:6px 8px;border:1px solid #BFC9D8;font-size:12px}
+  table.tb td{padding:6px 8px;border:1px solid #D2D9E3;vertical-align:top;line-height:1.45}
+  table.tb .sr{width:1%;white-space:nowrap;text-align:center}
+  table.tb td.k{white-space:nowrap;font-weight:700;color:var(--tag)}
+  table.tb td.q{white-space:nowrap;font-weight:700;color:var(--q)}
+  table.tb td.rec{color:var(--ok);font-weight:600}
+  table.tb td.new{white-space:nowrap;font-weight:700;color:var(--ok)}
+  table.tb tr:nth-child(even) td{background:#FAFBFD}
+  code{font-family:Consolas,Menlo,monospace;font-size:12px;background:#EEF1F5;padding:1px 4px;border-radius:3px}
+
+  .frames{display:grid;grid-template-columns:repeat(auto-fit,minmax(520px,1fr));gap:34px 28px;margin-top:14px}
+  figure{display:flex;flex-direction:column;align-items:center;gap:8px}
+  figure h3{font-size:15px;font-weight:800;color:var(--pri-d);align-self:flex-start}
+  figure h3 small{font-weight:500;color:var(--ink2);font-size:12.5px;margin-left:6px}
+  figure table.tb{font-size:12px}
+  figure table.tb td:nth-child(2){white-space:nowrap}
+  figure.full{grid-column:1 / -1}
+  figure.full h3{align-self:center}
+  figure.full table.tb{max-width:800px}
+
+  b.n{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:8px;background:var(--tag);color:#fff;font-size:10px;font-weight:800;line-height:1;flex-shrink:0;font-style:normal}
+  i.q{display:inline-flex;align-items:center;font-style:normal;font-size:10px;font-weight:800;color:var(--q);background:var(--q-bg);border:1px solid var(--q-bd);border-radius:9px;padding:1px 6px;line-height:1.3;flex-shrink:0}
+
+  .phone{width:378px;height:758px;background:var(--bg);border:9px solid #171A20;border-radius:36px;overflow:hidden;position:relative;box-shadow:0 12px 30px rgba(20,30,50,.20);display:flex;flex-direction:column;flex-shrink:0}
+  .sb{height:24px;background:var(--pri-d);color:#fff;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:space-between;padding:0 18px;flex-shrink:0}
+  .appbar{height:56px;background:var(--pri);color:#fff;display:flex;align-items:center;padding:0 6px 0 4px;gap:2px;flex-shrink:0}
+  .appbar.pad .t{padding-left:12px}
+  .appbar .t{font-size:17px;font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 6px;line-height:1.2}
+  .appbar .t small{display:block;font-size:11.5px;font-weight:400;opacity:.85}
+  .appbar.sel{background:var(--pri-d)}
+  .ic{width:24px;height:24px;fill:currentColor;flex-shrink:0}
+  .ic.s{width:20px;height:20px}
+  .ib{width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:20px;position:relative;flex-shrink:0}
+  .ib b.n{position:absolute;right:-1px;bottom:-1px}
+  .cnt{position:absolute;top:5px;right:5px;min-width:16px;height:16px;border-radius:8px;background:#FFB84D;color:#1C2431;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 4px}
+  .body{flex:1;overflow:hidden;position:relative;padding:10px 12px 0}
+  .nav{height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .nav i{width:108px;height:4px;border-radius:2px;background:#8B93A0}
+  .fab{position:absolute;right:16px;bottom:16px;height:48px;padding:0 18px 0 14px;border-radius:16px;background:var(--pri-c);color:var(--on-pri-c);font-weight:700;font-size:14px;display:flex;align-items:center;gap:8px;box-shadow:0 4px 12px rgba(0,0,0,.20)}
+
+  /* control row */
+  .ctl{display:flex;align-items:center;gap:6px;padding:0 2px 8px;position:relative}
+  .cchip{display:inline-flex;align-items:center;gap:4px;height:32px;padding:0 10px;border-radius:16px;border:1.5px solid var(--outline);background:#fff;font-size:12.5px;font-weight:600;color:var(--ink);white-space:nowrap;max-width:100%;overflow:hidden}
+  .cchip b{font-weight:700;color:var(--pri-d)}
+  .cchip .ic{width:16px;height:16px;color:var(--ink2)}
+  .cchip.on{background:var(--pri-c);border-color:var(--pri);color:var(--on-pri-c)}
+  .fbtn{margin-left:auto;width:34px;height:32px;border-radius:16px;border:1.5px solid var(--outline);background:#fff;display:flex;align-items:center;justify-content:center;position:relative;flex-shrink:0}
+  .fbtn.on{background:var(--pri-c);border-color:var(--pri)}
+  .fbtn .ic{width:18px;height:18px;color:var(--ink2)}
+  .fbtn .bdg{position:absolute;top:-5px;right:-5px;min-width:15px;height:15px;border-radius:8px;background:var(--pri);color:#fff;font-size:9.5px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 4px}
+  .qrow{display:flex;gap:6px;padding:0 2px 8px;overflow:hidden}
+  .qchip{height:28px;padding:0 11px;border-radius:14px;border:1.5px solid var(--outline);background:#fff;font-size:12px;font-weight:600;color:var(--ink2);display:flex;align-items:center;gap:4px;white-space:nowrap}
+  .qchip.on{background:var(--pri-c);border-color:var(--pri);color:var(--on-pri-c)}
+  .qchip.al{background:var(--err-c);border-color:#E7ADA8;color:var(--err)}
+
+  /* accordion */
+  .acc{background:var(--card);border-radius:14px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.08);overflow:hidden;position:relative}
+  .ahd{display:flex;align-items:center;gap:9px;padding:10px 10px 10px 0;min-height:52px}
+  .ahd .cbar{width:5px;align-self:stretch;border-radius:0 3px 3px 0;flex-shrink:0;margin-right:1px}
+  .spacer{height:62px}
+  .ahd .l{flex:1;min-width:0}
+  .ahd .l b{display:block;font-size:14.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ahd .l small{display:block;font-size:11.5px;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ahd .l small em{font-style:normal;color:var(--err);font-weight:700}
+  .ahd .cbadge{font-size:11.5px;font-weight:700;color:var(--ink2);background:#EDF0F4;border-radius:10px;padding:2px 8px;white-space:nowrap}
+  .ahd .chev{width:22px;height:22px;color:var(--ink2);flex-shrink:0;margin-right:2px}
+  .acc.open .ahd{border-bottom:1px solid var(--line);background:#F7F9FC}
+  .acc.open .chev{transform:rotate(180deg)}
+  .inner{padding:8px 10px 4px}
+  .mini-card{border:1px solid var(--line);border-radius:11px;padding:8px 10px 8px;margin-bottom:7px;position:relative}
+  .mini-card .tt{font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:16px}
+  .mini-card .kv{font-size:11.5px;color:var(--ink2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mini-card .kv b{color:var(--ink);font-weight:600}
+  .mini-card .kv em{font-style:normal;color:var(--ok);font-weight:700}
+  .mini-card .kv em.od{color:var(--err)}
+  .mini-card .rw{display:flex;gap:6px;align-items:center;margin-top:6px;flex-wrap:wrap}
+  .tag{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:11px;background:var(--amber-c);color:var(--amber)}
+  .tag .ic{width:12px;height:12px}
+  .tag.off{background:#ECEFF3;color:var(--ink2)}
+  .tag.cat{background:var(--pri-c);color:var(--on-pri-c)}
+  .tag.od{background:var(--err-c);color:var(--err)}
+  .addin{display:flex;align-items:center;justify-content:center;gap:5px;height:36px;font-size:12.5px;font-weight:700;color:var(--pri);border-top:1px dashed #D6DDE7;margin-top:2px}
+  .addin .ic{width:16px;height:16px}
+  .hidden-note{font-size:11.5px;color:var(--hint);text-align:center;padding:6px 4px 0}
+
+  /* selection */
+  .mini-card.sel{border-color:var(--pri);background:var(--pri-c)}
+  .cbx{position:absolute;right:8px;top:8px;width:20px;height:20px;border-radius:10px;border:2px solid var(--outline);background:#fff}
+  .cbx.on{background:var(--pri);border-color:var(--pri);display:flex;align-items:center;justify-content:center}
+  .cbx.on .ic{width:14px;height:14px;color:#fff}
+  .selbar{position:absolute;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);display:flex;padding:8px 10px;gap:8px;box-shadow:0 -3px 12px rgba(0,0,0,.08)}
+  .selbar .sa{flex:1;height:46px;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11.5px;font-weight:700;color:var(--pri);gap:1px}
+  .selbar .sa .ic{width:20px;height:20px}
+  .selbar .sa.dz{color:var(--err)}
+
+  /* sheets */
+  .dim{position:absolute;inset:0;background:rgba(20,26,36,.48)}
+  .sheet{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:22px 22px 0 0;padding:8px 16px 0;max-height:92%;overflow:hidden}
+  .grab{width:32px;height:4px;border-radius:2px;background:#C5CBD3;margin:0 auto 10px}
+  .sheet h4{font-size:17px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+  .sheet h4 .rt{margin-left:auto;font-size:12.5px;font-weight:700;color:var(--pri)}
+  .opt{display:flex;align-items:center;gap:10px;padding:9px 2px;border-bottom:1px solid var(--line);min-height:46px}
+  .opt:last-of-type{border-bottom:0}
+  .opt .l{flex:1;min-width:0}
+  .opt .l b{display:block;font-size:14px;font-weight:500}
+  .opt .l small{display:block;font-size:11.5px;color:var(--ink2);line-height:1.3}
+  .rad{width:20px;height:20px;border-radius:10px;border:2px solid var(--outline);flex-shrink:0}
+  .rad.on{border-color:var(--pri);border-width:6px}
+  .chk{width:20px;height:20px;border-radius:5px;border:2px solid var(--outline);flex-shrink:0}
+  .chk.on{background:var(--pri);border-color:var(--pri);display:flex;align-items:center;justify-content:center}
+  .chk.on .ic{width:14px;height:14px;color:#fff}
+  .lab{font-size:11.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--pri);margin:12px 0 6px 2px}
+  .seg{display:flex;border:1.5px solid var(--pri);border-radius:22px;overflow:hidden;height:38px}
+  .seg span{flex:1;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--pri);gap:6px}
+  .seg span+span{border-left:1.5px solid var(--pri)}
+  .seg .on{background:var(--pri-c);color:var(--on-pri-c)}
+  .segrow{display:flex;align-items:center;gap:8px}
+  .segrow .seg{flex:1}
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .fchip{height:30px;padding:0 11px;border-radius:15px;border:1.5px solid var(--outline);background:#fff;font-size:12.5px;font-weight:600;color:var(--ink2);display:flex;align-items:center;gap:5px}
+  .fchip.on{background:var(--pri-c);border-color:var(--pri);color:var(--on-pri-c)}
+  .fchip i.d{width:9px;height:9px;border-radius:5px;display:inline-block}
+  .btn{flex:1;height:50px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14.5px}
+  .btn.out{border:1.5px solid var(--pri);color:var(--pri)}
+  .btn.fill{background:var(--pri);color:#fff}
+  .btn.del{border:1.5px solid var(--err);color:var(--err)}
+  .sbs{height:32px;margin:8px -16px 0;border-top:1px dashed #C9D1DD;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--hint)}
+  .tf{border:1.5px solid var(--outline);border-radius:8px;height:50px;padding:0 12px;position:relative;display:flex;align-items:center;font-size:14.5px;gap:8px;background:transparent}
+  .tf .fl{position:absolute;top:-8px;left:10px;background:#fff;padding:0 4px;font-size:11.5px;color:var(--pri);font-weight:600}
+  .tf .v{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tf .ic{color:var(--ink2);width:22px;height:22px}
+  .tf.sm{height:42px;font-size:13px}
+  .tf.sm .fl{top:-7px;font-size:11px;background:var(--bg)}
+  .newcat{display:flex;align-items:center;gap:8px;padding:10px 2px;font-size:14px;font-weight:700;color:var(--pri);border-top:1px dashed #D6DDE7;margin-top:4px}
+  .newcat .ic{width:20px;height:20px}
+
+  /* manage categories */
+  .mrow{display:flex;align-items:center;gap:9px;background:#fff;border-radius:12px;padding:9px 10px;margin-bottom:7px;box-shadow:0 1px 3px rgba(0,0,0,.08);position:relative}
+  .mrow .dg{width:20px;height:20px;color:var(--hint);flex-shrink:0}
+  .mrow .dot{width:16px;height:16px;border-radius:8px;flex-shrink:0}
+  .mrow .l{flex:1;min-width:0}
+  .mrow .l b{display:block;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mrow .l small{display:block;font-size:11.5px;color:var(--ink2)}
+  .mrow .ic.mo{width:20px;height:20px;color:var(--ink2);flex-shrink:0}
+  .mrow.un{background:#F7F9FC;border:1px dashed #C9D1DD;box-shadow:none}
+
+  /* editor bits */
+  .er{display:flex;align-items:center;gap:6px;margin-bottom:8px;position:relative}
+  .er > b.n{position:absolute;left:-6px;top:-8px}
+  .er .tf.name{flex:0 0 104px}
+  .er .tf.val{flex:1;min-width:0}
+  .er .star{width:22px;height:22px;color:var(--amber);flex-shrink:0}
+  .er .star.off{color:#C7CDD6}
+  .er .ic.h{color:var(--hint);width:20px;height:20px}
+  .er .ic.x{color:var(--ink2);width:20px;height:20px}
+  .eh{display:flex;align-items:center;gap:6px;margin:12px 2px 6px}
+  .sec-h{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--pri)}
+  .eh .sec-h{flex:1}
+  .eh .add{font-size:12.5px;font-weight:800;color:var(--pri);display:flex;align-items:center;gap:2px}
+  .eh .add .ic{width:16px;height:16px}
+  .hint{font-size:11.5px;color:var(--ink2);margin:-2px 0 8px 4px}
+  .bar{position:absolute;left:0;right:0;bottom:0;padding:10px 12px;background:var(--bg);display:flex;gap:10px}
+  .swatches{display:flex;gap:9px;margin:2px 0 4px 2px}
+  .swatches i{width:30px;height:30px;border-radius:15px;display:flex;align-items:center;justify-content:center;color:#fff}
+  .swatches i .ic{width:18px;height:18px}
+  .c-blue{background:#4A6FB0}.c-teal{background:#2E8A86}.c-green{background:#4E9440}.c-amber{background:#D48A18}.c-purple{background:#7B57C0}.c-pink{background:#C2528A}.c-red{background:#C94A42}.c-grey{background:#7B8794}
+  .toast{position:absolute;left:12px;right:12px;background:#2A3342;color:#fff;border-radius:12px;padding:11px 14px;font-size:13px;display:flex;align-items:center;gap:10px;box-shadow:0 6px 18px rgba(0,0,0,.3)}
+  .toast b{margin-left:auto;color:#8FB4FF;font-weight:800;font-size:13px}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></symbol>
+  <symbol id="i-alarm" viewBox="0 0 24 24"><path d="M22 5.72l-4.6-3.86-1.29 1.53 4.6 3.86L22 5.72zM7.88 3.39 6.6 1.86 2 5.71l1.29 1.53 4.59-3.85zM12.5 8H11v6l4.75 2.85.75-1.23-4-2.37V8zM12 4c-4.97 0-9 4.03-9 9s4.02 9 9 9c4.97 0 9-4.03 9-9s-4.03-9-9-9zm0 16c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"/></symbol>
+  <symbol id="i-drag" viewBox="0 0 24 24"><path d="M11 18c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm-2-8c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0-6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6 4c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="M10 6 8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></symbol>
+  <symbol id="i-filter" viewBox="0 0 24 24"><path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/></symbol>
+  <symbol id="i-tick" viewBox="0 0 24 24"><path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M16.59 8.59 12 13.17 7.41 8.59 6 10l6 6 6-6z"/></symbol>
+  <symbol id="i-group" viewBox="0 0 24 24"><path d="M3 5h8v2H3V5zm0 6h8v2H3v-2zm0 6h8v2H3v-2zm10-9h8v2h-8V8zm0 6h8v2h-8v-2z"/></symbol>
+  <symbol id="i-sort" viewBox="0 0 24 24"><path d="M3 18h6v-2H3v2zM3 6v2h18V6H3zm0 7h12v-2H3v2z"/></symbol>
+  <symbol id="i-move" viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2zm-5 9v-2h-4v-2h4V9l3 3-3 3z"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 17.27 6.18 3.73-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></symbol>
+  <symbol id="i-staro" viewBox="0 0 24 24"><path d="M22 9.24l-7.19-.62L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.63-7.03L22 9.24zM12 15.4l-3.76 2.27 1-4.28-3.32-2.88 4.38-.38L12 6.1l1.71 4.04 4.38.38-3.32 2.88 1 4.28L12 15.4z"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a.996.996 0 0 0 0-1.41l-2.34-2.34a.996.996 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></symbol>
+  <symbol id="i-clear" viewBox="0 0 24 24"><path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"/></symbol>
+</svg>
+
+<div class="wrap">
+<header class="page">
+  <h1>InfoDeck — v1.00 · D2 design</h1>
+  <p>Second round. Adds <b>categories</b> (create, move cards between them), a <b>one-open-at-a-time accordion</b>, and the <b>Group by / Sort by / Filter</b> controls. Mock date is <b>Tue 18-Aug-2026</b>; every countdown is computed from it. D1 stays valid for everything not touched here — see section C9.</p>
+  <span class="stamp">DESIGN ONLY · nothing queued · nothing built</span>
+  <span class="stamp g">Reply by tag: “S1.4 → chips”, “Q11 → b”, or “defaults” = all recommended</span>
+</header>
+
+<div class="warn-box">
+  <b>⚑ Conflict to settle before anything else (Q11).</b> D1 already had a container called <b>Deck</b> (Insurance, Vehicle, Warranties…). Your “category” looks like the same thing under a different name, so this design <b>renames Deck → Category everywhere and keeps exactly one level</b>. Home becomes one screen: the category accordion, no drill-down into a separate deck screen.<br>
+  The alternative is two levels (Deck ▸ Category ▸ Card) — more taps, more moving parts, and every card then needs both. I do not recommend it, but say the word and I redraw. Everything below assumes one level.
+</div>
+
+<h2 class="sec">A · Reading this file</h2>
+<table class="tb">
+  <tr><th class="sr">SrNo.</th><th>Mark</th><th>Meaning</th></tr>
+  <tr><td class="sr">1</td><td><b class="n">3</b> navy number</td><td>Element tag, explained under each frame as <b>S&lt;frame&gt;.&lt;n&gt;</b> — e.g. <b>S1.4</b> = frame S1, element 4.</td></tr>
+  <tr><td class="sr">2</td><td><i class="q">Q12</i> amber tag</td><td>That spot depends on an open question in section C10.</td></tr>
+  <tr><td class="sr">3</td><td>Sample data</td><td>6 categories, 23 cards. “Insurance” is the open category in most frames.</td></tr>
+  <tr><td class="sr">4</td><td>New words</td><td><b>Category</b> = the container (was “Deck”). <b>Key date</b> = the one date variable a card is grouped and sorted by — see C7.</td></tr>
+</table>
+
+<h2 class="sec">B · Screens</h2>
+<div class="frames">
+
+<!-- ============ S1 HOME grouped by category ============ -->
+<figure>
+  <h3>S1 · Home — grouped by Category<small>the accordion</small></h3>
+  <div class="phone" style="height:830px">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="appbar pad">
+      <div class="t">InfoDeck</div>
+      <div class="ib"><svg class="ic"><use href="#i-search"/></svg></div>
+      <div class="ib"><svg class="ic"><use href="#i-bell"/></svg><span class="cnt">2</span></div>
+      <div class="ib"><svg class="ic"><use href="#i-more"/></svg><b class="n">1</b></div>
+    </div>
+    <div class="body">
+      <div class="ctl">
+        <span class="cchip on"><svg class="ic"><use href="#i-group"/></svg>Category<svg class="ic"><use href="#i-down"/></svg></span><b class="n">2</b>
+        <span class="cchip"><svg class="ic"><use href="#i-sort"/></svg>Expiry ↑<svg class="ic"><use href="#i-down"/></svg></span><b class="n">3</b>
+        <span class="fbtn on"><svg class="ic"><use href="#i-filter"/></svg><span class="bdg">1</span></span><b class="n" style="position:absolute;right:-2px;top:-6px">4</b>
+      </div>
+      <div class="qrow"><span class="qchip">All</span><span class="qchip al">Overdue 1</span><span class="qchip on">≤ 30 days</span><span class="qchip">No reminder</span><b class="n">5</b></div>
+
+      <div class="acc open">
+        <div class="ahd"><i class="cbar c-blue"></i><div class="l"><b>Insurance</b><small>Expiry 11-Oct-2026 · rings 11-Sep</small></div><span class="cbadge">3 of 4</span><svg class="ic chev"><use href="#i-down"/></svg><b class="n" style="position:absolute;right:6px;top:6px">6</b></div>
+        <div class="inner">
+          <div class="mini-card"><div class="tt">Car Insurance — HDFC Ergo</div>
+            <div class="kv">Policy Expiry <b>11-Oct-2026</b> · <em>in 54 d</em></div>
+            <div class="rw"><span class="tag"><svg class="ic"><use href="#i-alarm"/></svg>Rings 11-Sep · in 24 d</span></div><b class="n" style="position:absolute;right:6px;top:6px">7</b></div>
+          <div class="mini-card"><div class="tt">Bike Insurance — ICICI Lombard</div>
+            <div class="kv">Policy Expiry <b>15-Oct-2026</b> · <em>in 58 d</em></div>
+            <div class="rw"><span class="tag"><svg class="ic"><use href="#i-alarm"/></svg>Rings 30-Sep · in 43 d</span></div></div>
+          <div class="mini-card"><div class="tt">Health Insurance — Star Health</div>
+            <div class="kv">Policy Expiry <b>28-Feb-2027</b> · <em>in 194 d</em></div>
+            <div class="rw"><span class="tag"><svg class="ic"><use href="#i-alarm"/></svg>Rings 30-Dec · in 134 d</span></div></div>
+          <div class="addin"><svg class="ic"><use href="#i-plus"/></svg>Add card to Insurance<b class="n" style="margin-left:4px">8</b></div>
+        </div>
+      </div>
+
+      <div class="acc"><div class="ahd"><i class="cbar c-teal"></i><div class="l"><b>Vehicle</b><small>Expiry 20-Oct-2026 · rings 20-Oct</small></div><span class="cbadge">3</span><svg class="ic chev"><use href="#i-down"/></svg></div></div>
+      <div class="acc"><div class="ahd"><i class="cbar c-green"></i><div class="l"><b>Identity Docs</b><small>Expiry 25-Aug-2027 · rings 25-Aug</small></div><span class="cbadge">5</span><svg class="ic chev"><use href="#i-down"/></svg></div></div>
+      <div class="acc"><div class="ahd"><i class="cbar c-amber"></i><div class="l"><b>Warranties</b><small><em>1 overdue</em> · expiry 05-Dec-2026</small></div><span class="cbadge">6</span><svg class="ic chev"><use href="#i-down"/></svg><b class="n" style="position:absolute;right:6px;top:6px">9</b></div></div>
+      <div class="hidden-note">2 categories hidden by filters <b class="n">10</b></div>
+      <div class="spacer"></div>
+      <div class="fab"><svg class="ic"><use href="#i-plus"/></svg>New card</div>
+    </div>
+    <div class="nav"><i></i></div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">Tag</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="k">S1.1</td><td>Overflow</td><td>Manage categories (→ S8) · Select cards (→ S6) · Collapse all · Settings.</td></tr>
+    <tr><td class="k">S1.2</td><td>Group chip</td><td>Shows the active grouping; tap → S3. Filled style when it is not the default.</td></tr>
+    <tr><td class="k">S1.3</td><td>Sort chip</td><td>Active sort + direction arrow; tap → S4. Long-press flips the direction without opening the sheet.</td></tr>
+    <tr><td class="k">S1.4</td><td>Filter button</td><td>Opens S5. Badge = number of active filter groups; tinted while any filter is on.</td></tr>
+    <tr><td class="k">S1.5</td><td>Quick chips</td><td>One-tap presets: All · Overdue (red, hidden when zero) · ≤ 30 days · No reminder. They set the same filters as S5 and stay in sync with it.</td></tr>
+    <tr><td class="k">S1.6</td><td>Category header</td><td>Colour bar · name · summary line · count · chevron. Tap anywhere = expand; expanding <b>collapses whatever was open</b> (Q12). Long-press → Rename · Colour · Move up/down · Delete.</td></tr>
+    <tr><td class="k">S1.7</td><td>Card row</td><td>Label · key date with countdown · earliest ring chip. Tap → card view. Long-press → selection mode (S6) with this card already ticked.</td></tr>
+    <tr><td class="k">S1.8</td><td>Add card here</td><td>Opens the editor with this category pre-filled — the FAB does the same but asks which category when none is open.</td></tr>
+    <tr><td class="k">S1.9</td><td>Overdue category</td><td>Summary line leads with “N overdue” in red when the category holds any past key date that still has a live reminder.</td></tr>
+    <tr><td class="k">S1.10</td><td>Hidden note</td><td>Appears only while filters hide whole categories, so nothing silently disappears. Tap → S5.</td></tr>
+  </table>
+</figure>
+
+<!-- ============ S2 HOME grouped by expiry ============ -->
+<figure>
+  <h3>S2 · Home — grouped by Expiry month<small>same screen, different grouping</small></h3>
+  <div class="phone" style="height:790px">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="appbar pad"><div class="t">InfoDeck</div><div class="ib"><svg class="ic"><use href="#i-search"/></svg></div><div class="ib"><svg class="ic"><use href="#i-bell"/></svg><span class="cnt">2</span></div><div class="ib"><svg class="ic"><use href="#i-more"/></svg></div></div>
+    <div class="body">
+      <div class="ctl">
+        <span class="cchip on"><svg class="ic"><use href="#i-group"/></svg>Expiry month<svg class="ic"><use href="#i-down"/></svg></span><b class="n">1</b>
+        <span class="cchip"><svg class="ic"><use href="#i-sort"/></svg>Expiry ↑<svg class="ic"><use href="#i-down"/></svg></span>
+        <span class="fbtn"><svg class="ic"><use href="#i-filter"/></svg></span>
+      </div>
+      <div class="acc"><div class="ahd"><i class="cbar c-red"></i><div class="l"><b>Overdue</b><small>Key date already passed</small></div><span class="cbadge">1</span><svg class="ic chev"><use href="#i-down"/></svg><b class="n" style="position:absolute;right:6px;top:6px">2</b></div></div>
+      <div class="acc open">
+        <div class="ahd"><i class="cbar c-grey"></i><div class="l"><b>August 2026</b><small>2 cards · 21-Aug, 30-Aug</small></div><span class="cbadge">2</span><svg class="ic chev"><use href="#i-down"/></svg></div>
+        <div class="inner">
+          <div class="mini-card"><div class="tt">Gym membership</div>
+            <div class="kv">Renewal <b>21-Aug-2026</b> · <em>in 3 d</em></div>
+            <div class="rw"><span class="tag cat">Subscriptions<b class="n" style="margin-left:2px">3</b></span><span class="tag off"><svg class="ic"><use href="#i-alarm"/></svg>No reminder</span></div></div>
+          <div class="mini-card"><div class="tt">Driving Licence</div>
+            <div class="kv">Expiry <b>30-Aug-2026</b> · <em>in 12 d</em></div>
+            <div class="rw"><span class="tag cat">Identity Docs</span><span class="tag"><svg class="ic"><use href="#i-alarm"/></svg>Rings 23-Aug · in 5 d</span><b class="n" style="margin-left:2px">4</b></div></div>
+        </div>
+      </div>
+      <div class="acc"><div class="ahd"><i class="cbar c-grey"></i><div class="l"><b>September 2026</b><small>3 cards · nearest 20-Sep</small></div><span class="cbadge">3</span><svg class="ic chev"><use href="#i-down"/></svg></div></div>
+      <div class="acc"><div class="ahd"><i class="cbar c-grey"></i><div class="l"><b>October 2026</b><small>4 cards · nearest 01-Oct</small></div><span class="cbadge">4</span><svg class="ic chev"><use href="#i-down"/></svg></div></div>
+      <div class="acc"><div class="ahd"><i class="cbar c-grey"></i><div class="l"><b>December 2026</b><small>2 cards · nearest 05-Dec</small></div><span class="cbadge">2</span><svg class="ic chev"><use href="#i-down"/></svg></div></div>
+      <div class="acc"><div class="ahd"><i class="cbar c-grey"></i><div class="l"><b>No date</b><small>Cards without any date variable</small></div><span class="cbadge">4</span><svg class="ic chev"><use href="#i-down"/></svg><b class="n" style="position:absolute;right:6px;top:6px">5</b></div></div>
+      <div class="spacer"></div>
+      <div class="fab"><svg class="ic"><use href="#i-plus"/></svg>New card</div>
+    </div>
+    <div class="nav"><i></i></div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">Tag</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="k">S2.1</td><td>Grouping</td><td>Every grouping uses this one screen and the same accordion rule — only the group headers change.</td></tr>
+    <tr><td class="k">S2.2</td><td>Overdue group</td><td>Always first and red when it has anything; empty groups are not drawn.</td></tr>
+    <tr><td class="k">S2.3</td><td>Category chip</td><td>Shown on the card only when the grouping is <b>not</b> Category (otherwise the header already says it). Tap the chip → jumps to Category grouping with that one open.</td></tr>
+    <tr><td class="k">S2.4</td><td>Ring chip</td><td>Same chip as S1.7. A card is placed by its <b>key date</b>, so its ring can fall in a different month from the group it sits in.</td></tr>
+    <tr><td class="k">S2.5</td><td>No date</td><td>Catch-all group, always last. Same idea for “No reminder” when grouping by reminder.</td></tr>
+  </table>
+</figure>
+
+<!-- ============ S3 GROUP BY ============ -->
+<figure>
+  <h3>S3 · Group by sheet<small>from the group chip</small></h3>
+  <div class="phone">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="appbar pad"><div class="t">InfoDeck</div><div class="ib"><svg class="ic"><use href="#i-search"/></svg></div><div class="ib"><svg class="ic"><use href="#i-bell"/></svg></div><div class="ib"><svg class="ic"><use href="#i-more"/></svg></div></div>
+    <div class="body">
+      <div class="ctl"><span class="cchip on"><svg class="ic"><use href="#i-group"/></svg>Category<svg class="ic"><use href="#i-down"/></svg></span><span class="cchip"><svg class="ic"><use href="#i-sort"/></svg>Expiry ↑</span><span class="fbtn"><svg class="ic"><use href="#i-filter"/></svg></span></div>
+      <div class="dim"></div>
+      <div class="sheet">
+        <div class="grab"></div>
+        <h4>Group by <b class="n">1</b></h4>
+        <div class="opt"><span class="rad on"></span><div class="l"><b>Category</b><small>One section per category</small></div></div>
+        <div class="opt"><span class="rad"></span><div class="l"><b>Expiry month</b><small>By key date — Aug 2026, Sep 2026 …</small></div><b class="n">2</b></div>
+        <div class="opt"><span class="rad"></span><div class="l"><b>Expiry window</b><small>Overdue · This week · This month · 3 months · Later · No date</small></div><b class="n">3</b></div>
+        <div class="opt"><span class="rad"></span><div class="l"><b>Next reminder</b><small>Overdue · Today · This week · This month · Later · No reminder</small></div><b class="n">4</b></div>
+        <div class="opt"><span class="rad"></span><div class="l"><b>None</b><small>One flat list, no sections</small></div><b class="n">5</b></div>
+        <div class="lab">Order sections by <b class="n" style="margin-left:2px">6</b></div>
+        <div class="seg"><span class="on"><svg class="ic s"><use href="#i-tick"/></svg>Manual</span><span>A–Z</span><span>Nearest date</span></div>
+        <div class="opt" style="margin-top:8px;border-top:1px solid var(--line)"><div class="l"><b>One section open at a time</b><small>Opening a section closes the previous one</small></div><span class="chk on"><svg class="ic"><use href="#i-tick"/></svg></span><b class="n">7</b><i class="q">Q12</i></div>
+        <div style="display:flex;gap:10px;margin-top:12px"><div class="btn out">Cancel</div><div class="btn fill">Apply</div><b class="n" style="align-self:center">8</b></div>
+        <div class="sbs">sheet bottom space · max(25 % height, nav-bar + 24 dp)</div>
+      </div>
+    </div>
+    <div class="nav"><i></i></div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">Tag</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="k">S3.1</td><td>Sheet</td><td>Single choice. The pick is remembered across restarts, per your last use.</td></tr>
+    <tr><td class="k">S3.2</td><td>Expiry month</td><td>Your “Next by Expiry Date”. Groups run chronologically; Overdue first, No date last.</td></tr>
+    <tr><td class="k">S3.3</td><td>Expiry window</td><td>Same data in fixed buckets instead of months — better when dates are spread over years.</td></tr>
+    <tr><td class="k">S3.4</td><td>Next reminder</td><td>Groups by when the card <b>rings</b>, not when it expires.</td></tr>
+    <tr><td class="k">S3.5</td><td>None</td><td>Flat list; the sort alone orders it. Category chips show on every card.</td></tr>
+    <tr><td class="k">S3.6</td><td>Order sections by</td><td>Only for Category grouping (Manual = the order set in S8). Date groupings are always chronological.</td></tr>
+    <tr><td class="k">S3.7</td><td>Accordion switch</td><td>On = your rule (one open). Off = sections open independently. See Q12.</td></tr>
+    <tr><td class="k">S3.8</td><td>Buttons</td><td>Cancel · Apply, equal width, 50 dp. Nothing changes until Apply.</td></tr>
+  </table>
+</figure>
+
+<!-- ============ S4 SORT ============ -->
+<figure>
+  <h3>S4 · Sort by sheet<small>from the sort chip</small></h3>
+  <div class="phone">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="appbar pad"><div class="t">InfoDeck</div><div class="ib"><svg class="ic"><use href="#i-search"/></svg></div><div class="ib"><svg class="ic"><use href="#i-bell"/></svg></div><div class="ib"><svg class="ic"><use href="#i-more"/></svg></div></div>
+    <div class="body">
+      <div class="ctl"><span class="cchip on"><svg class="ic"><use href="#i-group"/></svg>Category</span><span class="cchip"><svg class="ic"><use href="#i-sort"/></svg>Expiry ↑<svg class="ic"><use href="#i-down"/></svg></span><span class="fbtn"><svg class="ic"><use href="#i-filter"/></svg></span></div>
+      <div class="dim"></div>
+      <div class="sheet">
+        <div class="grab"></div>
+        <h4>Sort cards by <b class="n">1</b></h4>
+        <div class="opt"><span class="rad"></span><div class="l"><b>Name</b><small>Card label, ignoring case</small></div><b class="n">2</b></div>
+        <div class="opt"><span class="rad on"></span><div class="l"><b>Expiry date</b><small>The card's key date ★</small></div><b class="n">3</b><i class="q">Q13</i></div>
+        <div class="opt"><span class="rad"></span><div class="l"><b>Next reminder</b><small>When it rings next</small></div></div>
+        <div class="opt"><span class="rad"></span><div class="l"><b>Recently updated</b></div></div>
+        <div class="opt"><span class="rad"></span><div class="l"><b>Recently added</b></div></div>
+        <div class="opt"><span class="rad"></span><div class="l"><b>Manual</b><small>Drag cards inside an open category</small></div><b class="n">4</b></div>
+        <div class="lab">Direction <b class="n" style="margin-left:2px">5</b></div>
+        <div class="seg"><span class="on"><svg class="ic s"><use href="#i-tick"/></svg>Soonest first</span><span>Latest first</span></div>
+        <div class="hint" style="margin:8px 0 0 2px">Reads “A–Z / Z–A” for Name and “Newest / Oldest” for the added &amp; updated sorts. <b class="n">6</b></div>
+        <div style="display:flex;gap:10px;margin-top:12px"><div class="btn out">Cancel</div><div class="btn fill">Apply</div></div>
+        <div class="sbs">sheet bottom space · max(25 % height, nav-bar + 24 dp)</div>
+      </div>
+    </div>
+    <div class="nav"><i></i></div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">Tag</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="k">S4.1</td><td>Scope</td><td>Sorts cards <b>inside</b> every section; section order is set in S3.6. With Group by = None it sorts the whole list.</td></tr>
+    <tr><td class="k">S4.2</td><td>Name</td><td>Natural sort, so “Card 2” lands before “Card 10”. Case ignored.</td></tr>
+    <tr><td class="k">S4.3</td><td>Expiry date</td><td>Key date (C7). Cards with no date sink to the bottom in either direction — never mixed into the dated ones.</td></tr>
+    <tr><td class="k">S4.4</td><td>Manual</td><td>Enables drag handles on card rows; the order is saved per category. Offered only with Group by = Category.</td></tr>
+    <tr><td class="k">S4.5</td><td>Direction</td><td>Two-state segment; also flips from a long-press on the sort chip.</td></tr>
+    <tr><td class="k">S4.6</td><td>Wording</td><td>The labels change with the chosen field so the direction is never ambiguous.</td></tr>
+  </table>
+</figure>
+
+<!-- ============ S5 FILTERS ============ -->
+<figure>
+  <h3>S5 · Filters sheet<small>from the filter button</small></h3>
+  <div class="phone">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="appbar pad"><div class="t">InfoDeck</div><div class="ib"><svg class="ic"><use href="#i-search"/></svg></div><div class="ib"><svg class="ic"><use href="#i-bell"/></svg></div><div class="ib"><svg class="ic"><use href="#i-more"/></svg></div></div>
+    <div class="body">
+      <div class="ctl"><span class="cchip on"><svg class="ic"><use href="#i-group"/></svg>Category</span><span class="cchip"><svg class="ic"><use href="#i-sort"/></svg>Expiry ↑</span><span class="fbtn on"><svg class="ic"><use href="#i-filter"/></svg><span class="bdg">2</span></span></div>
+      <div class="dim"></div>
+      <div class="sheet">
+        <div class="grab"></div>
+        <h4>Filters <span class="rt">Clear all</span><b class="n">1</b></h4>
+        <div class="lab" style="margin-top:2px">Categories <b class="n" style="margin-left:2px">2</b></div>
+        <div class="chips">
+          <span class="fchip on"><i class="d c-blue"></i>Insurance</span><span class="fchip on"><i class="d c-teal"></i>Vehicle</span><span class="fchip"><i class="d c-green"></i>Identity</span>
+          <span class="fchip on"><i class="d c-amber"></i>Warranties</span><span class="fchip"><i class="d c-purple"></i>Subscriptions</span><span class="fchip"><i class="d c-pink"></i>Bank</span>
+        </div>
+        <div class="lab">Expiry window <b class="n" style="margin-left:2px">3</b></div>
+        <div class="chips">
+          <span class="fchip">Any</span><span class="fchip">Overdue</span><span class="fchip">7 days</span><span class="fchip on">30 days</span><span class="fchip">90 days</span><span class="fchip">12 months</span><span class="fchip">Custom…</span>
+        </div>
+        <div class="lab">Reminder <b class="n" style="margin-left:2px">4</b></div>
+        <div class="chips">
+          <span class="fchip on">Any</span><span class="fchip">Has reminder</span><span class="fchip">No reminder</span><span class="fchip">Overdue</span><span class="fchip">Snoozed</span><span class="fchip">Off</span>
+        </div>
+        <div class="lab">Content <b class="n" style="margin-left:2px">5</b></div>
+        <div class="chips"><span class="fchip on">Any</span><span class="fchip">Has date</span><span class="fchip">No date</span><span class="fchip">Has data</span></div>
+        <div style="display:flex;gap:10px;margin-top:14px"><div class="btn out">Cancel</div><div class="btn fill">Show 7 cards</div><b class="n" style="align-self:center">6</b></div>
+        <div class="sbs">sheet bottom space · max(25 % height, nav-bar + 24 dp)</div>
+      </div>
+    </div>
+    <div class="nav"><i></i></div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">Tag</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="k">S5.1</td><td>Clear all</td><td>Resets every group to Any; greyed out when nothing is set.</td></tr>
+    <tr><td class="k">S5.2</td><td>Categories</td><td>Multi-select; none selected = all. Works with Category grouping too — unpicked categories simply do not draw.</td></tr>
+    <tr><td class="k">S5.3</td><td>Expiry window</td><td>Single choice on the key date; Custom… opens a from–to date range picker.</td></tr>
+    <tr><td class="k">S5.4</td><td>Reminder</td><td>Single choice on scheduler state.</td></tr>
+    <tr><td class="k">S5.5</td><td>Content</td><td>Single choice — useful to find half-filled cards.</td></tr>
+    <tr><td class="k">S5.6</td><td>Apply</td><td>Live count on the button so you know before applying. “Show 0 cards” stays tappable and lands on an empty state that offers Clear all.</td></tr>
+  </table>
+</figure>
+
+<!-- ============ S6 SELECTION ============ -->
+<figure>
+  <h3>S6 · Selection mode<small>long-press a card</small></h3>
+  <div class="phone">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="appbar sel">
+      <div class="ib"><svg class="ic"><use href="#i-close"/></svg><b class="n">1</b></div>
+      <div class="t">2 selected</div>
+      <div class="ib"><svg class="ic"><use href="#i-tick"/></svg><b class="n">2</b></div>
+      <div class="ib"><svg class="ic"><use href="#i-more"/></svg></div>
+    </div>
+    <div class="body">
+      <div class="acc open">
+        <div class="ahd"><i class="cbar c-blue"></i><div class="l"><b>Insurance</b><small>Tap cards to pick · long-press picks a range</small></div><span class="cbadge">4</span><svg class="ic chev"><use href="#i-down"/></svg></div>
+        <div class="inner">
+          <div class="mini-card sel"><div class="tt">Car Insurance — HDFC Ergo</div><div class="kv">Policy Expiry <b>11-Oct-2026</b> · <em>in 54 d</em></div><span class="cbx on"><svg class="ic"><use href="#i-tick"/></svg></span><b class="n" style="position:absolute;right:32px;top:8px">3</b></div>
+          <div class="mini-card sel"><div class="tt">Bike Insurance — ICICI Lombard</div><div class="kv">Policy Expiry <b>15-Oct-2026</b> · <em>in 58 d</em></div><span class="cbx on"><svg class="ic"><use href="#i-tick"/></svg></span></div>
+          <div class="mini-card"><div class="tt">Health Insurance — Star Health</div><div class="kv">Policy Expiry <b>28-Feb-2027</b> · <em>in 194 d</em></div><span class="cbx"></span></div>
+          <div class="mini-card"><div class="tt">Home Insurance — SBI General</div><div class="kv">Sum insured <b>₹25,00,000</b></div><span class="cbx"></span></div>
+        </div>
+      </div>
+      <div class="acc"><div class="ahd"><i class="cbar c-teal"></i><div class="l"><b>Vehicle</b><small>Open to pick cards from here too</small></div><span class="cbadge">3</span><svg class="ic chev"><use href="#i-down"/></svg><b class="n" style="position:absolute;right:6px;top:6px">4</b></div></div>
+      <div class="selbar">
+        <div class="sa"><svg class="ic"><use href="#i-move"/></svg>Move<b class="n" style="position:absolute;margin:-34px 0 0 34px">5</b></div>
+        <div class="sa"><svg class="ic"><use href="#i-alarm"/></svg>Reminders</div>
+        <div class="sa"><svg class="ic"><use href="#i-edit"/></svg>Duplicate</div>
+        <div class="sa dz"><svg class="ic"><use href="#i-trash"/></svg>Delete</div>
+      </div>
+    </div>
+    <div class="nav"><i></i></div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">Tag</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="k">S6.1</td><td>Close</td><td>Leaves selection mode; system back does the same before it leaves the screen.</td></tr>
+    <tr><td class="k">S6.2</td><td>Select all</td><td>All cards currently visible (filters respected); tap again clears.</td></tr>
+    <tr><td class="k">S6.3</td><td>Tick</td><td>Tap toggles; long-press on a second card ticks the whole range between them.</td></tr>
+    <tr><td class="k">S6.4</td><td>Cross-category</td><td>Selection survives collapsing and opening another category, so you can gather cards from several places before moving.</td></tr>
+    <tr><td class="k">S6.5</td><td>Action bar</td><td>Move → S7 · Reminders (turn all on/off) · Duplicate · Delete (confirm with the count). Bar is disabled while nothing is ticked.</td></tr>
+  </table>
+</figure>
+
+<!-- ============ S7 MOVE ============ -->
+<figure>
+  <h3>S7 · Move to category<small>and the undo</small></h3>
+  <div class="phone">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="appbar sel"><div class="ib"><svg class="ic"><use href="#i-close"/></svg></div><div class="t">2 selected</div><div class="ib"><svg class="ic"><use href="#i-tick"/></svg></div><div class="ib"><svg class="ic"><use href="#i-more"/></svg></div></div>
+    <div class="body">
+      <div class="acc open"><div class="ahd"><i class="cbar c-blue"></i><div class="l"><b>Insurance</b></div><span class="cbadge">4</span><svg class="ic chev"><use href="#i-down"/></svg></div></div>
+      <div class="dim"></div>
+      <div class="sheet">
+        <div class="grab"></div>
+        <h4>Move 2 cards to <b class="n">1</b></h4>
+        <div class="opt"><span class="rad"></span><i class="d c-blue" style="width:12px;height:12px;border-radius:6px"></i><div class="l"><b>Insurance</b><small>Current category</small></div><b class="n">2</b></div>
+        <div class="opt"><span class="rad"></span><i class="d c-teal" style="width:12px;height:12px;border-radius:6px"></i><div class="l"><b>Vehicle</b><small>3 cards</small></div></div>
+        <div class="opt"><span class="rad on"></span><i class="d c-green" style="width:12px;height:12px;border-radius:6px"></i><div class="l"><b>Identity Docs</b><small>5 cards</small></div></div>
+        <div class="opt"><span class="rad"></span><i class="d c-amber" style="width:12px;height:12px;border-radius:6px"></i><div class="l"><b>Warranties</b><small>6 cards</small></div></div>
+        <div class="opt"><span class="rad"></span><i class="d c-grey" style="width:12px;height:12px;border-radius:6px"></i><div class="l"><b>Uncategorised</b><small>0 cards</small></div><b class="n">3</b></div>
+        <div class="newcat"><svg class="ic"><use href="#i-plus"/></svg>New category…<b class="n" style="margin-left:4px">4</b></div>
+        <div style="display:flex;gap:10px;margin-top:8px"><div class="btn out">Cancel</div><div class="btn fill">Move</div></div>
+        <div class="sbs">sheet bottom space · max(25 % height, nav-bar + 24 dp)</div>
+      </div>
+      <div style="position:absolute;left:12px;right:12px;top:118px;text-align:center;font-size:11.5px;color:#fff;opacity:.85">after Move — the sheet closes, then:</div>
+      <div class="toast" style="top:140px">Moved 2 cards to Identity Docs<b>UNDO</b><b class="n" style="position:absolute;right:-4px;top:-8px">5</b></div>
+    </div>
+    <div class="nav"><i></i></div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">Tag</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="k">S7.1</td><td>Title</td><td>Reads “Move 1 card to” / “Move N cards to”. Same sheet from a single card's overflow.</td></tr>
+    <tr><td class="k">S7.2</td><td>Current category</td><td>Marked and non-selectable when every picked card already sits there.</td></tr>
+    <tr><td class="k">S7.3</td><td>Uncategorised</td><td>Built-in, cannot be renamed or deleted; always last. Holds cards whose category was deleted with “Keep the cards”.</td></tr>
+    <tr><td class="k">S7.4</td><td>New category…</td><td>Creates one inline (name + colour) and moves straight into it — no trip to S8.</td></tr>
+    <tr><td class="k">S7.5</td><td>Undo</td><td>Snackbar with UNDO for ~6 s. Moving never touches variables, dates or reminders — only the card's category.</td></tr>
+  </table>
+</figure>
+
+<!-- ============ S8 MANAGE CATEGORIES ============ -->
+<figure>
+  <h3>S8 · Manage categories<small>overflow → Manage categories</small></h3>
+  <div class="phone">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="appbar"><div class="ib"><svg class="ic"><use href="#i-back"/></svg></div><div class="t">Categories<small>6 categories · 23 cards</small></div></div>
+    <div class="body">
+      <div class="mrow"><svg class="ic dg"><use href="#i-drag"/></svg><i class="dot c-blue"></i><div class="l"><b>Insurance</b><small>4 cards · next expiry 11-Oct-2026</small></div><svg class="ic mo"><use href="#i-more"/></svg><b class="n" style="position:absolute;right:4px;top:-4px">1</b></div>
+      <div class="mrow"><svg class="ic dg"><use href="#i-drag"/></svg><i class="dot c-teal"></i><div class="l"><b>Vehicle</b><small>3 cards · next expiry 20-Oct-2026</small></div><svg class="ic mo"><use href="#i-more"/></svg></div>
+      <div class="mrow"><svg class="ic dg"><use href="#i-drag"/></svg><i class="dot c-green"></i><div class="l"><b>Identity Docs</b><small>5 cards · next expiry 25-Aug-2027</small></div><svg class="ic mo"><use href="#i-more"/></svg></div>
+      <div class="mrow"><svg class="ic dg"><use href="#i-drag"/></svg><i class="dot c-amber"></i><div class="l"><b>Warranties</b><small>6 cards · 1 overdue</small></div><svg class="ic mo"><use href="#i-more"/></svg></div>
+      <div class="mrow"><svg class="ic dg"><use href="#i-drag"/></svg><i class="dot c-purple"></i><div class="l"><b>Subscriptions</b><small>2 cards · next expiry 01-Oct-2026</small></div><svg class="ic mo"><use href="#i-more"/></svg></div>
+      <div class="mrow"><svg class="ic dg"><use href="#i-drag"/></svg><i class="dot c-pink"></i><div class="l"><b>Bank &amp; Cards</b><small>3 cards · no dates</small></div><svg class="ic mo"><use href="#i-more"/></svg></div>
+      <div class="mrow un"><i class="dot c-grey" style="margin-left:29px"></i><div class="l"><b>Uncategorised</b><small>0 cards · built-in, always last</small></div><b class="n" style="position:absolute;right:4px;top:-4px">2</b></div>
+      <div class="hidden-note" style="text-align:left;padding-left:6px">Drag the handle to reorder — that order is “Manual” in S3.6 <b class="n">3</b></div>
+      <div class="spacer"></div>
+      <div class="fab"><svg class="ic"><use href="#i-plus"/></svg>New category<b class="n" style="margin-left:2px">4</b></div>
+    </div>
+    <div class="nav"><i></i></div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">Tag</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="k">S8.1</td><td>Row overflow</td><td>Rename · Colour · Move to top · <b>Delete</b>. Delete asks what happens to the cards: <b>Move them to…</b> (picker) or <b>Delete them too</b> (typed confirm) — never a silent cascade.</td></tr>
+    <tr><td class="k">S8.2</td><td>Uncategorised</td><td>Cannot be dragged, renamed, coloured or deleted. Hidden on Home while it is empty.</td></tr>
+    <tr><td class="k">S8.3</td><td>Reorder</td><td>Drag handle; the saved order drives Home when “Order sections by” = Manual.</td></tr>
+    <tr><td class="k">S8.4</td><td>New category</td><td>Name (≤ 40, unique, case-insensitive) + one of 8 colours. Also reachable from S7.4 and from the editor's category dropdown.</td></tr>
+  </table>
+</figure>
+
+<!-- ============ S9 EDITOR ============ -->
+<figure class="full">
+  <h3>S9 · Card editor — what changed<small>D1 frame S4 with the category + key date bits</small></h3>
+  <div class="phone" style="height:700px">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="appbar"><div class="ib"><svg class="ic"><use href="#i-close"/></svg></div><div class="t">Edit card</div></div>
+    <div class="body">
+      <div class="tf" style="margin-top:6px"><span class="fl" style="background:var(--bg)">Label name</span><span class="v">Car Insurance — HDFC Ergo</span></div>
+      <div class="tf sm" style="margin-top:16px"><span class="fl">Category</span><span class="v">Insurance</span><svg class="ic"><use href="#i-down"/></svg><b class="n" style="position:absolute;right:-6px;top:-8px">1</b></div>
+      <div class="hint" style="margin-top:6px">Dropdown lists every category and ends with “+ New category…”. Changing it moves the card on Save. <b class="n">2</b></div>
+
+      <div class="eh"><div class="sec-h">Dates</div><span class="add"><svg class="ic"><use href="#i-plus"/></svg>Add</span></div>
+      <div class="er"><svg class="ic h"><use href="#i-drag"/></svg><div class="tf sm name"><span class="fl">Name</span><span class="v">Policy Start</span></div><div class="tf sm val"><span class="fl">Date</span><span class="v">12-Oct-2025</span><svg class="ic"><use href="#i-cal"/></svg></div><svg class="ic star off"><use href="#i-staro"/></svg><svg class="ic x"><use href="#i-close"/></svg></div>
+      <div class="er"><svg class="ic h"><use href="#i-drag"/></svg><div class="tf sm name"><span class="fl">Name</span><span class="v">Policy Expiry</span></div><div class="tf sm val"><span class="fl">Date</span><span class="v">11-Oct-2026</span><svg class="ic"><use href="#i-cal"/></svg></div><svg class="ic star"><use href="#i-star"/></svg><svg class="ic x"><use href="#i-close"/></svg><b class="n" style="position:absolute;left:auto;right:26px;top:-8px">3</b></div>
+      <div class="hint">★ marks the <b>key date</b> — the one this card is grouped and sorted by. Exactly one per card; tapping another star moves it. <b class="n">4</b> <i class="q">Q13</i></div>
+
+      <div class="eh"><div class="sec-h">Schedulers</div><span class="add"><svg class="ic"><use href="#i-plus"/></svg>Add</span></div>
+      <div class="hint" style="margin-top:2px">Unchanged from D1 — any scheduler can still hang off any date, not only the key date. <b class="n">5</b></div>
+      <div class="bar"><div class="btn out">Cancel</div><div class="btn fill">Save</div><div class="btn del">Delete</div></div>
+    </div>
+    <div class="nav"><i></i></div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">Tag</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="k">S9.1</td><td>Category field</td><td>Was “Deck” in D1. Pre-filled from wherever the editor was opened.</td></tr>
+    <tr><td class="k">S9.2</td><td>New category inline</td><td>Creating one here does not leave the editor; the new category is selected straight away.</td></tr>
+    <tr><td class="k">S9.3</td><td>Key date star</td><td>Filled ★ = key date. First date variable added is starred automatically, so a card is never without one unless it has no dates at all.</td></tr>
+    <tr><td class="k">S9.4</td><td>Helper</td><td>States the rule where it is used, not in a help page.</td></tr>
+    <tr><td class="k">S9.5</td><td>Schedulers</td><td>Untouched by this round.</td></tr>
+  </table>
+</figure>
+
+</div><!-- /frames -->
+
+<h2 class="sec">C · Spec behind the frames</h2>
+
+<h3 class="sub">C1 · Terminology change</h3>
+<table class="tb">
+  <tr><th class="sr">SrNo.</th><th>D1 word</th><th>D2 word</th><th>Effect</th></tr>
+  <tr><td class="sr">1</td><td>Deck</td><td><b>Category</b></td><td>Same entity, renamed in the model, the UI and every string. One level only (Q11).</td></tr>
+  <tr><td class="sr">2</td><td>Deck grid + deck screen (D1 S1 + S2)</td><td><b>One Home screen</b></td><td>The grid and the separate deck screen are both gone; Home is the grouped accordion list.</td></tr>
+  <tr><td class="sr">3</td><td>“Move to deck”</td><td>“Move to category”</td><td>Now also works on many cards at once (S6 → S7).</td></tr>
+  <tr><td class="sr">4</td><td>—</td><td><b>Uncategorised</b></td><td>New built-in category, so deleting a category never has to delete cards.</td></tr>
+  <tr><td class="sr">5</td><td>—</td><td><b>Key date ★</b></td><td>New per-card marker that makes “expiry” a well-defined thing to group and sort by (C7).</td></tr>
+</table>
+
+<h3 class="sub">C2 · Grouping</h3>
+<table class="tb">
+  <tr><th class="sr">SrNo.</th><th>Group by</th><th>Sections produced</th><th>Section order</th><th>Notes</th></tr>
+  <tr><td class="sr">1</td><td><b>Category</b> (default)</td><td>One per category with at least one visible card</td><td>Manual · A–Z · Nearest date</td><td>Your accordion. Category chip is hidden on the cards.</td></tr>
+  <tr><td class="sr">2</td><td><b>Expiry month</b></td><td>Overdue · month buckets (Aug 2026, Sep 2026 …) · No date</td><td>Chronological, Overdue first, No date last</td><td>Your “Next by Expiry Date”.</td></tr>
+  <tr><td class="sr">3</td><td><b>Expiry window</b></td><td>Overdue · This week · This month · Next 3 months · Later · No date</td><td>Fixed</td><td>Steadier than months when dates span years.</td></tr>
+  <tr><td class="sr">4</td><td><b>Next reminder</b></td><td>Overdue · Today · This week · This month · Later · No reminder</td><td>Fixed</td><td>Groups by ring, not expiry.</td></tr>
+  <tr><td class="sr">5</td><td><b>None</b></td><td>None — flat list</td><td>—</td><td>Pure sort view.</td></tr>
+  <tr><td class="sr">6</td><td colspan="4">Empty sections are never drawn. Section counts always read “visible of total” (“3 of 4”) while a filter is on, plain (“4”) otherwise.</td></tr>
+</table>
+
+<h3 class="sub">C3 · Sorting</h3>
+<table class="tb">
+  <tr><th class="sr">SrNo.</th><th>Sort by</th><th>Ascending reads</th><th>Ties broken by</th><th>Cards missing the value</th></tr>
+  <tr><td class="sr">1</td><td><b>Name</b></td><td>A–Z</td><td>Recently updated</td><td>—</td></tr>
+  <tr><td class="sr">2</td><td><b>Expiry date</b> (key date, default)</td><td>Soonest first</td><td>Name A–Z</td><td>Always last, in both directions</td></tr>
+  <tr><td class="sr">3</td><td><b>Next reminder</b></td><td>Soonest first</td><td>Key date, then name</td><td>Always last</td></tr>
+  <tr><td class="sr">4</td><td><b>Recently updated</b></td><td>Newest first</td><td>Name</td><td>—</td></tr>
+  <tr><td class="sr">5</td><td><b>Recently added</b></td><td>Newest first</td><td>Name</td><td>—</td></tr>
+  <tr><td class="sr">6</td><td><b>Manual</b></td><td>Your drag order</td><td>—</td><td>Category grouping only; a card moved to another category lands at the end of that one</td></tr>
+</table>
+
+<h3 class="sub">C4 · Filters</h3>
+<table class="tb">
+  <tr><th class="sr">SrNo.</th><th>Filter</th><th>Type</th><th>Values</th></tr>
+  <tr><td class="sr">1</td><td>Categories</td><td>Multi-select</td><td>Every category + Uncategorised; none picked = all</td></tr>
+  <tr><td class="sr">2</td><td>Expiry window (key date)</td><td>Single</td><td>Any · Overdue · 7 days · 30 days · 90 days · 12 months · Custom from–to</td></tr>
+  <tr><td class="sr">3</td><td>Reminder</td><td>Single</td><td>Any · Has reminder · No reminder · Overdue · Snoozed · Off</td></tr>
+  <tr><td class="sr">4</td><td>Content</td><td>Single</td><td>Any · Has date · No date · Has data</td></tr>
+  <tr><td class="sr">5</td><td>Quick chips (Home)</td><td>Presets</td><td>All · Overdue · ≤ 30 days · No reminder — the same state as the sheet, one tap away</td></tr>
+  <tr><td class="sr">6</td><td colspan="3">Filters survive restarts. The filter button is tinted with a badge whenever anything is on, and a hidden-count note appears under the list, so a filtered view can never be mistaken for an empty app.</td></tr>
+</table>
+
+<h3 class="sub">C5 · Accordion rules</h3>
+<table class="tb">
+  <tr><th class="sr">SrNo.</th><th>Situation</th><th>Behaviour</th></tr>
+  <tr><td class="sr">1</td><td>Opening a section</td><td>The previously open one collapses in the same animation (Q12). The opened section scrolls to the top of the viewport.</td></tr>
+  <tr><td class="sr">2</td><td>App start</td><td>The last opened section reopens; if it no longer exists, everything stays collapsed.</td></tr>
+  <tr><td class="sr">3</td><td>Coming back from a card</td><td>The same section is still open and the list is at the same scroll position.</td></tr>
+  <tr><td class="sr">4</td><td>Changing group / sort / filter</td><td>Sections collapse; if exactly one section survives the filter, it opens by itself.</td></tr>
+  <tr><td class="sr">5</td><td>Search</td><td>Grouping is suspended — matches show as one flat list with a category chip on each. Clearing search restores the previous state.</td></tr>
+  <tr><td class="sr">6</td><td>Only one category exists</td><td>It opens on first launch and the header stays visible, so the control is never a mystery.</td></tr>
+  <tr><td class="sr">7</td><td>Collapse all</td><td>Overflow item; also the effect of tapping the open section's header.</td></tr>
+</table>
+
+<h3 class="sub">C6 · Category management &amp; moving</h3>
+<table class="tb">
+  <tr><th class="sr">SrNo.</th><th>Action</th><th>Where</th><th>Rules</th></tr>
+  <tr><td class="sr">1</td><td>Create</td><td>S8 FAB · S7.4 · editor dropdown</td><td>Name ≤ 40, unique case-insensitively, 1 of 8 colours; added at the end of the manual order.</td></tr>
+  <tr><td class="sr">2</td><td>Rename / recolour</td><td>S8 row overflow · Home long-press</td><td>Uniqueness re-checked; cards untouched.</td></tr>
+  <tr><td class="sr">3</td><td>Reorder</td><td>S8 drag</td><td>Drives Home when “Order sections by” = Manual.</td></tr>
+  <tr><td class="sr">4</td><td>Delete</td><td>S8 row overflow · Home long-press</td><td>Always asks: <b>Move cards to…</b> (default, picker with Uncategorised) or <b>Delete cards too</b> (typed confirm showing the count).</td></tr>
+  <tr><td class="sr">5</td><td>Move one card</td><td>Card view overflow · editor dropdown · long-press → Move</td><td>Same sheet as S7 with the count at 1.</td></tr>
+  <tr><td class="sr">6</td><td>Move many</td><td>S6 → S7</td><td>Selection may span categories; the move is one transaction with one UNDO.</td></tr>
+  <tr><td class="sr">7</td><td>What a move changes</td><td>—</td><td>Only <code>categoryId</code> and the card's manual position. Variables, dates, schedulers, reminder state and history all stay exactly as they were.</td></tr>
+  <tr><td class="sr">8</td><td>Not in 1.00</td><td>—</td><td>Dragging a card onto a collapsed header, nested sub-categories, and per-category colours on the card rows.</td></tr>
+</table>
+
+<h3 class="sub">C7 · Key date — what “expiry” means</h3>
+<table class="tb">
+  <tr><th class="sr">SrNo.</th><th>Point</th><th>Rule</th></tr>
+  <tr><td class="sr">1</td><td>Why</td><td>Date variables are freely named (“Policy Expiry”, “Warranty end”, “Renewal”), so the app has no way to guess which one “expiry” means. The star makes it explicit.</td></tr>
+  <tr><td class="sr">2</td><td>Definition</td><td>Key date = the date variable marked ★ on the card. Exactly one; the first date added is starred automatically.</td></tr>
+  <tr><td class="sr">3</td><td>Used by</td><td>Home preview line · Expiry-month and Expiry-window grouping · Expiry-date sorting · the expiry filter · the category summary line.</td></tr>
+  <tr><td class="sr">4</td><td>No dates</td><td>Card lands in “No date”, sorts last, and shows its first data variable in the preview line instead.</td></tr>
+  <tr><td class="sr">5</td><td>Alternative (Q13)</td><td>Instead of the star: always use the <b>nearest upcoming</b> date on the card. Zero setup, but a card silently changes group as dates pass. I recommend the star.</td></tr>
+</table>
+
+<h3 class="sub">C8 · Data-model deltas from D1</h3>
+<table class="tb">
+  <tr><th class="sr">SrNo.</th><th>Entity</th><th>Change</th></tr>
+  <tr><td class="sr">1</td><td>Deck → <b>Category</b></td><td>Renamed; fields unchanged (id · name · colour · sortOrder · createdAt · updatedAt). Row id 0 reserved for Uncategorised, undeletable.</td></tr>
+  <tr><td class="sr">2</td><td>Card</td><td><code>deckId</code> → <code>categoryId</code>; new <code>keyDateVarId</code> (nullable) and <code>manualOrder</code>.</td></tr>
+  <tr><td class="sr">3</td><td>DateVar</td><td>No new field — the star lives on the card as <code>keyDateVarId</code>, so it cannot get out of step with two rows claiming it.</td></tr>
+  <tr><td class="sr">4</td><td>Settings (DataStore)</td><td>New: <code>groupBy</code> · <code>groupOrder</code> · <code>accordionSingleOpen</code> · <code>sortBy</code> · <code>sortAsc</code> · <code>filterState</code> · <code>openSectionKey</code>.</td></tr>
+  <tr><td class="sr">5</td><td>Schema</td><td>Still v1 — this is all pre-release, so no migration is needed.</td></tr>
+  <tr><td class="sr">6</td><td>Tests (three companions)</td><td>Grouper (every mode, empty sections, catch-all buckets, counts) · Comparator (every sort, both directions, missing values last, tie-breaks) · Filter matcher (each group and combinations) · Move transaction (multi-card, cross-category, undo) · Category delete with both card outcomes · Key-date resolution · Accordion state persistence.</td></tr>
+</table>
+
+<h3 class="sub">C9 · D1 frames — what carries over</h3>
+<table class="tb">
+  <tr><th class="sr">SrNo.</th><th>D1 frame</th><th>Status</th></tr>
+  <tr><td class="sr">1</td><td>S1 Home (deck grid)</td><td><b>Replaced</b> by D2 S1 / S2.</td></tr>
+  <tr><td class="sr">2</td><td>S2 Deck — cards list</td><td><b>Removed</b> — its content is now the expanded section on Home.</td></tr>
+  <tr><td class="sr">3</td><td>S3 Card view</td><td>Kept; the “deck chip” becomes a category chip that opens Home with that category expanded.</td></tr>
+  <tr><td class="sr">4</td><td>S4 Card editor</td><td>Kept, with the two changes drawn in D2 S9.</td></tr>
+  <tr><td class="sr">5</td><td>S5 Scheduler sheet</td><td>Unchanged.</td></tr>
+  <tr><td class="sr">6</td><td>S6 Upcoming</td><td>Unchanged; its filter now offers the same category multi-select as S5.</td></tr>
+  <tr><td class="sr">7</td><td>S7 The ring</td><td>Unchanged, except the notification line says the category name.</td></tr>
+  <tr><td class="sr">8</td><td>S8 New deck sheet</td><td>Becomes the New category sheet, reachable from S8 / S7.4 / the editor.</td></tr>
+  <tr><td class="sr">9</td><td>S9 Settings</td><td>Kept; Appearance loses “Deck layout” (no grid any more) and gains <b>Default grouping</b> and <b>One section open at a time</b>.</td></tr>
+</table>
+
+<h3 class="sub">C10 · Open questions — answer by number, or “defaults” for every recommended value</h3>
+<table class="tb">
+  <tr><th class="sr">Q</th><th>Question</th><th>Options</th><th>Recommended (= drawn)</th></tr>
+  <tr><td class="q">Q11</td><td>Deck vs Category</td><td>(a) one level, Deck renamed Category — as drawn · (b) two levels: Deck ▸ Category ▸ Card</td><td class="rec">(a)</td></tr>
+  <tr><td class="q">Q12</td><td>One section open at a time</td><td>(a) always on, hard rule · (b) on by default but switchable in S3.7 — as drawn · (c) applies to Category grouping only, date groups open freely</td><td class="rec">(b)</td></tr>
+  <tr><td class="q">Q13</td><td>What is a card's “expiry date”</td><td>(a) the ★ key date — as drawn · (b) the nearest upcoming date on the card, automatic</td><td class="rec">(a)</td></tr>
+  <tr><td class="q">Q14</td><td>Default view on first launch</td><td>(a) Group by Category, sort by Expiry ↑ — as drawn · (b) Group by Expiry month · (c) flat list sorted by name</td><td class="rec">(a)</td></tr>
+  <tr><td class="q">Q15</td><td>Card preview line</td><td>(a) key date + countdown + ring chip — as drawn · (b) first data variable instead · (c) both lines</td><td class="rec">(a)</td></tr>
+  <tr><td class="q">Q16</td><td>Deleting a category</td><td>(a) always ask: move cards or delete them — as drawn · (b) always move to Uncategorised silently</td><td class="rec">(a)</td></tr>
+  <tr><td class="q">Q17</td><td>Bulk actions in selection mode</td><td>(a) Move · Reminders on/off · Duplicate · Delete — as drawn · (b) Move and Delete only</td><td class="rec">(a)</td></tr>
+</table>
+<p class="note" style="margin-top:12px"><b>Still open from D1:</b> Q1 app name/package · Q2 what a “label” is · Q3 variables per card · Q4 alphanumeric strictness · Q5 Before/After · Q6 notification vs alarm-style · Q7 repeat · Q8 local vs Firestore · Q9 app lock · Q10 versioning. “Defaults” covers D1 and D2 together.</p>
+<p class="note">Next step after your corrections: <code>BACKLOG.md</code> for InfoDeck carrying D1 + D2 as the v1.00 spec, every item with its three companions (exception handling · Logger.e · tests). Nothing is built until you say <b>build</b> or <b>release</b>.</p>
+</div>
+</body>
+</html>
