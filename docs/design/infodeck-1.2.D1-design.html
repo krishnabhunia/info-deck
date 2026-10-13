@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InfoDeck — v1.2 D1 design · visual overhaul, Save/Undo/Discard, friendly text size</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100..900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* new token set */
+    --ink:#131A26; --ink2:#5A6675; --hint:#96A0AF;
+    --pri:#2F4FCD; --pri-2:#5A6BF0; --pri-3:#7A5AF8; --pri-d:#1E357F;
+    --pri-c:#E7EBFF; --on-pri-c:#22337F;
+    --ok:#1E8E5A; --ok-c:#E3F5EC;
+    --warn:#A9700D; --warn-c:#FDF2DC;
+    --err:#C0392F; --err-c:#FCEAE8;
+    --bg:#F5F7FB; --card:#FFFFFF; --line:#E6EAF2; --outline:#C3CBDA;
+    --page:#E3E7F0; --tag:#22337F; --q:#7A5A00; --q-bg:#FFF3C4; --q-bd:#E2C35C;
+    --r-lg:20px; --r-md:16px; --r-sm:12px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--page);font-family:Roboto,"Segoe UI",system-ui,-apple-system,sans-serif;color:var(--ink);padding:26px 18px 70px}
+  .wrap{max-width:1180px;margin:0 auto}
+  header.page h1{font-size:24px;font-weight:800;color:var(--pri-d)}
+  header.page p{font-size:13.5px;color:var(--ink2);margin-top:5px;line-height:1.55}
+  .stamp{display:inline-block;margin:10px 8px 0 0;font-size:12px;font-weight:700;color:#7A2E00;background:#FFE1CC;border:1px solid #E8B08C;border-radius:20px;padding:3px 12px}
+  .stamp.g{color:var(--on-pri-c);background:var(--pri-c);border-color:#B9C3F5}
+  .stamp.r{color:#8A1F19;background:var(--err-c);border-color:#E7ADA8}
+  h2.sec{font-size:18px;font-weight:800;color:var(--pri-d);margin:38px 0 12px;padding-bottom:6px;border-bottom:2px solid #C9D1DD}
+  h3.sub{font-size:15px;color:var(--pri-d);margin-top:20px}
+  .note{font-size:13px;color:var(--ink2);line-height:1.5;margin:6px 0 10px}
+  .rej-box{background:var(--err-c);border:1px solid #E7ADA8;border-radius:10px;padding:12px 14px;font-size:13.5px;line-height:1.55;margin:10px 0 4px}
+  .rej-box b{color:#8A1F19}
+  .warn-box{background:#FFF6E5;border:1px solid #E8C98C;border-radius:10px;padding:12px 14px;font-size:13.5px;line-height:1.55;margin:10px 0 4px}
+  .warn-box b{color:#7A4A00}
+
+  table.tb{width:100%;border-collapse:collapse;font-size:12.5px;background:#fff;margin:6px 0 4px}
+  table.tb th{background:#E9EDF8;color:var(--pri-d);text-align:left;padding:6px 8px;border:1px solid #BFC9D8;font-size:12px}
+  table.tb td{padding:6px 8px;border:1px solid #D2D9E3;vertical-align:top;line-height:1.45}
+  table.tb .sr{width:1%;white-space:nowrap;text-align:center}
+  table.tb td.k{white-space:nowrap;font-weight:700;color:var(--tag)}
+  table.tb td.q{white-space:nowrap;font-weight:700;color:var(--q)}
+  table.tb td.rec{color:var(--ok);font-weight:600}
+  table.tb td.new{white-space:nowrap;font-weight:700;color:var(--ok)}
+  table.tb td.del{white-space:nowrap;font-weight:700;color:var(--err)}
+  table.tb tr:nth-child(even) td{background:#FAFBFD}
+  code{font-family:Consolas,Menlo,monospace;font-size:12px;background:#EEF1F5;padding:1px 4px;border-radius:3px}
+  .sw-row{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0 2px}
+  .sw-row i{width:78px;height:52px;border-radius:10px;display:flex;align-items:flex-end;justify-content:center;font-size:9.5px;font-weight:800;color:#fff;padding-bottom:4px;font-style:normal;letter-spacing:.02em}
+
+  .frames{display:grid;grid-template-columns:repeat(auto-fit,minmax(520px,1fr));gap:34px 28px;margin-top:14px}
+  figure{display:flex;flex-direction:column;align-items:center;gap:8px}
+  figure h3{font-size:15px;font-weight:800;color:var(--pri-d);align-self:flex-start}
+  figure h3 small{font-weight:500;color:var(--ink2);font-size:12.5px;margin-left:6px}
+  figure table.tb{font-size:12px}
+  figure.full{grid-column:1 / -1}
+  figure.full h3{align-self:center}
+  figure.full table.tb{max-width:880px}
+  .duo{display:flex;gap:26px;justify-content:center;flex-wrap:wrap}
+
+  b.n{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:8px;background:var(--tag);color:#fff;font-size:10px;font-weight:800;line-height:1;flex-shrink:0;font-style:normal}
+  b.n.d{background:var(--err)}
+  i.q{display:inline-flex;align-items:center;font-style:normal;font-size:10px;font-weight:800;color:var(--q);background:var(--q-bg);border:1px solid var(--q-bd);border-radius:9px;padding:1px 6px;line-height:1.3}
+
+  .phone{width:378px;height:790px;background:var(--bg);border:9px solid #12151C;border-radius:38px;overflow:hidden;position:relative;box-shadow:0 16px 38px rgba(20,30,50,.22);display:flex;flex-direction:column;flex-shrink:0}
+  .sb{height:24px;background:transparent;color:#fff;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:space-between;padding:0 18px;flex-shrink:0;position:absolute;left:0;right:0;top:0;z-index:3}
+  .sb.dark{color:var(--ink)}
+
+  /* hero */
+  .hero{background:linear-gradient(135deg,var(--pri) 0%,var(--pri-2) 55%,var(--pri-3) 100%);padding:30px 16px 16px;border-radius:0 0 26px 26px;color:#fff;position:relative;flex-shrink:0}
+  .hero .top{display:flex;align-items:center;gap:6px}
+  .hero .top .t{flex:1}
+  .hero .top .t b{display:block;font-size:20px;font-weight:800;letter-spacing:-.2px}
+  .hero .top .t small{display:block;font-size:12px;opacity:.92;margin-top:1px}
+  .hero .ib{width:38px;height:38px;border-radius:19px;background:rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;position:relative}
+  .hero .stats{display:flex;gap:8px;margin-top:14px}
+  .hero .stat{flex:1;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.22);border-radius:14px;padding:8px 9px}
+  .hero .stat b{display:block;font-size:19px;font-weight:800;line-height:1.1}
+  .hero .stat small{display:block;font-size:10.5px;opacity:.92;margin-top:1px}
+  .hero .stat.alert{background:rgba(255,255,255,.94);border-color:#fff;color:var(--err)}
+  .hero .stat.alert small{color:var(--err);opacity:.85}
+  .ic{width:22px;height:22px;fill:currentColor;flex-shrink:0}
+  .ic.s{width:18px;height:18px}
+  .body{flex:1;overflow:hidden;position:relative;padding:12px 14px 0}
+
+  /* search pill */
+  .searchpill{display:flex;align-items:center;gap:8px;height:42px;background:#fff;border-radius:21px;padding:0 14px;box-shadow:0 3px 10px rgba(25,40,80,.08);margin:-30px 2px 12px;position:relative;z-index:2}
+  .searchpill span{flex:1;font-size:13.5px;color:var(--hint)}
+  .searchpill .ic{color:var(--ink2)}
+
+  /* control row */
+  .ctl{display:flex;align-items:center;gap:7px;padding:0 2px 10px;position:relative}
+  .cchip{display:inline-flex;align-items:center;gap:5px;height:34px;padding:0 12px;border-radius:17px;background:#fff;font-size:12.5px;font-weight:700;color:var(--ink);box-shadow:0 2px 6px rgba(25,40,80,.07);white-space:nowrap}
+  .cchip .ic{width:15px;height:15px;color:var(--pri)}
+  .cchip.on{background:var(--pri);color:#fff}
+  .cchip.on .ic{color:#fff}
+  .fbtn{margin-left:auto;width:36px;height:34px;border-radius:17px;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(25,40,80,.07);position:relative}
+  .fbtn .ic{width:17px;height:17px;color:var(--pri)}
+  .fbtn .bdg{position:absolute;top:-4px;right:-4px;min-width:16px;height:16px;border-radius:8px;background:var(--pri-3);color:#fff;font-size:9.5px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 4px}
+
+  /* section header */
+  .sec-card{background:#fff;border-radius:var(--r-md);margin-bottom:10px;box-shadow:0 2px 8px rgba(25,40,80,.07);overflow:hidden;position:relative}
+  .sec-hd{display:flex;align-items:center;gap:10px;padding:11px 12px;min-height:56px}
+  .sec-hd .dot{width:32px;height:32px;border-radius:11px;display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0}
+  .sec-hd .dot .ic{width:17px;height:17px}
+  .sec-hd .l{flex:1;min-width:0}
+  .sec-hd .l b{display:block;font-size:14.5px;font-weight:700;letter-spacing:-.1px}
+  .sec-hd .l small{display:block;font-size:11.5px;color:var(--ink2);margin-top:1px}
+  .sec-hd .cnt{font-size:11.5px;font-weight:800;color:var(--pri);background:var(--pri-c);border-radius:11px;padding:3px 9px}
+  .sec-hd .chev{width:20px;height:20px;color:var(--hint)}
+  .sec-card.open .sec-hd{background:linear-gradient(180deg,rgba(47,79,205,.07),rgba(47,79,205,0))}
+  .sec-card.open .chev{transform:rotate(180deg)}
+  .inner{padding:2px 10px 10px}
+
+  /* the card */
+  .idc{display:flex;gap:11px;align-items:center;background:#fff;border-radius:var(--r-md);padding:11px 12px;margin-bottom:9px;box-shadow:0 2px 8px rgba(25,40,80,.07);position:relative;overflow:hidden}
+  .idc:before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--pri)}
+  .idc.od:before{background:var(--err)}
+  .idc.od{background:linear-gradient(90deg,rgba(192,57,47,.055),#fff 42%)}
+  .idc .l{flex:1;min-width:0}
+  .idc .tt{font-size:14.5px;font-weight:700;letter-spacing:-.1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .idc .kv{font-size:11.5px;color:var(--ink2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .idc .kv b{color:var(--ink);font-weight:700}
+  .idc .rw{display:flex;gap:5px;align-items:center;margin-top:7px;flex-wrap:wrap}
+  .ring{width:50px;height:50px;border-radius:25px;flex-shrink:0;display:flex;align-items:center;justify-content:center;position:relative}
+  .ring .inner2{width:40px;height:40px;border-radius:20px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .ring .inner2 b{font-size:14px;font-weight:800;line-height:1}
+  .ring .inner2 small{font-size:8.5px;font-weight:700;color:var(--ink2);letter-spacing:.02em}
+  .chip{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:11px}
+  .chip.cat{background:var(--pri-c);color:var(--on-pri-c)}
+  .chip.alarm{background:var(--warn-c);color:var(--warn)}
+  .chip.tg{background:#EFF1F6;color:var(--ink2)}
+  .chip.file{background:#F0EAFB;color:#5B3FA0}
+  .chip.none{background:#F1F3F7;color:var(--hint)}
+  .chip .ic{width:11px;height:11px}
+
+  /* bottom nav */
+  .bnav{position:absolute;left:0;right:0;bottom:0;height:66px;background:#fff;border-top:1px solid var(--line);display:flex;align-items:center;padding:0 6px;box-shadow:0 -4px 16px rgba(25,40,80,.06)}
+  .bnav .it{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--hint);font-size:10.5px;font-weight:700;position:relative}
+  .bnav .it .pillbg{width:52px;height:28px;border-radius:14px;display:flex;align-items:center;justify-content:center}
+  .bnav .it.on{color:var(--pri)}
+  .bnav .it.on .pillbg{background:var(--pri-c)}
+  .fab{position:absolute;right:16px;bottom:82px;height:52px;padding:0 20px 0 16px;border-radius:18px;background:linear-gradient(135deg,var(--pri),var(--pri-3));color:#fff;font-weight:800;font-size:14px;display:flex;align-items:center;gap:8px;box-shadow:0 8px 20px rgba(47,79,205,.35)}
+
+  /* action bar: Discard / Undo / Save */
+  .abar{position:absolute;left:0;right:0;bottom:0;padding:12px 14px 14px;background:linear-gradient(180deg,rgba(245,247,251,0),var(--bg) 22%);display:flex;gap:9px}
+  .abtn{flex:1;height:50px;border-radius:14px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:13.5px;font-weight:800}
+  .abtn .ic{width:16px;height:16px}
+  .abtn.disc{border:1.5px solid #E2B4B0;color:var(--err);background:#fff}
+  .abtn.undo{border:1.5px solid var(--outline);color:var(--ink2);background:#fff}
+  .abtn.undo.off{opacity:.42}
+  .abtn.save{background:linear-gradient(135deg,var(--pri),var(--pri-3));color:#fff;box-shadow:0 6px 14px rgba(47,79,205,.3)}
+  .abtn.save.off{background:#C7CEE4;box-shadow:none}
+
+  /* forms */
+  .fld{background:#fff;border-radius:14px;padding:11px 13px;margin-bottom:10px;box-shadow:0 2px 6px rgba(25,40,80,.06);position:relative}
+  .fld .fl{font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--pri);margin-bottom:3px}
+  .fld .v{font-size:14.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .fld .v.hint{color:var(--hint);font-weight:400}
+  .fld.row{display:flex;align-items:center;gap:10px}
+  .fld .ic.tr{color:var(--ink2);width:20px;height:20px}
+  .grp{display:flex;gap:9px;margin-bottom:10px}
+  .grp .fld{margin-bottom:0}
+  .lab{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--pri);margin:14px 0 7px 4px;display:flex;align-items:center;gap:6px}
+  .lab .add{margin-left:auto;font-size:12px;font-weight:800;color:var(--pri);display:flex;align-items:center;gap:3px;text-transform:none;letter-spacing:0}
+  .lab.dz{color:var(--err)}
+
+  /* settings rows */
+  .scard{background:#fff;border-radius:var(--r-md);overflow:hidden;box-shadow:0 2px 8px rgba(25,40,80,.07);position:relative}
+  .srow{display:flex;align-items:center;gap:12px;padding:11px 13px;min-height:54px;border-bottom:1px solid var(--line)}
+  .srow:last-child{border-bottom:0}
+  .srow .si{width:34px;height:34px;border-radius:12px;background:var(--pri-c);color:var(--pri);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .srow .si.warn{background:var(--warn-c);color:var(--warn)}
+  .srow .si.err{background:var(--err-c);color:var(--err)}
+  .srow .l{flex:1;min-width:0}
+  .srow .l b{display:block;font-size:14px;font-weight:600}
+  .srow .l small{display:block;font-size:11.5px;color:var(--ink2);line-height:1.35;margin-top:1px}
+  .srow .val{font-size:12.5px;font-weight:700;color:var(--pri);white-space:nowrap}
+  .srow .ic.ch{width:19px;height:19px;color:var(--hint)}
+  .sw{width:46px;height:26px;border-radius:13px;background:#CDD4E0;position:relative;flex-shrink:0}
+  .sw i{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:10px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+  .sw.on{background:var(--pri)}
+  .sw.on i{left:23px}
+
+  /* text-size screen */
+  .aa{background:#fff;border-radius:var(--r-lg);padding:16px 14px;box-shadow:0 3px 12px rgba(25,40,80,.09);text-align:center;position:relative}
+  .aa .name{font-size:22px;font-weight:800;color:var(--pri-d);letter-spacing:-.3px}
+  .aa .sub{font-size:11.5px;color:var(--ink2);margin-top:2px}
+  .aabtns{display:flex;align-items:center;justify-content:center;gap:18px;margin-top:12px}
+  .aabtn{width:64px;height:64px;border-radius:22px;background:var(--pri-c);color:var(--pri);display:flex;align-items:center;justify-content:center;font-weight:800;box-shadow:0 3px 10px rgba(47,79,205,.16)}
+  .aabtn.small{font-size:19px}
+  .aabtn.big{font-size:30px}
+  .steps{display:flex;gap:5px;justify-content:center;margin-top:14px}
+  .steps i{width:22px;height:6px;border-radius:3px;background:#DDE2EE}
+  .steps i.on{background:var(--pri);width:34px}
+  .sizecards{display:flex;gap:8px;margin-top:12px}
+  .sizecard{flex:1;background:#fff;border-radius:14px;padding:10px 8px;text-align:center;box-shadow:0 2px 6px rgba(25,40,80,.06)}
+  .sizecard b{display:block;font-weight:800;color:var(--ink)}
+  .sizecard small{display:block;font-size:10px;color:var(--ink2);margin-top:2px}
+  .sizecard.on{background:var(--pri);color:#fff}
+  .sizecard.on b,.sizecard.on small{color:#fff}
+  .miniprev{background:#fff;border-radius:var(--r-md);padding:22px 10px 10px;box-shadow:0 2px 8px rgba(25,40,80,.07);position:relative}
+  .miniprev .plab{position:absolute;right:10px;top:8px;font-size:9.5px;font-weight:800;color:var(--hint);letter-spacing:.06em}
+  .tri{display:flex;background:#EFF2F8;border-radius:14px;padding:4px;gap:4px}
+  .tri span{flex:1;text-align:center;font-size:12px;font-weight:700;color:var(--ink2);padding:7px 0;border-radius:11px}
+  .tri span.on{background:#fff;color:var(--pri);box-shadow:0 2px 5px rgba(25,40,80,.12)}
+
+  /* sheets & dialogs */
+  .dim{position:absolute;inset:0;background:rgba(12,18,30,.5)}
+  .sheet{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:26px 26px 0 0;padding:10px 16px 0;max-height:92%;overflow:hidden}
+  .grab{width:36px;height:4px;border-radius:2px;background:#D3D9E4;margin:0 auto 12px}
+  .sheet h4{font-size:17.5px;font-weight:800;margin-bottom:8px;display:flex;align-items:center;gap:9px}
+  .sheet p.sd{font-size:12.5px;color:var(--ink2);line-height:1.45;margin-bottom:6px}
+  .opt{display:flex;align-items:center;gap:11px;padding:10px 2px;border-bottom:1px solid var(--line);min-height:48px}
+  .opt:last-of-type{border-bottom:0}
+  .opt .l{flex:1;min-width:0}
+  .opt .l b{display:block;font-size:14px;font-weight:600}
+  .opt .l small{display:block;font-size:11.5px;color:var(--ink2)}
+  .rad{width:21px;height:21px;border-radius:11px;border:2px solid var(--outline);flex-shrink:0}
+  .rad.on{border-color:var(--pri);border-width:7px}
+  .sbs{height:32px;margin:12px -16px 0;border-top:1px dashed #C9D1DD;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--hint)}
+  .dlg{position:absolute;left:20px;right:20px;top:50%;transform:translateY(-50%);background:#fff;border-radius:24px;padding:20px;box-shadow:0 18px 46px rgba(0,0,0,.35)}
+  .dlg .di{width:46px;height:46px;border-radius:16px;display:flex;align-items:center;justify-content:center;margin-bottom:12px}
+  .dlg .di.warn{background:var(--warn-c);color:var(--warn)}
+  .dlg .di.err{background:var(--err-c);color:var(--err)}
+  .dlg h5{font-size:17px;font-weight:800;margin-bottom:6px}
+  .dlg p{font-size:13.5px;color:var(--ink2);line-height:1.5}
+  .dlg .acts{display:flex;gap:9px;margin-top:16px}
+  .dlg .acts .b{flex:1;height:46px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:13.5px;font-weight:800}
+  .dlg .acts .b.keep{border:1.5px solid var(--outline);color:var(--ink2)}
+  .dlg .acts .b.go{background:var(--err);color:#fff}
+  .dlg .acts .b.gob{background:var(--pri);color:#fff}
+  .toast{position:absolute;left:14px;right:14px;bottom:82px;background:#18202E;color:#fff;border-radius:16px;padding:13px 15px;font-size:13px;display:flex;align-items:center;gap:10px;box-shadow:0 10px 24px rgba(0,0,0,.32)}
+  .toast b{margin-left:auto;color:#9DB4FF;font-weight:800}
+  .toast .ic{width:18px;height:18px;color:#7FE0AC}
+
+  /* tag + file bits */
+  .tchip{display:inline-flex;align-items:center;gap:5px;height:30px;padding:0 12px;border-radius:15px;background:#EFF1F6;font-size:12.5px;font-weight:700;color:var(--ink2)}
+  .tchip.on{background:var(--pri-c);color:var(--on-pri-c)}
+  .tchip .x{color:var(--hint);font-size:13px}
+  .frow{display:flex;align-items:center;gap:11px;background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:9px;box-shadow:0 2px 6px rgba(25,40,80,.06)}
+  .frow .fi{width:36px;height:42px;border-radius:8px;display:flex;align-items:flex-end;justify-content:center;font-size:9px;font-weight:800;color:#fff;padding-bottom:5px}
+  .frow .fi.pdf{background:linear-gradient(160deg,#E0574B,#B8271B)}
+  .frow .fi.doc{background:linear-gradient(160deg,#4B7BD6,#20509E)}
+  .frow .l{flex:1;min-width:0}
+  .frow .l b{display:block;font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .frow .l small{display:block;font-size:11.5px;color:var(--ink2)}
+  .frow .op{font-size:12.5px;font-weight:800;color:var(--pri)}
+  .empty{display:flex;flex-direction:column;align-items:center;text-align:center;padding:34px 20px}
+  .empty .art{width:96px;height:96px;border-radius:32px;background:linear-gradient(135deg,var(--pri-c),#EFE7FD);display:flex;align-items:center;justify-content:center;color:var(--pri);margin-bottom:14px}
+  .empty .art .ic{width:44px;height:44px}
+  .empty b{font-size:16px;font-weight:800}
+  .empty small{font-size:12.5px;color:var(--ink2);margin-top:5px;line-height:1.5}
+  .c-blue{background:linear-gradient(150deg,#5670D8,#3A50B4)}
+  .c-teal{background:linear-gradient(150deg,#33A29B,#1F7B76)}
+  .c-green{background:linear-gradient(150deg,#5CA84C,#3C8032)}
+  .c-amber{background:linear-gradient(150deg,#E2A02A,#B87706)}
+  .c-red{background:linear-gradient(150deg,#DE5F53,#B23A2F)}
+  .c-grey{background:linear-gradient(150deg,#8B95A5,#68717F)}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></symbol>
+  <symbol id="i-alarm" viewBox="0 0 24 24"><path d="M12.5 8H11v6l4.75 2.85.75-1.23-4-2.37V8zM12 4c-4.97 0-9 4.03-9 9s4.02 9 9 9c4.97 0 9-4.03 9-9s-4.03-9-9-9zm0 16c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="M10 6 8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></symbol>
+  <symbol id="i-filter" viewBox="0 0 24 24"><path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/></symbol>
+  <symbol id="i-tick" viewBox="0 0 24 24"><path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M16.59 8.59 12 13.17 7.41 8.59 6 10l6 6 6-6z"/></symbol>
+  <symbol id="i-group" viewBox="0 0 24 24"><path d="M3 5h8v2H3V5zm0 6h8v2H3v-2zm0 6h8v2H3v-2zm10-9h8v2h-8V8zm0 6h8v2h-8v-2z"/></symbol>
+  <symbol id="i-sort" viewBox="0 0 24 24"><path d="M3 18h6v-2H3v2zM3 6v2h18V6H3zm0 7h12v-2H3v2z"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 24 24"><path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62A7.94 7.94 0 0 1 12.5 11c3.54 0 6.55 2.31 7.6 5.5l2.37-.78A10.02 10.02 0 0 0 12.5 8z"/></symbol>
+  <symbol id="i-save" viewBox="0 0 24 24"><path d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm3-10H5V5h10v4z"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 1 3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 17.27 6.18 3.73-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></symbol>
+  <symbol id="i-text" viewBox="0 0 24 24"><path d="M2.5 4v3h5v12h3V7h5V4h-13zm19 5h-9v3h3v7h3v-7h3V9z"/></symbol>
+  <symbol id="i-label" viewBox="0 0 24 24"><path d="M17.63 5.84A2 2 0 0 0 16 5H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h11a2 2 0 0 0 1.63-.84L22 12l-4.37-6.16z"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.48.48 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1 1 12 8.4a3.6 3.6 0 0 1 0 7.2z"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2V6a2 2 0 0 0-2-2zm0 16H5V9h14v11z"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></symbol>
+  <symbol id="i-attach" viewBox="0 0 24 24"><path d="M16.5 6v11.5a4 4 0 0 1-8 0V5a2.5 2.5 0 0 1 5 0v10.5a1 1 0 0 1-2 0V6H10v9.5a2.5 2.5 0 0 0 5 0V5a4 4 0 0 0-8 0v12.5a5.5 5.5 0 0 0 11 0V6h-1.5z"/></symbol>
+  <symbol id="i-restore" viewBox="0 0 24 24"><path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6a7 7 0 1 1 2.05 4.95l-1.42 1.42A9 9 0 1 0 13 3zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zm0 12a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9zm0-7a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z"/></symbol>
+</svg>
+
+<div class="wrap">
+<header class="page">
+  <h1>InfoDeck — v1.2 · D1 design</h1>
+  <p>Three things you asked for: <b>1)</b> a proper visual overhaul — the app currently looks like a settings list, not a product; <b>2)</b> <b>Save · Undo · Discard</b> on every editing surface, and <b>no reset that acts without confirmation</b>; <b>3)</b> text customisation that talks in <b>words, not percentages</b>. Mock date <b>Tue 18-Aug-2026</b>.</p>
+  <span class="stamp r">1.2's slider-and-percent text screen — replaced, see C4</span>
+  <span class="stamp">DESIGN ONLY · nothing built · no version bump</span>
+  <span class="stamp g">Reply by tag: “S1.4 → smaller”, “Q3 → b”, or “defaults” = all recommended</span>
+</header>
+
+<div class="rej-box"><b>Your item “3.” is still blank</b> from the previous round, and I never got an answer. It stays open as Q12 — one line from you and it joins this design.</div>
+
+<h2 class="sec">A · Screens</h2>
+<div class="frames">
+
+<!-- S1 -->
+<figure>
+  <h3>S1 · Home — the new look<small>hero, glanceable cards, bottom bar</small></h3>
+  <div class="phone">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="hero">
+      <div class="top">
+        <div class="t"><b>Good morning</b><small>18 cards · 2 need attention</small></div>
+        <div class="ib"><svg class="ic"><use href="#i-bell"/></svg></div>
+        <div class="ib" style="margin-left:6px"><svg class="ic"><use href="#i-more"/></svg></div>
+        <b class="n" style="position:absolute;right:10px;top:26px">1</b>
+      </div>
+      <div class="stats">
+        <div class="stat alert"><b>1</b><small>Overdue</small></div>
+        <div class="stat"><b>3</b><small>This month</small></div>
+        <div class="stat"><b>5</b><small>No reminder</small></div>
+        <b class="n" style="position:absolute;left:10px;bottom:8px">2</b>
+      </div>
+    </div>
+    <div class="body">
+      <div class="searchpill"><svg class="ic s"><use href="#i-search"/></svg><span>Search cards, tags, files</span><b class="n">3</b></div>
+      <div class="ctl">
+        <span class="cchip on"><svg class="ic"><use href="#i-group"/></svg>Category<svg class="ic"><use href="#i-down"/></svg></span>
+        <span class="cchip"><svg class="ic"><use href="#i-sort"/></svg>Expiry ↑</span>
+        <span class="fbtn"><svg class="ic"><use href="#i-filter"/></svg><span class="bdg">1</span></span>
+      </div>
+
+      <div class="idc od">
+        <div class="l">
+          <div class="tt">Bike Insurance — ICICI Lombard</div>
+          <div class="kv">Policy Expiry <b>12-Oct-2025</b></div>
+          <div class="rw"><span class="chip cat">Insurance</span><span class="chip tg">#renewal</span><span class="chip none">No reminder</span></div>
+        </div>
+        <div class="ring" style="background:conic-gradient(var(--err) 0 100%,#EEF1F6 0)"><div class="inner2"><b style="color:var(--err)">310</b><small>AGO</small></div></div>
+        <b class="n d" style="position:absolute;right:6px;bottom:5px">4</b>
+      </div>
+
+      <div class="idc">
+        <div class="l">
+          <div class="tt">Laptop Warranty — Dell XPS</div>
+          <div class="kv">Warranty End <b>07-Sep-2026</b></div>
+          <div class="rw"><span class="chip cat">Warranties</span><span class="chip alarm"><svg class="ic"><use href="#i-alarm"/></svg>25-Aug</span><span class="chip file">1 file</span></div>
+        </div>
+        <div class="ring" style="background:conic-gradient(var(--warn) 0 78%,#EEF1F6 0)"><div class="inner2"><b style="color:var(--warn)">20</b><small>DAYS</small></div></div>
+        <b class="n" style="position:absolute;right:6px;bottom:5px">5</b>
+      </div>
+
+      <div class="idc">
+        <div class="l">
+          <div class="tt">Car Insurance — HDFC Ergo</div>
+          <div class="kv">Policy Expiry <b>11-Oct-2026</b></div>
+          <div class="rw"><span class="chip cat">Insurance</span><span class="chip alarm"><svg class="ic"><use href="#i-alarm"/></svg>11-Sep</span><span class="chip tg">#vehicle</span></div>
+        </div>
+        <div class="ring" style="background:conic-gradient(var(--ok) 0 42%,#EEF1F6 0)"><div class="inner2"><b style="color:var(--ok)">54</b><small>DAYS</small></div></div>
+      </div>
+
+      <div class="fab"><svg class="ic"><use href="#i-plus"/></svg>New card</div>
+      <div class="bnav">
+        <div class="it on"><span class="pillbg"><svg class="ic"><use href="#i-home"/></svg></span>Home</div>
+        <div class="it"><span class="pillbg"><svg class="ic"><use href="#i-cal"/></svg></span>Upcoming</div>
+        <div class="it"><span class="pillbg"><svg class="ic"><use href="#i-label"/></svg></span>Tags</div>
+        <div class="it"><span class="pillbg"><svg class="ic"><use href="#i-gear"/></svg></span>Settings</div>
+        <b class="n" style="position:absolute;left:8px;top:2px">6</b>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="new">Hero header</td><td>Gradient indigo→violet, rounded bottom. Replaces the flat blue app bar. Collapses to a slim bar as you scroll</td></tr>
+    <tr><td class="sr">2</td><td class="new">Stat pills</td><td>Overdue · This month · No reminder — each is a one-tap filter. Overdue inverts to white-on-red when it is non-zero, so the app tells you what matters before you read anything</td></tr>
+    <tr><td class="sr">3</td><td class="new">Search pill</td><td>Floats over the hero edge. Searches labels, values, tags and file names</td></tr>
+    <tr><td class="sr">4</td><td class="new">Overdue card</td><td>Red left rail, faint red wash, red ring. Impossible to miss without shouting</td></tr>
+    <tr><td class="sr">5</td><td class="new">Countdown ring</td><td>Replaces the “in 20 d” text. The arc fills as the date approaches: green → amber → red. Days and unit sit inside <i class="q">Q2</i></td></tr>
+    <tr><td class="sr">6</td><td class="new">Bottom bar</td><td>Home · Upcoming · Tags · Settings, always one tap away. Today those live behind a ⋮ menu, which is why the app feels like a list of screens rather than one app</td></tr>
+  </table>
+</figure>
+
+<!-- S2 -->
+<figure>
+  <h3>S2 · Grouped view + empty state<small>sections, and what nothing looks like</small></h3>
+  <div class="phone">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="hero" style="padding-bottom:14px">
+      <div class="top"><div class="t"><b>Your cards</b><small>Grouped by category</small></div><div class="ib"><svg class="ic"><use href="#i-search"/></svg></div></div>
+    </div>
+    <div class="body">
+      <div class="sec-card open">
+        <div class="sec-hd">
+          <span class="dot c-blue"><svg class="ic"><use href="#i-shield"/></svg></span>
+          <div class="l"><b>Insurance</b><small>Next expiry 11-Oct-2026 · rings 11-Sep</small></div>
+          <span class="cnt">3</span><svg class="ic chev"><use href="#i-down"/></svg>
+          <b class="n" style="position:absolute;right:8px;top:6px">1</b>
+        </div>
+        <div class="inner">
+          <div class="idc" style="box-shadow:none;border:1px solid var(--line)">
+            <div class="l"><div class="tt">Car Insurance — HDFC Ergo</div>
+              <div class="kv">Policy Expiry <b>11-Oct-2026</b></div>
+              <div class="rw"><span class="chip alarm"><svg class="ic"><use href="#i-alarm"/></svg>11-Sep</span><span class="chip tg">#renewal</span></div></div>
+            <div class="ring" style="background:conic-gradient(var(--ok) 0 42%,#EEF1F6 0)"><div class="inner2"><b style="color:var(--ok)">54</b><small>DAYS</small></div></div>
+          </div>
+          <div class="idc" style="box-shadow:none;border:1px solid var(--line)">
+            <div class="l"><div class="tt">Health Insurance — Star</div>
+              <div class="kv">Policy Expiry <b>28-Feb-2027</b></div>
+              <div class="rw"><span class="chip alarm"><svg class="ic"><use href="#i-alarm"/></svg>30-Dec</span></div></div>
+            <div class="ring" style="background:conic-gradient(var(--ok) 0 18%,#EEF1F6 0)"><div class="inner2"><b style="color:var(--ok)">194</b><small>DAYS</small></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sec-card"><div class="sec-hd"><span class="dot c-teal"><svg class="ic"><use href="#i-cal"/></svg></span>
+        <div class="l"><b>Vehicle</b><small>Next expiry 20-Oct-2026</small></div><span class="cnt">3</span><svg class="ic chev"><use href="#i-down"/></svg></div></div>
+      <div class="sec-card"><div class="sec-hd"><span class="dot c-amber"><svg class="ic"><use href="#i-file"/></svg></span>
+        <div class="l"><b>Warranties</b><small><span style="color:var(--err);font-weight:700">1 overdue</span> · next 07-Sep-2026</small></div><span class="cnt">6</span><svg class="ic chev"><use href="#i-down"/></svg>
+        <b class="n" style="position:absolute;right:8px;top:6px">2</b></div></div>
+
+      <div class="empty" style="padding-top:14px">
+        <div class="art"><svg class="ic"><use href="#i-label"/></svg></div>
+        <b>Nothing tagged yet</b>
+        <small>Tags cut across categories — “#renewal” can hold an insurance policy and a passport at once.</small>
+        <b class="n" style="position:relative;top:-70px;left:60px">3</b>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="new">Section header</td><td>Category colour becomes a rounded icon tile, not a thin stripe. Open section gets a soft gradient wash instead of a grey block</td></tr>
+    <tr><td class="sr">2</td><td class="k">Overdue in the subtitle</td><td>Red and bold inside the summary line, so a collapsed section still warns you</td></tr>
+    <tr><td class="sr">3</td><td class="new">Empty states</td><td>Soft gradient art tile + a sentence that explains the feature. Today they are a grey icon and a shrug</td></tr>
+  </table>
+</figure>
+
+<!-- S3 -->
+<figure>
+  <h3>S3 · Card editor — Save · Undo · Discard<small>the new standard bar</small></h3>
+  <div class="phone">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="hero" style="padding:30px 16px 14px">
+      <div class="top">
+        <div class="ib"><svg class="ic"><use href="#i-close"/></svg></div>
+        <div class="t" style="padding-left:10px"><b>Edit card</b><small>3 unsaved changes</small></div>
+        <div class="ib"><svg class="ic"><use href="#i-more"/></svg></div>
+        <b class="n" style="position:absolute;left:120px;bottom:2px">1</b>
+      </div>
+    </div>
+    <div class="body" style="padding-bottom:82px">
+      <div class="fld"><div class="fl">Label</div><div class="v">Car Insurance — HDFC Ergo</div></div>
+
+      <div class="lab">Tags</div>
+      <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:4px">
+        <span class="tchip on">#renewal <span class="x">✕</span></span>
+        <span class="tchip on">#vehicle <span class="x">✕</span></span>
+        <span class="tchip" style="color:var(--pri);background:var(--pri-c)">+ Tag</span>
+      </div>
+
+      <div class="lab">Data <span class="add"><svg class="ic s"><use href="#i-plus"/></svg>Add</span></div>
+      <div class="grp"><div class="fld" style="flex:0 0 118px"><div class="fl">Name</div><div class="v">Policy No</div></div>
+        <div class="fld" style="flex:1"><div class="fl">Value</div><div class="v">HD-2291-KX</div></div></div>
+
+      <div class="lab">Dates <span class="add"><svg class="ic s"><use href="#i-plus"/></svg>Add</span></div>
+      <div class="grp"><div class="fld" style="flex:0 0 118px"><div class="fl">Name</div><div class="v">Policy Expiry</div></div>
+        <div class="fld row" style="flex:1"><div style="flex:1"><div class="fl">Date ★</div><div class="v">11-Oct-2026</div></div>
+        <svg class="ic tr"><use href="#i-cal"/></svg></div></div>
+
+      <div class="lab"><svg class="ic s"><use href="#i-attach"/></svg>Files <span class="add"><svg class="ic s"><use href="#i-plus"/></svg>Add file</span></div>
+      <div class="frow"><span class="fi pdf">PDF</span><div class="l"><b>Policy document.pdf</b><small>1.8 MB · 18-Aug-2026</small></div><span class="op">Open</span></div>
+
+      <div class="abar">
+        <span class="abtn disc"><svg class="ic"><use href="#i-close"/></svg>Discard</span>
+        <span class="abtn undo"><svg class="ic"><use href="#i-undo"/></svg>Undo</span>
+        <span class="abtn save"><svg class="ic"><use href="#i-save"/></svg>Save</span>
+        <b class="n" style="position:absolute;left:8px;top:2px">2</b>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="new">“3 unsaved changes”</td><td>Live count in the header — you always know whether anything is pending</td></tr>
+    <tr><td class="sr">2</td><td class="new">Discard · Undo · Save</td><td><b>The new standard bar, everywhere.</b> Undo steps back one change at a time and greys out at the top of the stack; Discard drops every unsaved change (and asks first); Save writes and closes. Equal width, 50 dp, and the 25 % bottom clearance rule is unchanged <i class="q">Q4 Q5</i></td></tr>
+    <tr><td class="sr">3</td><td class="k">Fields</td><td>Outlined boxes become soft white cards with a small coloured label — lighter, and easier to scan at big text sizes</td></tr>
+    <tr><td class="sr">4</td><td class="del">Delete</td><td>Still only in ⋮ → Danger zone. It is never one of the three bar buttons</td></tr>
+  </table>
+</figure>
+
+<!-- S4 -->
+<figure>
+  <h3>S4 · Text size — friendly<small>words first, numbers second</small></h3>
+  <div class="phone" style="height:812px">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="hero" style="padding:30px 16px 14px">
+      <div class="top"><div class="ib"><svg class="ic"><use href="#i-back"/></svg></div>
+        <div class="t" style="padding-left:10px"><b>Text size</b><small>Try it — nothing is saved until you tap Save</small></div></div>
+    </div>
+    <div class="body" style="padding-bottom:82px">
+      <div class="aa">
+        <div class="name">Comfortable</div>
+        <div class="sub">a little larger than standard · 115 %</div>
+        <div class="aabtns">
+          <span class="aabtn small">A</span>
+          <span class="aabtn big">A</span>
+        </div>
+        <div class="steps"><i></i><i></i><i class="on"></i><i></i><i></i><i></i><i></i></div>
+        <b class="n" style="position:absolute;left:8px;top:8px">1</b>
+        <b class="n" style="position:absolute;right:8px;bottom:44px">2</b>
+      </div>
+
+      <div class="sizecards">
+        <div class="sizecard"><b style="font-size:12px">Aa</b><small>Small</small></div>
+        <div class="sizecard"><b style="font-size:14px">Aa</b><small>Standard</small></div>
+        <div class="sizecard on"><b style="font-size:16px">Aa</b><small>Comfy</small></div>
+        <div class="sizecard"><b style="font-size:19px">Aa</b><small>Large</small></div>
+        <div class="sizecard"><b style="font-size:22px">Aa</b><small>Huge</small></div>
+        <b class="n">3</b>
+      </div>
+
+      <div class="lab" style="margin-top:16px">Live preview <span class="add" style="color:var(--ink2);font-weight:600">pinch to resize</span></div>
+      <div class="miniprev">
+        <span class="plab">HOME</span>
+        <div class="idc" style="box-shadow:none;border:1px solid var(--line);margin-bottom:8px">
+          <div class="l"><div class="tt" style="font-size:16px">Car Insurance — HDFC Ergo</div>
+            <div class="kv" style="font-size:13px">Policy Expiry <b>11-Oct-2026</b></div>
+            <div class="rw"><span class="chip cat" style="font-size:12px">Insurance</span><span class="chip alarm" style="font-size:12px">11-Sep</span></div></div>
+          <div class="ring" style="background:conic-gradient(var(--ok) 0 42%,#EEF1F6 0)"><div class="inner2"><b style="color:var(--ok)">54</b><small>DAYS</small></div></div>
+        </div>
+        <div class="srow" style="border:0;padding:2px;min-height:0"><div class="l"><b style="font-size:16px">A settings row</b><small style="font-size:13px">and its explaining line</small></div></div>
+        <b class="n" style="position:absolute;left:8px;top:6px">4</b>
+      </div>
+
+      <div class="srow" style="background:#fff;border-radius:16px;margin-top:12px;box-shadow:0 2px 8px rgba(25,40,80,.07)">
+        <span class="si"><svg class="ic s"><use href="#i-eye"/></svg></span>
+        <div class="l"><b>Easy-read mode</b><small>Large text, extra spacing, heavier strokes — one tap</small></div>
+        <span class="sw"><i></i></span>
+        <b class="n">5</b>
+      </div>
+
+      <div class="srow" style="background:#fff;border-radius:16px;margin-top:9px;box-shadow:0 2px 8px rgba(25,40,80,.07)">
+        <span class="si"><svg class="ic s"><use href="#i-text"/></svg></span>
+        <div class="l"><b>What to enlarge…</b><small>Titles, dates, chips — set each one separately</small></div>
+        <svg class="ic ch"><use href="#i-chev"/></svg>
+        <b class="n">6</b>
+      </div>
+
+      <div class="abar">
+        <span class="abtn disc"><svg class="ic"><use href="#i-close"/></svg>Discard</span>
+        <span class="abtn undo"><svg class="ic"><use href="#i-undo"/></svg>Undo</span>
+        <span class="abtn save"><svg class="ic"><use href="#i-save"/></svg>Save</span>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="new">A name, not a number</td><td>Tiny · Small · Standard · <b>Comfortable</b> · Large · Extra large · Huge. The percentage is a grey second line for when you want it <i class="q">Q6</i></td></tr>
+    <tr><td class="sr">2</td><td class="new">Two big A buttons</td><td>Small A shrinks, big A grows — one step per tap. No slider to hunt, no thin knob to miss</td></tr>
+    <tr><td class="sr">3</td><td class="new">Size cards</td><td>Five shortcuts, each drawn at its own size. Tap the one that reads best</td></tr>
+    <tr><td class="sr">4</td><td class="new">Live preview of Home</td><td>A real card and a real settings row. Pinch the preview itself to fine-tune between steps <i class="q">Q7</i></td></tr>
+    <tr><td class="sr">5</td><td class="new">Easy-read mode</td><td>One switch that sets Large + Spacious + Medium weight together — the common request in one tap</td></tr>
+    <tr><td class="sr">6</td><td class="new">“What to enlarge…”</td><td>Replaces six ± % sliders with plain choices — see S5</td></tr>
+    <tr><td class="sr">7</td><td class="del">Reset</td><td>No longer in the ⋮ menu firing instantly. It lives inside “What to enlarge…” and asks first — see S6</td></tr>
+  </table>
+</figure>
+
+<!-- S5 -->
+<figure>
+  <h3>S5 · What to enlarge<small>three plain choices instead of ± % sliders</small></h3>
+  <div class="phone">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="hero" style="padding:30px 16px 14px">
+      <div class="top"><div class="ib"><svg class="ic"><use href="#i-back"/></svg></div>
+        <div class="t" style="padding-left:10px"><b>What to enlarge</b><small>on top of Comfortable</small></div></div>
+    </div>
+    <div class="body" style="padding-bottom:82px">
+      <div class="miniprev" style="margin-bottom:14px">
+        <span class="plab">PREVIEW</span>
+        <div class="idc" style="box-shadow:none;border:1px solid var(--line);margin:0">
+          <div class="l"><div class="tt" style="font-size:19px">Car Insurance — HDFC Ergo</div>
+            <div class="kv" style="font-size:13px">Policy Expiry <b>11-Oct-2026</b></div>
+            <div class="rw"><span class="chip cat" style="font-size:12px">Insurance</span></div></div>
+        </div>
+      </div>
+
+      <div style="background:#fff;border-radius:16px;padding:12px;box-shadow:0 2px 8px rgba(25,40,80,.07)">
+        <div style="font-size:13px;font-weight:700;margin-bottom:7px">Card titles</div>
+        <div class="tri"><span>Smaller</span><span>Normal</span><span class="on">Bigger</span></div>
+        <b class="n" style="position:relative;top:-52px;left:96px">1</b>
+
+        <div style="font-size:13px;font-weight:700;margin:14px 0 7px">Dates and second lines</div>
+        <div class="tri"><span>Smaller</span><span class="on">Normal</span><span>Bigger</span></div>
+
+        <div style="font-size:13px;font-weight:700;margin:14px 0 7px">Chips and tags</div>
+        <div class="tri"><span>Smaller</span><span class="on">Normal</span><span>Bigger</span></div>
+
+        <div style="font-size:13px;font-weight:700;margin:14px 0 7px">Buttons and sheets</div>
+        <div class="tri"><span>Smaller</span><span class="on">Normal</span><span>Bigger</span></div>
+      </div>
+
+      <div class="srow" style="background:#fff;border-radius:16px;margin-top:12px;box-shadow:0 2px 8px rgba(25,40,80,.07)">
+        <span class="si warn"><svg class="ic s"><use href="#i-restore"/></svg></span>
+        <div class="l"><b>Put everything back to normal</b><small>Asks you first — nothing resets on a stray tap</small></div>
+        <svg class="ic ch"><use href="#i-chev"/></svg>
+        <b class="n d">2</b>
+      </div>
+
+      <div class="abar">
+        <span class="abtn disc"><svg class="ic"><use href="#i-close"/></svg>Discard</span>
+        <span class="abtn undo"><svg class="ic"><use href="#i-undo"/></svg>Undo</span>
+        <span class="abtn save"><svg class="ic"><use href="#i-save"/></svg>Save</span>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="new">Smaller / Normal / Bigger</td><td>Four groups, three choices each — no percentages, no knobs. Under the hood they are the −15 % / 0 / +15 % offsets from 1.2, just spoken plainly <i class="q">Q8</i></td></tr>
+    <tr><td class="sr">2</td><td class="del">Reset, confirmed</td><td>Amber icon, plain words, and a dialog before anything moves (S6)</td></tr>
+    <tr><td class="sr">3</td><td class="k">Preview on top</td><td>Sticky, so the effect of each tap is visible without scrolling</td></tr>
+  </table>
+</figure>
+
+<!-- S6 -->
+<figure>
+  <h3>S6 · Every reset asks first<small>and Discard asks too</small></h3>
+  <div class="phone">
+    <div class="sb dark"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="body" style="padding-top:36px">
+      <div class="lab" style="margin-top:0">Reset — before</div>
+      <div class="scard" style="opacity:.55">
+        <div class="srow"><span class="si err"><svg class="ic s"><use href="#i-restore"/></svg></span>
+          <div class="l"><b>Reset to 100 %</b><small>v1.2: in the ⋮ menu, fires immediately</small></div></div>
+        <div class="srow"><span class="si err"><svg class="ic s"><use href="#i-restore"/></svg></span>
+          <div class="l"><b>Reset offsets</b><small>v1.2: a button that wipes all six at once</small></div></div>
+        <div class="srow"><span class="si err"><svg class="ic s"><use href="#i-close"/></svg></span>
+          <div class="l"><b>Clear all filters</b><small>v1.2: instant</small></div></div>
+        <b class="n d" style="position:absolute;right:8px;top:8px">1</b>
+      </div>
+
+      <div class="lab dz">Reset — after</div>
+      <div class="scard">
+        <div class="srow"><span class="si warn"><svg class="ic s"><use href="#i-restore"/></svg></span>
+          <div class="l"><b>Put text back to normal</b><small>Opens the dialog below</small></div><svg class="ic ch"><use href="#i-chev"/></svg></div>
+        <div class="srow"><span class="si warn"><svg class="ic s"><use href="#i-restore"/></svg></span>
+          <div class="l"><b>Clear all filters</b><small>Asks, then clears · Undo for 5 s</small></div><svg class="ic ch"><use href="#i-chev"/></svg></div>
+        <div class="srow"><span class="si err"><svg class="ic s"><use href="#i-trash"/></svg></span>
+          <div class="l"><b>Erase everything</b><small>Danger zone → type ERASE → confirm</small></div><svg class="ic ch"><use href="#i-chev"/></svg>
+          <b class="n d" style="position:absolute;right:8px;top:8px">2</b></div>
+      </div>
+
+      <div class="dlg" style="top:auto;bottom:26px;transform:none">
+        <div class="di warn"><svg class="ic"><use href="#i-restore"/></svg></div>
+        <h5>Put text back to normal?</h5>
+        <p>Size returns to Standard (100 %), all four “what to enlarge” choices return to Normal, and spacing returns to Comfortable. Your cards are not touched.</p>
+        <div class="acts"><span class="b keep">Keep my settings</span><span class="b gob">Put back</span></div>
+        <b class="n" style="position:absolute;right:10px;top:10px">3</b>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="del">What was wrong</td><td>Three controls in 1.2 reset state on a single tap with no way back: text size reset, offsets reset, and Clear all filters</td></tr>
+    <tr><td class="sr">2</td><td class="new">One rule now</td><td><b>No control that clears, resets or restores anything acts on one tap.</b> Every one opens a dialog that names exactly what changes and what does not</td></tr>
+    <tr><td class="sr">3</td><td class="new">The dialog</td><td>Coloured icon tile, plain-English list of what moves, and a reassurance line. Buttons say what they do — “Keep my settings” beats “Cancel” <i class="q">Q9</i></td></tr>
+    <tr><td class="sr">4</td><td class="k">Undo after the fact</td><td>Reversible resets (filters, text) also drop a 5 s Undo snackbar. Erase everything does not — it stays behind typed confirmation</td></tr>
+  </table>
+</figure>
+
+<!-- S7 -->
+<figure>
+  <h3>S7 · Discard, and the Saved snackbar<small>the other half of the rule</small></h3>
+  <div class="phone">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="hero" style="padding:30px 16px 14px">
+      <div class="top"><div class="ib"><svg class="ic"><use href="#i-close"/></svg></div>
+        <div class="t" style="padding-left:10px"><b>Edit card</b><small>3 unsaved changes</small></div></div>
+    </div>
+    <div class="body">
+      <div class="dim" style="top:-90px"></div>
+      <div class="dlg">
+        <div class="di err"><svg class="ic"><use href="#i-warn"/></svg></div>
+        <h5>Discard 3 changes?</h5>
+        <p>The label, one date and one tag go back to how they were when you opened this card. Nothing already saved is lost.</p>
+        <div class="acts"><span class="b keep">Keep editing</span><span class="b go">Discard</span></div>
+        <b class="n d" style="position:absolute;right:10px;top:10px">1</b>
+      </div>
+      <div class="toast" style="bottom:20px"><svg class="ic"><use href="#i-tick"/></svg>Saved · text size Comfortable <b>UNDO</b>
+        <b class="n" style="position:absolute;left:-6px;top:-8px">2</b></div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="new">Discard asks</td><td>Only when something is unsaved; with nothing pending it just closes. The dialog counts and names the changes rather than saying “unsaved changes”</td></tr>
+    <tr><td class="sr">2</td><td class="new">Saved snackbar</td><td>Every Save confirms and offers Undo for 5 s — so Save is never a one-way door either</td></tr>
+    <tr><td class="sr">3</td><td class="k">Back gesture</td><td>Treated exactly as Discard: it asks, it never silently drops your work</td></tr>
+    <tr><td class="sr">4</td><td class="k">Where the bar appears</td><td>Card editor · text size · what-to-enlarge · category editor · scheduler sheet · group / sort / filter sheets · every settings screen that holds more than a switch</td></tr>
+  </table>
+</figure>
+
+<!-- S8 -->
+<figure class="full">
+  <h3>S8 · Sheets and Settings, restyled<small>same rules, new skin</small></h3>
+  <div class="duo">
+    <div class="phone" style="height:700px">
+      <div class="sb dark"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+      <div class="body" style="padding-top:36px">
+        <div class="dim"></div>
+        <div class="sheet">
+          <div class="grab"></div>
+          <h4><svg class="ic" style="color:var(--pri)"><use href="#i-group"/></svg>Group by</h4>
+          <div class="opt"><span class="rad on"></span><div class="l"><b>Category</b><small>One section per category</small></div></div>
+          <div class="opt"><span class="rad"></span><div class="l"><b>Tag</b><small>A card with two tags shows under both</small></div></div>
+          <div class="opt"><span class="rad"></span><div class="l"><b>Expiry month</b><small>Aug 2026, Sep 2026 …</small></div></div>
+          <div class="opt"><span class="rad"></span><div class="l"><b>None</b><small>Just the cards, no sections</small></div></div>
+          <div style="display:flex;gap:9px;margin-top:14px">
+            <span class="abtn disc" style="flex:1"><svg class="ic"><use href="#i-close"/></svg>Discard</span>
+            <span class="abtn undo off" style="flex:1"><svg class="ic"><use href="#i-undo"/></svg>Undo</span>
+            <span class="abtn save" style="flex:1"><svg class="ic"><use href="#i-save"/></svg>Save</span>
+          </div>
+          <div class="sbs">bottom clearance = max(25 % screen height, nav bar + 24 dp)</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="phone" style="height:700px">
+      <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+      <div class="hero" style="padding:30px 16px 14px">
+        <div class="top"><div class="ib"><svg class="ic"><use href="#i-back"/></svg></div><div class="t" style="padding-left:10px"><b>Settings</b><small>InfoDeck 1.3</small></div></div>
+      </div>
+      <div class="body">
+        <div class="lab" style="margin-top:2px">Look and feel</div>
+        <div class="scard">
+          <div class="srow"><span class="si"><svg class="ic s"><use href="#i-text"/></svg></span>
+            <div class="l"><b>Text size</b><small>Comfortable · 115 %</small></div><svg class="ic ch"><use href="#i-chev"/></svg></div>
+          <div class="srow"><span class="si"><svg class="ic s"><use href="#i-eye"/></svg></span>
+            <div class="l"><b>Theme</b><small>Follows your phone</small></div><span class="val">System</span></div>
+          <div class="srow"><span class="si"><svg class="ic s"><use href="#i-group"/></svg></span>
+            <div class="l"><b>Card style</b><small>Countdown ring · compact rows</small></div><span class="val">Ring</span>
+            <b class="n">1</b></div>
+        </div>
+
+        <div class="lab">Reminders</div>
+        <div class="scard">
+          <div class="srow"><span class="si warn"><svg class="ic s"><use href="#i-alarm"/></svg></span>
+            <div class="l"><b>Default ring time</b><small>Used by every new scheduler</small></div><span class="val">09:00</span></div>
+          <div class="srow"><span class="si warn"><svg class="ic s"><use href="#i-bell"/></svg></span>
+            <div class="l"><b>Test ring</b><small>Fires a sample notification</small></div><span class="val">Ring now</span></div>
+        </div>
+
+        <div class="lab dz">Danger zone</div>
+        <div class="scard">
+          <div class="srow"><span class="si err"><svg class="ic s"><use href="#i-restore"/></svg></span>
+            <div class="l"><b>Put settings back to normal</b><small>Asks first · cards untouched</small></div><svg class="ic ch"><use href="#i-chev"/></svg></div>
+          <div class="srow"><span class="si err"><svg class="ic s"><use href="#i-trash"/></svg></span>
+            <div class="l"><b>Erase everything</b><small>Type ERASE, then confirm</small></div><svg class="ic ch"><use href="#i-chev"/></svg>
+            <b class="n d">2</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="new">Card style</td><td>Ring · Bar · Plain — for when the countdown ring is not to your taste <i class="q">Q2</i></td></tr>
+    <tr><td class="sr">2</td><td class="del">Two separate resets</td><td>“Put settings back to normal” (safe, confirmed, undoable) is now clearly separate from “Erase everything” (typed word, no undo). In 1.2 both lived under one word, Reset</td></tr>
+    <tr><td class="sr">3</td><td class="k">Sheets</td><td>Rounded 26 dp, grab handle, coloured title icon, and the same three-button bar. Undo greys out when there is nothing to step back to</td></tr>
+    <tr><td class="sr">4</td><td class="k">Settings rows</td><td>Every row gets a soft icon tile — colour-coded blue for neutral, amber for reminders, red for danger</td></tr>
+  </table>
+</figure>
+
+</div><!-- /frames -->
+
+<h2 class="sec">B · Specification</h2>
+
+<h3 class="sub">C1 · Visual language</h3>
+<div class="sw-row">
+  <i style="background:linear-gradient(135deg,#2F4FCD,#7A5AF8)">GRADIENT</i>
+  <i style="background:#2F4FCD">PRIMARY</i>
+  <i style="background:#E7EBFF;color:#22337F">PRI TINT</i>
+  <i style="background:#1E8E5A">OK</i>
+  <i style="background:#A9700D">WARN</i>
+  <i style="background:#C0392F">DANGER</i>
+  <i style="background:#F5F7FB;color:#5A6675">SURFACE</i>
+</div>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Token</th><th>v1.2 today</th><th>Proposed</th></tr>
+  <tr><td class="sr">1</td><td class="k">Brand</td><td>flat #34518A bar</td><td class="rec">Indigo→violet gradient hero, #2F4FCD → #7A5AF8, rounded 26 dp bottom</td></tr>
+  <tr><td class="sr">2</td><td class="k">Background</td><td>#F3F5F8</td><td class="rec">#F5F7FB with soft shadows instead of hairlines — depth rather than lines</td></tr>
+  <tr><td class="sr">3</td><td class="k">Corner radius</td><td>11–14 dp mixed</td><td class="rec">12 / 16 / 20 dp scale, applied consistently</td></tr>
+  <tr><td class="sr">4</td><td class="k">Elevation</td><td>1 dp flat</td><td class="rec">Two levels: cards <code>0 2 8 rgba(25,40,80,.07)</code>, floating <code>0 8 20</code></td></tr>
+  <tr><td class="sr">5</td><td class="k">Category colour</td><td>4 dp stripe</td><td class="rec">Rounded 32 dp icon tile with a gradient fill; the stripe survives only on cards</td></tr>
+  <tr><td class="sr">6</td><td class="k">Status</td><td>green / red text</td><td class="rec">Countdown ring: green → amber → red as the date closes; overdue cards get a wash and a red rail</td></tr>
+  <tr><td class="sr">7</td><td class="k">Navigation</td><td>⋮ menu holds everything</td><td class="rec">Bottom bar: Home · Upcoming · Tags · Settings</td></tr>
+  <tr><td class="sr">8</td><td class="k">Type</td><td>one weight, small sizes</td><td class="rec">400 / 600 / 800, tighter tracking on titles, clearer hierarchy</td></tr>
+  <tr><td class="sr">9</td><td class="k">Motion</td><td>none beyond expand</td><td class="rec">Press-scale 0.98 on cards, 180 ms section expand, snackbars slide from the bottom bar <i class="q">Q3</i></td></tr>
+  <tr><td class="sr">10</td><td class="k">Empty states</td><td>grey icon + line</td><td class="rec">Gradient art tile + a sentence that teaches the feature</td></tr>
+</table>
+
+<h3 class="sub">C2 · Save · Undo · Discard — the new standard</h3>
+<div class="warn-box"><b>This supersedes the shared EditorSheet chrome</b> (“Cancel outlined + Save filled + Delete slot”) that is currently a project-wide standard. Under your universal-application rule it would become the new bar for <b>every</b> app — Remindly, App &amp; Contact Cleaner, Kalam, ChargeWatch, Watchlist — each adopting it at its next release. Say the word if you want it InfoDeck-only for now <i class="q">Q11</i>.</div>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Button</th><th>What it does</th><th>When it is disabled</th><th>Confirms?</th></tr>
+  <tr><td class="sr">1</td><td class="k">Discard</td><td>Drops every unsaved change and closes the screen or sheet</td><td>never disabled</td><td class="rec">Yes, whenever something is pending — the dialog counts and names the changes</td></tr>
+  <tr><td class="sr">2</td><td class="k">Undo</td><td>Steps back one change at a time, in order</td><td>greyed when the stack is empty</td><td>No — it is itself the safety net</td></tr>
+  <tr><td class="sr">3</td><td class="k">Save</td><td>Writes, closes, and drops a “Saved” snackbar with a 5 s Undo</td><td>greyed when nothing changed or the form is invalid</td><td>No</td></tr>
+</table>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Rule</th><th>Detail</th></tr>
+  <tr><td class="sr">1</td><td class="k">Order</td><td>Discard · Undo · Save, left to right — destructive far from the thumb, primary under it <i class="q">Q4</i></td></tr>
+  <tr><td class="sr">2</td><td class="k">Shape</td><td>Equal width, 50 dp × layout scale, 14 dp radius; Save filled with the brand gradient, the other two outlined</td></tr>
+  <tr><td class="sr">3</td><td class="k">Undo depth</td><td>Every field edit, add, remove and toggle is one step; 50 steps kept per screen <i class="q">Q5</i></td></tr>
+  <tr><td class="sr">4</td><td class="k">Back gesture</td><td>Behaves as Discard, including the confirmation</td></tr>
+  <tr><td class="sr">5</td><td class="k">Live settings</td><td>Text size still previews live, but the change is only written on Save — which is what makes Discard meaningful there</td></tr>
+  <tr><td class="sr">6</td><td class="k">Delete</td><td>Never one of the three. It stays in ⋮ → Danger zone → sheet → confirm</td></tr>
+</table>
+
+<h3 class="sub">C3 · Reset audit — nothing acts on one tap</h3>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Control</th><th>v1.2 today</th><th>Proposed</th><th>Undo after?</th></tr>
+  <tr><td class="sr">1</td><td class="k">Text size reset</td><td class="del">⋮ → Reset to 100 %, instant</td><td class="rec">Row inside “What to enlarge”, named “Put text back to normal”, with a dialog listing exactly what moves</td><td class="rec">Yes, 5 s</td></tr>
+  <tr><td class="sr">2</td><td class="k">Offsets reset</td><td class="del">“Reset offsets” button, instant</td><td class="rec">Folded into the same confirmed reset</td><td class="rec">Yes</td></tr>
+  <tr><td class="sr">3</td><td class="k">Clear all filters</td><td class="del">Instant</td><td class="rec">Dialog: “Clear 3 filters?” naming them</td><td class="rec">Yes</td></tr>
+  <tr><td class="sr">4</td><td class="k">Reset all data</td><td>Typed RESET</td><td class="rec">Renamed <b>Erase everything</b>, typed <b>ERASE</b>, then a final confirm — and separated from the harmless resets</td><td>No, by design</td></tr>
+  <tr><td class="sr">5</td><td class="k">Category delete</td><td>Danger zone + typed DELETE</td><td class="rec">Unchanged</td><td>No</td></tr>
+  <tr><td class="sr">6</td><td class="k">Settings defaults</td><td class="del">Did not exist</td><td class="rec">New “Put settings back to normal” — confirmed, cards untouched</td><td class="rec">Yes</td></tr>
+</table>
+
+<h3 class="sub">C4 · Friendly text customisation — replaces 1.2 §C1</h3>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Aspect</th><th>v1.2 (built, you are unhappy with it)</th><th>Proposed</th></tr>
+  <tr><td class="sr">1</td><td class="k">Primary control</td><td class="del">Thin slider plus a 115 % read-out</td><td class="rec">Two large A buttons and a named size — “Comfortable”</td></tr>
+  <tr><td class="sr">2</td><td class="k">Vocabulary</td><td class="del">Percentages and “offsets”</td><td class="rec">Tiny · Small · Standard · Comfortable · Large · Extra large · Huge, with % as a grey subtitle</td></tr>
+  <tr><td class="sr">3</td><td class="k">Shortcuts</td><td class="del">Six numeric preset chips</td><td class="rec">Five size cards, each drawn at its own size</td></tr>
+  <tr><td class="sr">4</td><td class="k">Per element</td><td class="del">Six ± 30 % sliders</td><td class="rec">Four groups × Smaller / Normal / Bigger</td></tr>
+  <tr><td class="sr">5</td><td class="k">One-tap answer</td><td class="del">None</td><td class="rec">“Easy-read mode” — Large + Spacious + Medium weight together</td></tr>
+  <tr><td class="sr">6</td><td class="k">Preview</td><td>Single sample card</td><td class="rec">A working slice of Home, pinchable in place</td></tr>
+  <tr><td class="sr">7</td><td class="k">Committing</td><td class="del">Silent live save, no way back</td><td class="rec">Live preview, then Save · Undo · Discard</td></tr>
+  <tr><td class="sr">8</td><td class="k">Underneath</td><td colspan="2" class="rec">The engine from 1.2 is kept exactly as it is — 70–200 % continuous, damped layout scale, 8–46 sp clamps. Only the words and controls change, so nothing already tested is thrown away</td></tr>
+</table>
+
+<h3 class="sub">C5 · Three companions</h3>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Item</th><th>Exception handling</th><th>Logger.e</th><th>Tests</th></tr>
+  <tr><td class="sr">1</td><td class="k">Visual overhaul</td><td>Every new drawing helper is total — a bad colour index or a null date falls back to the neutral style</td><td>logs an out-of-range ring fraction or unknown card style</td><td>JUnit on the ring fraction maths (overdue, today, far future, no date) and the colour band thresholds; device pass on all screens light and dark</td></tr>
+  <tr><td class="sr">2</td><td class="k">Save/Undo/Discard</td><td>Undo stack is bounded at 50 and never pops past empty; Save validates before writing; Discard restores the snapshot taken on open</td><td>logs a failed save, a failed restore, and any stack underflow</td><td>JUnit on the stack (push, undo, bound, empty), on the dirty-count, and on snapshot→discard equality; device pass on the back gesture</td></tr>
+  <tr><td class="sr">3</td><td class="k">Confirmed resets</td><td>Every reset is one transaction; a failed reset leaves settings untouched rather than half-applied</td><td>logs any reset failure with what it was resetting</td><td>JUnit that each reset returns exactly the documented defaults and touches no card data; device pass on all six controls</td></tr>
+  <tr><td class="sr">4</td><td class="k">Friendly text</td><td>Name↔scale mapping is total in both directions; an unknown stored name falls back to Standard</td><td>logs an unmapped name or step</td><td>JUnit on name↔percent mapping for all seven steps, the three-way choices → offsets, and Easy-read composing to the documented triple</td></tr>
+</table>
+
+<h2 class="sec">C · Open questions</h2>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Q</th><th>Question</th><th>Options</th><th>My recommendation</th></tr>
+  <tr><td class="sr">1</td><td class="q">Q1</td><td>Overall direction</td><td>(a) gradient hero + bottom bar as drawn &nbsp; (b) keep the flat bar, restyle cards only &nbsp; (c) darker, more serious palette</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">2</td><td class="q">Q2</td><td>Countdown ring on every card</td><td>(a) ring &nbsp; (b) thin progress bar &nbsp; (c) plain text as today</td><td class="rec">(a), with (b)/(c) selectable in Settings ▸ Card style</td></tr>
+  <tr><td class="sr">3</td><td class="q">Q3</td><td>Motion</td><td>(a) subtle as described &nbsp; (b) none — instant everywhere</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">4</td><td class="q">Q4</td><td>Button order</td><td>(a) Discard · Undo · Save &nbsp; (b) Undo · Discard · Save &nbsp; (c) Save on the left</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">5</td><td class="q">Q5</td><td>Undo depth</td><td>(a) 50 steps &nbsp; (b) one step only &nbsp; (c) unlimited</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">6</td><td class="q">Q6</td><td>Size names</td><td>(a) Tiny…Huge, 7 steps, % as subtitle &nbsp; (b) names only, no % anywhere &nbsp; (c) keep % primary</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">7</td><td class="q">Q7</td><td>Pinch</td><td>(a) on the preview and on Home &nbsp; (b) preview only &nbsp; (c) drop it</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">8</td><td class="q">Q8</td><td>What-to-enlarge groups</td><td>(a) 4 groups × 3 choices &nbsp; (b) keep 6 sliders as an “advanced” page too</td><td class="rec">(a) — (b) is what you rejected</td></tr>
+  <tr><td class="sr">9</td><td class="q">Q9</td><td>Dialog button wording</td><td>(a) “Keep my settings” / “Put back” &nbsp; (b) “Cancel” / “Reset”</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">10</td><td class="q">Q10</td><td>Bottom bar destinations</td><td>(a) Home · Upcoming · Tags · Settings &nbsp; (b) Home · Upcoming · Settings &nbsp; (c) no bottom bar</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">11</td><td class="q">Q11</td><td>Is Save/Undo/Discard project-wide?</td><td>(a) yes — all apps adopt at their next release &nbsp; (b) InfoDeck only for now</td><td class="rec">(a), matching your universal-application rule</td></tr>
+  <tr><td class="sr">12</td><td class="q">Q12</td><td><b>Your item “3.”</b> from the last round — still blank</td><td>—</td><td class="rec">One line and it joins this round</td></tr>
+</table>
+
+<h2 class="sec">D · If accepted</h2>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Field</th><th>Value</th></tr>
+  <tr><td class="sr">1</td><td class="k">Queue</td><td>N36 visual overhaul · N37 Save/Undo/Discard standard · N38 confirmed resets · N39 friendly text customisation (replaces the 1.2 screens, keeps the engine)</td></tr>
+  <tr><td class="sr">2</td><td class="k">Release</td><td><b>1.3</b>, versionCode <b>1003000</b>, <code>InfoDeck-1.3.apk</code></td></tr>
+  <tr><td class="sr">3</td><td class="k">Database</td><td>No schema change — this round is presentation and control flow only</td></tr>
+  <tr><td class="sr">4</td><td class="k">Also outstanding</td><td>Undo after card delete, the Filter sheet's tag block, and “Backup with files” are still queued from 1.2</td></tr>
+  <tr><td class="sr">5</td><td class="k">Trigger</td><td>Nothing is built until you say <b>build</b> / <b>release</b></td></tr>
+</table>
+
+</div>
+</body>
+</html>

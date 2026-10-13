@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InfoDeck — v1.3 D1 design · compact chrome, persistent bottom bar, grouped settings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100..900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#131A26; --ink2:#5A6675; --hint:#96A0AF;
+    --pri:#2F4FCD; --pri-2:#5A6BF0; --pri-3:#7A5AF8; --pri-d:#1E357F;
+    --pri-c:#E7EBFF; --on-pri-c:#22337F;
+    --ok:#1E8E5A; --ok-c:#E3F5EC;
+    --warn:#A9700D; --warn-c:#FDF2DC;
+    --err:#C0392F; --err-c:#FCEAE8;
+    --bg:#F5F7FB; --card:#FFFFFF; --line:#E6EAF2; --outline:#C3CBDA;
+    --page:#E3E7F0; --tag:#22337F; --q:#7A5A00; --q-bg:#FFF3C4; --q-bd:#E2C35C;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--page);font-family:Roboto,"Segoe UI",system-ui,-apple-system,sans-serif;color:var(--ink);padding:26px 18px 70px}
+  .wrap{max-width:1180px;margin:0 auto}
+  header.page h1{font-size:24px;font-weight:800;color:var(--pri-d)}
+  header.page p{font-size:13.5px;color:var(--ink2);margin-top:5px;line-height:1.55}
+  .stamp{display:inline-block;margin:10px 8px 0 0;font-size:12px;font-weight:700;color:#7A2E00;background:#FFE1CC;border:1px solid #E8B08C;border-radius:20px;padding:3px 12px}
+  .stamp.g{color:var(--on-pri-c);background:var(--pri-c);border-color:#B9C3F5}
+  .stamp.r{color:#8A1F19;background:var(--err-c);border-color:#E7ADA8}
+  h2.sec{font-size:18px;font-weight:800;color:var(--pri-d);margin:38px 0 12px;padding-bottom:6px;border-bottom:2px solid #C9D1DD}
+  h3.sub{font-size:15px;color:var(--pri-d);margin-top:20px}
+  .note{font-size:13px;color:var(--ink2);line-height:1.5;margin:6px 0 10px}
+  .warn-box{background:#FFF6E5;border:1px solid #E8C98C;border-radius:10px;padding:12px 14px;font-size:13.5px;line-height:1.55;margin:10px 0 4px}
+  .warn-box b{color:#7A4A00}
+  .idea-box{background:#EEF2FF;border:1px solid #B9C3F5;border-radius:10px;padding:12px 14px;font-size:13.5px;line-height:1.55;margin:10px 0 4px}
+  .idea-box b{color:var(--pri-d)}
+
+  table.tb{width:100%;border-collapse:collapse;font-size:12.5px;background:#fff;margin:6px 0 4px}
+  table.tb th{background:#E9EDF8;color:var(--pri-d);text-align:left;padding:6px 8px;border:1px solid #BFC9D8;font-size:12px}
+  table.tb td{padding:6px 8px;border:1px solid #D2D9E3;vertical-align:top;line-height:1.45}
+  table.tb .sr{width:1%;white-space:nowrap;text-align:center}
+  table.tb td.k{white-space:nowrap;font-weight:700;color:var(--tag)}
+  table.tb td.q{white-space:nowrap;font-weight:700;color:var(--q)}
+  table.tb td.rec{color:var(--ok);font-weight:600}
+  table.tb td.new{white-space:nowrap;font-weight:700;color:var(--ok)}
+  table.tb td.del{white-space:nowrap;font-weight:700;color:var(--err)}
+  table.tb td.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+  table.tb tr:nth-child(even) td{background:#FAFBFD}
+  code{font-family:Consolas,Menlo,monospace;font-size:12px;background:#EEF1F5;padding:1px 4px;border-radius:3px}
+
+  .frames{display:grid;grid-template-columns:repeat(auto-fit,minmax(520px,1fr));gap:34px 28px;margin-top:14px}
+  figure{display:flex;flex-direction:column;align-items:center;gap:8px}
+  figure h3{font-size:15px;font-weight:800;color:var(--pri-d);align-self:flex-start}
+  figure h3 small{font-weight:500;color:var(--ink2);font-size:12.5px;margin-left:6px}
+  figure table.tb{font-size:12px}
+  figure.full{grid-column:1 / -1}
+  figure.full h3{align-self:center}
+  figure.full table.tb{max-width:880px}
+  .duo{display:flex;gap:26px;justify-content:center;flex-wrap:wrap}
+
+  b.n{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:8px;background:var(--tag);color:#fff;font-size:10px;font-weight:800;line-height:1;flex-shrink:0;font-style:normal}
+  b.n.d{background:var(--err)}
+  b.n.g{background:var(--ok)}
+  i.q{display:inline-flex;align-items:center;font-style:normal;font-size:10px;font-weight:800;color:var(--q);background:var(--q-bg);border:1px solid var(--q-bd);border-radius:9px;padding:1px 6px;line-height:1.3}
+
+  .phone{width:378px;height:790px;background:var(--bg);border:9px solid #12151C;border-radius:38px;overflow:hidden;position:relative;box-shadow:0 16px 38px rgba(20,30,50,.22);display:flex;flex-direction:column;flex-shrink:0}
+  .sb{height:22px;color:#fff;font-size:10.5px;font-weight:600;display:flex;align-items:center;justify-content:space-between;padding:0 16px;flex-shrink:0;position:absolute;left:0;right:0;top:0;z-index:4}
+  .sb.dark{color:var(--ink)}
+
+  /* SLIM top bar — 56 dp */
+  .tbar{background:linear-gradient(135deg,var(--pri) 0%,var(--pri-2) 60%,var(--pri-3) 100%);color:#fff;padding:26px 6px 8px 14px;display:flex;align-items:center;gap:2px;flex-shrink:0;border-radius:0 0 18px 18px;position:relative}
+  .tbar .t{flex:1;min-width:0}
+  .tbar .t b{display:block;font-size:17px;font-weight:800;letter-spacing:-.2px;line-height:1.15}
+  .tbar .t small{display:block;font-size:10.5px;opacity:.9}
+  .tbar .ib{width:36px;height:36px;border-radius:18px;display:flex;align-items:center;justify-content:center;position:relative;flex-shrink:0}
+  .tbar .ib .dot{position:absolute;top:6px;right:6px;width:8px;height:8px;border-radius:4px;background:#FFC96B;border:1.5px solid #4C5FE0}
+  .ic{width:21px;height:21px;fill:currentColor;flex-shrink:0}
+  .ic.s{width:17px;height:17px}
+  .ic.xs{width:14px;height:14px}
+  .body{flex:1;overflow:hidden;position:relative;padding:8px 12px 0}
+
+  /* COMPACT filter strip — 30 dp, scrolls sideways */
+  .strip{display:flex;gap:5px;align-items:center;padding:0 1px 8px;overflow:hidden}
+  .fchip{display:inline-flex;align-items:center;gap:4px;height:30px;padding:0 8px;border-radius:15px;background:#fff;font-size:12px;font-weight:700;color:var(--ink2);box-shadow:0 1px 4px rgba(25,40,80,.08);white-space:nowrap}
+  .fchip .num{display:inline-flex;align-items:center;justify-content:center;min-width:17px;height:17px;border-radius:9px;background:#EEF1F6;color:var(--ink2);font-size:10.5px;font-weight:800;padding:0 4px}
+  .fchip.alert{background:var(--err-c);color:var(--err)}
+  .fchip.alert .num{background:var(--err);color:#fff}
+  .fchip.on{background:var(--pri);color:#fff}
+  .fchip.on .num{background:rgba(255,255,255,.25);color:#fff}
+  .fchip .ic{width:14px;height:14px}
+  .vbtn{margin-left:auto;display:inline-flex;align-items:center;gap:4px;height:30px;padding:0 8px;border-radius:15px;background:#fff;box-shadow:0 1px 4px rgba(25,40,80,.08);font-size:12px;font-weight:700;color:var(--pri);white-space:nowrap;flex-shrink:0}
+  .vbtn .ic{width:14px;height:14px;color:var(--pri)}
+  .vbtn .bdg{min-width:15px;height:15px;border-radius:8px;background:var(--pri);color:#fff;font-size:9.5px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 4px}
+
+  /* cards */
+  .idc{display:flex;gap:10px;align-items:center;background:#fff;border-radius:14px;padding:9px 11px;margin-bottom:8px;box-shadow:0 2px 7px rgba(25,40,80,.07);position:relative;overflow:hidden}
+  .idc:before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--pri)}
+  .idc.od:before{background:var(--err)}
+  .idc.od{background:linear-gradient(90deg,rgba(192,57,47,.06),#fff 40%)}
+  .idc .l{flex:1;min-width:0}
+  .idc .tt{font-size:14px;font-weight:700;letter-spacing:-.1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .idc .kv{font-size:11px;color:var(--ink2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .idc .kv b{color:var(--ink);font-weight:700}
+  .idc .rw{display:flex;gap:5px;align-items:center;margin-top:5px;flex-wrap:nowrap;overflow:hidden}
+  .idc.compact .rw{display:none}
+  .idc.compact{padding:7px 11px}
+  .ring{width:44px;height:44px;border-radius:22px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+  .ring .inner2{width:35px;height:35px;border-radius:18px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .ring .inner2 b{font-size:12.5px;font-weight:800;line-height:1}
+  .ring .inner2 small{font-size:7.5px;font-weight:700;color:var(--ink2)}
+  .chip{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;white-space:nowrap}
+  .chip.cat{background:var(--pri-c);color:var(--on-pri-c)}
+  .chip.alarm{background:var(--warn-c);color:var(--warn)}
+  .chip.tg{background:#EFF1F6;color:var(--ink2)}
+  .chip.file{background:#F0EAFB;color:#5B3FA0}
+  .chip.none{background:#F1F3F7;color:var(--hint)}
+  .chip .ic{width:10px;height:10px}
+
+  /* SLIM bottom bar — 50 dp, always visible */
+  .bnav{position:absolute;left:0;right:0;bottom:0;height:50px;background:#fff;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-around;box-shadow:0 -3px 12px rgba(25,40,80,.06);z-index:3}
+  .bnav .it{display:flex;align-items:center;gap:6px;height:34px;padding:0 12px;border-radius:17px;color:var(--hint);font-size:11.5px;font-weight:800}
+  .bnav .it.on{background:var(--pri-c);color:var(--pri)}
+  .bnav .it.on .ic{color:var(--pri)}
+  .bnav .it .lbl{display:none}
+  .bnav .it.on .lbl{display:inline}
+  .fabmini{position:absolute;right:14px;bottom:62px;width:52px;height:52px;border-radius:26px;background:linear-gradient(135deg,var(--pri),var(--pri-3));color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 18px rgba(47,79,205,.36);z-index:3}
+  .fabmini .ic{width:26px;height:26px}
+
+  /* search field state */
+  .sfield{display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.94);border-radius:19px;height:38px;padding:0 12px;flex:1}
+  .sfield span{flex:1;font-size:13px;color:var(--ink)}
+  .sfield .ic{color:var(--ink2)}
+
+  /* settings accordion */
+  .sgrp{background:#fff;border-radius:14px;margin-bottom:8px;box-shadow:0 2px 7px rgba(25,40,80,.07);overflow:hidden;position:relative}
+  .sghd{display:flex;align-items:center;gap:11px;padding:10px 12px;min-height:50px}
+  .sghd .si{width:32px;height:32px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .sghd .si.b{background:var(--pri-c);color:var(--pri)}
+  .sghd .si.a{background:var(--warn-c);color:var(--warn)}
+  .sghd .si.g{background:var(--ok-c);color:var(--ok)}
+  .sghd .si.r{background:var(--err-c);color:var(--err)}
+  .sghd .l{flex:1;min-width:0}
+  .sghd .l b{display:block;font-size:14px;font-weight:700}
+  .sghd .l small{display:block;font-size:11px;color:var(--ink2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sghd .chev{width:19px;height:19px;color:var(--hint)}
+  .sgrp.open .sghd{background:linear-gradient(180deg,rgba(47,79,205,.06),rgba(47,79,205,0))}
+  .sgrp.open .chev{transform:rotate(180deg)}
+  .sgbody{padding:0 12px 8px}
+  .srow{display:flex;align-items:center;gap:11px;padding:9px 2px;min-height:46px;border-top:1px solid var(--line)}
+  .srow .l{flex:1;min-width:0}
+  .srow .l b{display:block;font-size:13.5px;font-weight:600}
+  .srow .l small{display:block;font-size:11px;color:var(--ink2);margin-top:1px}
+  .srow .val{font-size:12.5px;font-weight:700;color:var(--pri);white-space:nowrap}
+  .srow .ic.ch{width:18px;height:18px;color:var(--hint)}
+  .sw{width:44px;height:24px;border-radius:12px;background:#CDD4E0;position:relative;flex-shrink:0}
+  .sw i{position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:9px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+  .sw.on{background:var(--pri)}
+  .sw.on i{left:23px}
+
+  /* misc */
+  .mrow{display:flex;align-items:center;gap:10px;background:#fff;border-radius:12px;padding:9px 11px;margin-bottom:7px;box-shadow:0 2px 6px rgba(25,40,80,.07)}
+  .mrow .dot{width:14px;height:14px;border-radius:7px;flex-shrink:0}
+  .mrow .l{flex:1;min-width:0}
+  .mrow .l b{display:block;font-size:13.5px;font-weight:700}
+  .mrow .l small{display:block;font-size:11px;color:var(--ink2)}
+  .mrow .cnt{font-size:11px;font-weight:800;color:var(--ink2);background:#EEF1F6;border-radius:10px;padding:2px 8px}
+  .daygrp{font-size:10.5px;font-weight:800;color:var(--pri);letter-spacing:.05em;margin:10px 0 6px 4px}
+  .up{display:flex;gap:10px;align-items:center;background:#fff;border-radius:13px;padding:9px 11px;margin-bottom:7px;box-shadow:0 2px 6px rgba(25,40,80,.07)}
+  .up .d{width:42px;text-align:center;flex-shrink:0}
+  .up .d b{display:block;font-size:17px;font-weight:800;color:var(--pri);line-height:1}
+  .up .d small{display:block;font-size:9.5px;font-weight:700;color:var(--ink2)}
+  .up .l{flex:1;min-width:0}
+  .up .l b{display:block;font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .up .l small{display:block;font-size:11px;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .c-blue{background:#4A6FB0}.c-teal{background:#2E8A86}.c-green{background:#4E9440}.c-amber{background:#D48A18}.c-grey{background:#8B95A5}
+  .measure{position:absolute;right:2px;background:rgba(47,79,205,.10);border:1px dashed var(--pri);border-radius:4px;font-size:9px;font-weight:800;color:var(--pri-d);display:flex;align-items:center;justify-content:center;z-index:5}
+  .gain{position:absolute;left:2px;background:rgba(30,142,90,.12);border:1px dashed var(--ok);border-radius:4px;font-size:9px;font-weight:800;color:#14603C;display:flex;align-items:center;justify-content:center;z-index:5;text-align:center;line-height:1.2}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></symbol>
+  <symbol id="i-alarm" viewBox="0 0 24 24"><path d="M12.5 8H11v6l4.75 2.85.75-1.23-4-2.37V8zM12 4c-4.97 0-9 4.03-9 9s4.02 9 9 9c4.97 0 9-4.03 9-9s-4.03-9-9-9zm0 16c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="M10 6 8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></symbol>
+  <symbol id="i-filter" viewBox="0 0 24 24"><path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/></symbol>
+  <symbol id="i-tick" viewBox="0 0 24 24"><path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M16.59 8.59 12 13.17 7.41 8.59 6 10l6 6 6-6z"/></symbol>
+  <symbol id="i-group" viewBox="0 0 24 24"><path d="M3 5h8v2H3V5zm0 6h8v2H3v-2zm0 6h8v2H3v-2zm10-9h8v2h-8V8zm0 6h8v2h-8v-2z"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></symbol>
+  <symbol id="i-text" viewBox="0 0 24 24"><path d="M2.5 4v3h5v12h3V7h5V4h-13zm19 5h-9v3h3v7h3v-7h3V9z"/></symbol>
+  <symbol id="i-label" viewBox="0 0 24 24"><path d="M17.63 5.84A2 2 0 0 0 16 5H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h11a2 2 0 0 0 1.63-.84L22 12l-4.37-6.16z"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.48.48 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1 1 12 8.4a3.6 3.6 0 0 1 0 7.2z"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2V6a2 2 0 0 0-2-2zm0 16H5V9h14v11z"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M10 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-8l-2-2z"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 1 3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></symbol>
+  <symbol id="i-db" viewBox="0 0 24 24"><path d="M12 2C7.58 2 4 3.79 4 6s3.58 4 8 4 8-1.79 8-4-3.58-4-8-4zM4 8v4c0 2.21 3.58 4 8 4s8-1.79 8-4V8c0 2.21-3.58 4-8 4S4 10.21 4 8zm0 6v4c0 2.21 3.58 4 8 4s8-1.79 8-4v-4c0 2.21-3.58 4-8 4s-8-1.79-8-4z"/></symbol>
+  <symbol id="i-bug" viewBox="0 0 24 24"><path d="M20 8h-2.81a5.98 5.98 0 0 0-1.82-1.96L17 4.41 15.59 3l-2.17 2.17a6.02 6.02 0 0 0-2.83 0L8.41 3 7 4.41l1.62 1.63A5.98 5.98 0 0 0 6.81 8H4v2h2.09c-.05.33-.09.66-.09 1v1H4v2h2v1c0 .34.04.67.09 1H4v2h2.81a6 6 0 0 0 10.38 0H20v-2h-2.09c.05-.33.09-.66.09-1v-1h2v-2h-2v-1c0-.34-.04-.67-.09-1H20V8z"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zm0 12a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9zm0-7a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z"/></symbol>
+  <symbol id="i-sort" viewBox="0 0 24 24"><path d="M3 18h6v-2H3v2zM3 6v2h18V6H3zm0 7h12v-2H3v2z"/></symbol>
+  <symbol id="i-density" viewBox="0 0 24 24"><path d="M3 4h18v2H3V4zm0 5h18v2H3V9zm0 5h18v2H3v-2zm0 5h18v2H3v-2z"/></symbol>
+</svg>
+
+<div class="wrap">
+<header class="page">
+  <h1>InfoDeck — v1.3 · D1 design</h1>
+  <p>All nine corrections, and item 4's “plan what I missed to say” answered as a numbered list of my own proposals in <b>§C7</b>. The theme is space: 1.3 spends <b>218 dp</b> of a 790 dp screen on chrome before a single card appears. This round gets that to <b>96 dp</b> — room for <b>two and a half more cards</b> without shrinking anything you read.</p>
+  <span class="stamp">DESIGN ONLY · nothing built · no version bump</span>
+  <span class="stamp g">Reply by tag: “S1.3 → smaller”, “Q4 → b”, or “defaults” = all recommended</span>
+  <span class="stamp r">Your item “3.” from three rounds ago is still blank — Q10</span>
+</header>
+
+<h2 class="sec">A · Screens</h2>
+<div class="frames">
+
+<!-- S1 -->
+<figure>
+  <h3>S1 · Home — the space you get back<small>corrections 1, 2, 3, 4, 5</small></h3>
+  <div class="phone">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="tbar">
+      <div class="t"><b>InfoDeck</b><small>18 cards · 1 needs attention</small></div>
+      <div class="ib"><svg class="ic"><use href="#i-search"/></svg><b class="n" style="position:absolute;top:-2px;right:-2px">3</b></div>
+      <div class="ib"><svg class="ic"><use href="#i-alarm"/></svg><span class="dot"></span></div>
+      <div class="ib"><svg class="ic"><use href="#i-more"/></svg></div>
+      
+    </div>
+    <div class="body">
+      <div class="strip">
+        <span class="fchip alert"><span class="num">1</span>Overdue</span>
+        <span class="fchip"><span class="num">3</span>Month</span>
+        <span class="fchip"><span class="num">5</span>No alarm</span>
+        <span class="vbtn"><svg class="ic"><use href="#i-filter"/></svg>View<span class="bdg">1</span></span>
+        <b class="n" style="position:relative;top:-16px">1</b>
+      </div>
+
+      <div class="idc od"><div class="l"><div class="tt">Bike Insurance — ICICI Lombard</div>
+        <div class="kv">Policy Expiry <b>12-Oct-2025</b></div>
+        <div class="rw"><span class="chip cat">Insurance</span><span class="chip tg">#renewal</span><span class="chip none">No reminder</span></div></div>
+        <div class="ring" style="background:conic-gradient(var(--err) 0 100%,#EEF1F6 0)"><div class="inner2"><b style="color:var(--err)">310</b><small>AGO</small></div></div></div>
+
+      <div class="idc"><div class="l"><div class="tt">Laptop Warranty — Dell XPS</div>
+        <div class="kv">Warranty End <b>07-Sep-2026</b></div>
+        <div class="rw"><span class="chip cat">Warranties</span><span class="chip alarm">25-Aug</span><span class="chip file">1 file</span></div></div>
+        <div class="ring" style="background:conic-gradient(var(--warn) 0 78%,#EEF1F6 0)"><div class="inner2"><b style="color:var(--warn)">20</b><small>DAYS</small></div></div></div>
+
+      <div class="idc"><div class="l"><div class="tt">Car Insurance — HDFC Ergo</div>
+        <div class="kv">Policy Expiry <b>11-Oct-2026</b></div>
+        <div class="rw"><span class="chip cat">Insurance</span><span class="chip alarm">11-Sep</span><span class="chip tg">#vehicle</span></div></div>
+        <div class="ring" style="background:conic-gradient(var(--ok) 0 42%,#EEF1F6 0)"><div class="inner2"><b style="color:var(--ok)">54</b><small>DAYS</small></div></div></div>
+
+      <div class="idc"><div class="l"><div class="tt">Pollution Certificate — WB 24 AB 1234</div>
+        <div class="kv">Valid Till <b>20-Oct-2026</b></div>
+        <div class="rw"><span class="chip cat">Vehicle</span><span class="chip alarm">13-Oct</span></div></div>
+        <div class="ring" style="background:conic-gradient(var(--ok) 0 38%,#EEF1F6 0)"><div class="inner2"><b style="color:var(--ok)">63</b><small>DAYS</small></div></div></div>
+
+      <div class="idc"><div class="l"><div class="tt">Passport — K. D. Bhunia</div>
+        <div class="kv">Expiry <b>25-Aug-2027</b></div>
+        <div class="rw"><span class="chip cat">Identity Docs</span><span class="chip file">2 files</span></div></div>
+        <div class="ring" style="background:conic-gradient(var(--ok) 0 12%,#EEF1F6 0)"><div class="inner2"><b style="color:var(--ok)">372</b><small>DAYS</small></div></div></div>
+
+      <div class="idc"><div class="l"><div class="tt">Wi-Fi Password — Home</div>
+        <div class="kv">Network <b>Bhunia_5G</b></div>
+        <div class="rw"><span class="chip cat">Uncategorised</span><span class="chip none">No date</span></div></div>
+        <div class="ring" style="background:#EEF1F6"><div class="inner2"><small>—</small></div></div></div>
+
+      <span class="gain" style="bottom:112px;height:88px;width:74px">2½ more<br>cards<br>than 1.3</span>
+      <div class="fabmini"><svg class="ic"><use href="#i-plus"/></svg><b class="n" style="position:absolute;top:-6px;right:-6px">5</b></div>
+      <div class="bnav">
+        <div class="it on"><svg class="ic s"><use href="#i-home"/></svg><span class="lbl">Home</span></div>
+        <div class="it"><svg class="ic s"><use href="#i-cal"/></svg><span class="lbl">Upcoming</span></div>
+        <div class="it"><svg class="ic s"><use href="#i-gear"/></svg><span class="lbl">Settings</span></div>
+        <span class="measure" style="top:0;height:50px;width:34px;writing-mode:vertical-rl">50 dp</span>
+        <b class="n" style="position:absolute;left:6px;top:-8px">2</b>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="new">Filter strip — 30 dp</td><td>The three stat blocks become small count-chips on one line: <b>1 Overdue · 3 Month · 5 No alarm</b>. Same one-tap filtering, <b>62 dp saved</b>. A chip with a count of zero is hidden entirely, and the strip scrolls sideways if you add more <i class="q">Q1</i></td></tr>
+    <tr><td class="sr">2</td><td class="new">Bottom bar — 50 dp</td><td>Was 66 dp with a label under every icon. Now icons only, and just the <b>selected</b> tab shows its word inside a tinted pill. Three destinations, since Tags and Categories move into Settings <i class="q">Q2</i></td></tr>
+    <tr><td class="sr">3</td><td class="new">Search is an icon</td><td>The 56 dp search pill is gone. The magnifier sits in the top bar and expands in place (S3)</td></tr>
+    <tr><td class="sr">4</td><td class="new">Top bar — 56 dp</td><td>Was a 168 dp hero. Title, one-line summary, three icons. The alarm icon carries a dot when something is due</td></tr>
+    <tr><td class="sr">5</td><td class="new">“+” only</td><td>Round 52 dp button, no wording. The list keeps 62 dp of bottom padding so the last card is never hidden behind it</td></tr>
+    <tr><td class="sr">6</td><td class="k">“View” button</td><td>Group and Sort collapse into one button with a badge for active filters — <b>34 dp saved</b>. It opens one sheet with both <i class="q">Q3</i></td></tr>
+  </table>
+</figure>
+
+<!-- S2 -->
+<figure>
+  <h3>S2 · Before and after, measured<small>correction 4</small></h3>
+  <div class="phone">
+    <div class="sb dark"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="body" style="padding-top:30px">
+      <div class="daygrp" style="color:var(--err)">v1.3 TODAY — 218 dp before the first card</div>
+      <div style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 2px 7px rgba(25,40,80,.07)">
+        <div style="height:34px;background:linear-gradient(135deg,var(--pri),var(--pri-3));color:#fff;font-size:10.5px;font-weight:800;display:flex;align-items:center;padding:0 10px">Status bar + hero title — 82 dp</div>
+        <div style="height:52px;background:#DDE3F5;color:var(--pri-d);font-size:10.5px;font-weight:800;display:flex;align-items:center;padding:0 10px">Three stat blocks — 62 dp</div>
+        <div style="height:40px;background:#EAEEF8;color:var(--pri-d);font-size:10.5px;font-weight:800;display:flex;align-items:center;padding:0 10px">Search pill — 56 dp</div>
+        <div style="height:26px;background:#F1F4FA;color:var(--ink2);font-size:10.5px;font-weight:800;display:flex;align-items:center;padding:0 10px">Group + Sort + Filter row — 42 dp</div>
+        <div style="height:20px;background:#F6F8FC;color:var(--hint);font-size:10.5px;font-weight:800;display:flex;align-items:center;padding:0 10px">“18 cards · Expiry ↑” line — 20 dp</div>
+      </div>
+      <b class="n d" style="position:relative;top:-90px;left:300px">1</b>
+
+      <div class="daygrp" style="color:var(--ok);margin-top:14px">PROPOSED — 96 dp before the first card</div>
+      <div style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 2px 7px rgba(25,40,80,.07)">
+        <div style="height:34px;background:linear-gradient(135deg,var(--pri),var(--pri-3));color:#fff;font-size:10.5px;font-weight:800;display:flex;align-items:center;padding:0 10px">Status bar + slim top bar — 56 dp</div>
+        <div style="height:22px;background:#E4F3EB;color:#14603C;font-size:10.5px;font-weight:800;display:flex;align-items:center;padding:0 10px">Filter strip + View button — 30 dp, one line</div>
+        <div style="height:74px;background:#F3FAF6;color:#14603C;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;text-align:center">122 dp returned to your cards<br>≈ 2½ extra rows</div>
+      </div>
+      <b class="n g" style="position:relative;top:-60px;left:300px">2</b>
+
+      <div class="daygrp" style="margin-top:16px">AND WHEN YOU SCROLL</div>
+      <div style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 2px 7px rgba(25,40,80,.07)">
+        <div style="height:30px;background:linear-gradient(135deg,var(--pri),var(--pri-3));color:#fff;font-size:10.5px;font-weight:800;display:flex;align-items:center;padding:0 10px">Top bar shrinks to 44 dp, summary line drops away</div>
+        <div style="height:24px;background:#E4F3EB;color:#14603C;font-size:10.5px;font-weight:800;display:flex;align-items:center;padding:0 10px">Filter strip stays pinned — it is how you steer</div>
+      </div>
+      <b class="n" style="position:relative;top:-40px;left:300px">3</b>
+
+      <div class="bnav">
+        <div class="it on"><svg class="ic s"><use href="#i-home"/></svg><span class="lbl">Home</span></div>
+        <div class="it"><svg class="ic s"><use href="#i-cal"/></svg></div>
+        <div class="it"><svg class="ic s"><use href="#i-gear"/></svg></div>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="del">Where it went</td><td>Hero title 82 + stats 62 + search 56 + control row 42 + count line 20 = <b>262 dp</b> of chrome, of which 218 dp sits above the first card</td></tr>
+    <tr><td class="sr">2</td><td class="new">What comes back</td><td>56 + 30 = <b>86 dp</b>, plus 16 dp saved at the bottom bar. Net gain <b>≈ 138 dp</b></td></tr>
+    <tr><td class="sr">3</td><td class="new">Collapsing top bar</td><td>Scrolling down drops the summary line and shrinks the bar to 44 dp; scrolling up brings it straight back <i class="q">Q4</i></td></tr>
+    <tr><td class="sr">4</td><td class="k">Nothing shrinks that you read</td><td>Card title, dates and chips keep their sizes and still obey your text-size setting. Only chrome shrinks</td></tr>
+  </table>
+</figure>
+
+<!-- S3 -->
+<figure>
+  <h3>S3 · Search, expanded in place<small>correction 3 and 6</small></h3>
+  <div class="phone">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="tbar" style="padding:26px 8px 8px 8px">
+      <div class="ib"><svg class="ic"><use href="#i-back"/></svg></div>
+      <div class="sfield"><svg class="ic s"><use href="#i-search"/></svg><span>insur</span><svg class="ic s"><use href="#i-close"/></svg></div>
+      <b class="n" style="position:absolute;right:8px;bottom:-6px">1</b>
+    </div>
+    <div class="body">
+      <div class="strip">
+        <span class="fchip on">Cards <span class="num">4</span></span>
+        <span class="fchip">Tags <span class="num">1</span></span>
+        <span class="fchip">Files <span class="num">2</span></span>
+        <b class="n" style="position:relative;top:-16px">2</b>
+      </div>
+
+      <div class="idc"><div class="l"><div class="tt">Car <mark style="background:#FFE9A8">Insur</mark>ance — HDFC Ergo</div>
+        <div class="kv">Policy Expiry <b>11-Oct-2026</b></div>
+        <div class="rw"><span class="chip cat">Insurance</span><span class="chip alarm">11-Sep</span></div></div>
+        <div class="ring" style="background:conic-gradient(var(--ok) 0 42%,#EEF1F6 0)"><div class="inner2"><b style="color:var(--ok)">54</b><small>DAYS</small></div></div></div>
+
+      <div class="idc od"><div class="l"><div class="tt">Bike <mark style="background:#FFE9A8">Insur</mark>ance — ICICI Lombard</div>
+        <div class="kv">Policy Expiry <b>12-Oct-2025</b></div>
+        <div class="rw"><span class="chip cat">Insurance</span><span class="chip tg">#renewal</span></div></div>
+        <div class="ring" style="background:conic-gradient(var(--err) 0 100%,#EEF1F6 0)"><div class="inner2"><b style="color:var(--err)">310</b><small>AGO</small></div></div></div>
+
+      <div class="idc"><div class="l"><div class="tt">Health <mark style="background:#FFE9A8">Insur</mark>ance — Star</div>
+        <div class="kv">Policy Expiry <b>28-Feb-2027</b></div>
+        <div class="rw"><span class="chip cat">Insurance</span></div></div>
+        <div class="ring" style="background:conic-gradient(var(--ok) 0 18%,#EEF1F6 0)"><div class="inner2"><b style="color:var(--ok)">194</b><small>DAYS</small></div></div></div>
+
+      <div class="daygrp">IN FILES</div>
+      <div class="mrow"><span class="dot c-blue"></span><div class="l"><b>Policy document.pdf</b><small>Car Insurance — HDFC Ergo · 1.8 MB</small></div><svg class="ic ch s"><use href="#i-chev"/></svg>
+        <b class="n" style="position:absolute;right:6px;top:-6px">3</b></div>
+
+      <div class="bnav">
+        <div class="it on"><svg class="ic s"><use href="#i-home"/></svg><span class="lbl">Home</span></div>
+        <div class="it"><svg class="ic s"><use href="#i-cal"/></svg></div>
+        <div class="it"><svg class="ic s"><use href="#i-gear"/></svg></div>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="new">Expands in the bar</td><td>The icon becomes the field inside the same 56 dp bar — no extra row is ever added. Back or ✕ collapses it again</td></tr>
+    <tr><td class="sr">2</td><td class="new">Result buckets</td><td>Cards · Tags · Files, with counts, on the same 30 dp strip the filters use</td></tr>
+    <tr><td class="sr">3</td><td class="new">Files are searchable</td><td>Matching attachments are listed with the card they belong to. Tapping opens the card <i class="q">Q5</i></td></tr>
+    <tr><td class="sr">4</td><td class="k">Same search everywhere</td><td>The identical control sits on Upcoming and inside Settings ▸ Categories and ▸ Tags (S4, S6)</td></tr>
+  </table>
+</figure>
+
+<!-- S4 -->
+<figure>
+  <h3>S4 · Upcoming — now with search<small>corrections 6 and 8</small></h3>
+  <div class="phone">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="tbar">
+      <div class="t"><b>Upcoming</b><small>9 reminders · next in 7 days</small></div>
+      <div class="ib"><svg class="ic"><use href="#i-search"/></svg><b class="n" style="position:absolute;top:-2px;right:-2px">1</b></div>
+      <div class="ib"><svg class="ic"><use href="#i-more"/></svg></div>
+    </div>
+    <div class="body">
+      <div class="strip">
+        <span class="fchip on">Upcoming <span class="num">9</span></span>
+        <span class="fchip">History <span class="num">24</span></span>
+        <span class="vbtn"><svg class="ic"><use href="#i-sort"/></svg>Soonest</span>
+        <b class="n" style="position:relative;top:-16px">2</b>
+      </div>
+
+      <div class="daygrp">AUGUST 2026</div>
+      <div class="up"><div class="d"><b>25</b><small>TUE</small></div>
+        <div class="l"><b>Laptop Warranty — Dell XPS</b><small>Warranties · 13 days before Warranty End</small></div>
+        <span class="chip alarm">in 7 d</span></div>
+      <div class="up"><div class="d"><b>30</b><small>SUN</small></div>
+        <div class="l"><b>Passport — K. D. Bhunia</b><small>Identity Docs · 12 months before Expiry</small></div>
+        <span class="chip alarm">in 12 d</span></div>
+
+      <div class="daygrp">SEPTEMBER 2026</div>
+      <div class="up"><div class="d"><b>11</b><small>FRI</small></div>
+        <div class="l"><b>Car Insurance — HDFC Ergo</b><small>Insurance · 30 days before Policy Expiry</small></div>
+        <span class="chip alarm">in 24 d</span></div>
+      <div class="up"><div class="d"><b>13</b><small>SUN</small></div>
+        <div class="l"><b>Pollution Certificate — WB 24 AB 1234</b><small>Vehicle · 7 days before Valid Till</small></div>
+        <span class="chip alarm">in 26 d</span></div>
+      <div class="up"><div class="d"><b>30</b><small>WED</small></div>
+        <div class="l"><b>Health Insurance — Star</b><small>Insurance · 60 days before Policy Expiry</small></div>
+        <span class="chip alarm">in 43 d</span></div>
+
+      <div class="fabmini"><svg class="ic"><use href="#i-plus"/></svg></div>
+      <div class="bnav">
+        <div class="it"><svg class="ic s"><use href="#i-home"/></svg></div>
+        <div class="it on"><svg class="ic s"><use href="#i-cal"/></svg><span class="lbl">Upcoming</span></div>
+        <div class="it"><svg class="ic s"><use href="#i-gear"/></svg></div>
+        <b class="n" style="position:absolute;left:6px;top:-8px">3</b>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="new">Search icon</td><td>Was missing entirely. Same expand-in-place control as Home; it filters reminders by card, category or rule</td></tr>
+    <tr><td class="sr">2</td><td class="new">Upcoming / History</td><td>The old full-width segmented control becomes two count-chips on the same 30 dp strip — <b>38 dp saved here too</b></td></tr>
+    <tr><td class="sr">3</td><td class="new">Bar stays put</td><td>The bottom bar is on every top-level screen, with the current one lit. It never disappears when you switch tabs</td></tr>
+    <tr><td class="sr">4</td><td class="k">“+” here too</td><td>Adds a card and jumps straight into its scheduler, since that is why you are on this screen</td></tr>
+  </table>
+</figure>
+
+<!-- S5 -->
+<figure>
+  <h3>S5 · Settings — grouped and collapsed<small>corrections 7 and 9</small></h3>
+  <div class="phone">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="tbar">
+      <div class="t"><b>Settings</b><small>InfoDeck 1.4 · 18 cards · 38.4 MB</small></div>
+      <div class="ib"><svg class="ic"><use href="#i-search"/></svg><b class="n" style="position:absolute;top:-2px;right:-2px">1</b></div>
+    </div>
+    <div class="body">
+      <div class="sgrp"><div class="sghd"><span class="si b"><svg class="ic s"><use href="#i-folder"/></svg></span>
+        <div class="l"><b>Organise</b><small>Categories 5 · Tags 9</small></div><svg class="ic chev"><use href="#i-down"/></svg>
+        <b class="n" style="position:absolute;right:6px;top:4px">2</b></div></div>
+
+      <div class="sgrp"><div class="sghd"><span class="si b"><svg class="ic s"><use href="#i-eye"/></svg></span>
+        <div class="l"><b>Look and feel</b><small>Text size Comfortable · Theme System · Density Cozy</small></div><svg class="ic chev"><use href="#i-down"/></svg></div></div>
+
+      <div class="sgrp"><div class="sghd"><span class="si a"><svg class="ic s"><use href="#i-alarm"/></svg></span>
+        <div class="l"><b>Reminders</b><small>Ring 09:00 · snooze 1 h · exact alarms allowed</small></div><svg class="ic chev"><use href="#i-down"/></svg></div></div>
+
+      <div class="sgrp"><div class="sghd"><span class="si b"><svg class="ic s"><use href="#i-text"/></svg></span>
+        <div class="l"><b>Typing</b><small>Auto-capitalise on · all fields</small></div><svg class="ic chev"><use href="#i-down"/></svg></div></div>
+
+      <div class="sgrp"><div class="sghd"><span class="si g"><svg class="ic s"><use href="#i-db"/></svg></span>
+        <div class="l"><b>Data and backup</b><small>Last backup 18-Aug-2026 · 14 files</small></div><svg class="ic chev"><use href="#i-down"/></svg></div></div>
+
+      <div class="sgrp"><div class="sghd"><span class="si b"><svg class="ic s"><use href="#i-shield"/></svg></span>
+        <div class="l"><b>Security</b><small>App lock off</small></div><svg class="ic chev"><use href="#i-down"/></svg></div></div>
+
+      <div class="sgrp"><div class="sghd"><span class="si g"><svg class="ic s"><use href="#i-bug"/></svg></span>
+        <div class="l"><b>Diagnostics and About</b><small>0 error logs · InfoDeck 1.4</small></div><svg class="ic chev"><use href="#i-down"/></svg></div></div>
+
+      <div class="sgrp"><div class="sghd"><span class="si r"><svg class="ic s"><use href="#i-warn"/></svg></span>
+        <div class="l"><b>Danger zone</b><small>Put settings back · Erase everything</small></div><svg class="ic chev"><use href="#i-down"/></svg>
+        <b class="n d" style="position:absolute;right:6px;top:4px">3</b></div></div>
+
+      <div class="bnav">
+        <div class="it"><svg class="ic s"><use href="#i-home"/></svg></div>
+        <div class="it"><svg class="ic s"><use href="#i-cal"/></svg></div>
+        <div class="it on"><svg class="ic s"><use href="#i-gear"/></svg><span class="lbl">Settings</span></div>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="new">Settings search</td><td>Type “backup”, “lock”, “size” — matching rows surface with their group name. Eight groups need a way in <i class="q">Q7</i></td></tr>
+    <tr><td class="sr">2</td><td class="new">Organise</td><td><b>Categories and Tags now live here</b>, exactly as you asked. Both keep their own screens, reached from this group</td></tr>
+    <tr><td class="sr">3</td><td class="new">Eight collapsible groups</td><td>All collapsed on arrival; every header carries a summary line so you rarely need to open one. Opening one closes the previous, matching the Home accordion rule <i class="q">Q6</i></td></tr>
+    <tr><td class="sr">4</td><td class="k">Whole page fits</td><td>Eight groups on one screen with no scrolling — today Settings is a 1 400 dp scroll of loose rows</td></tr>
+  </table>
+</figure>
+
+<!-- S6 -->
+<figure>
+  <h3>S6 · Settings — one group open<small>correction 9 · Organise expanded</small></h3>
+  <div class="phone">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="tbar"><div class="t"><b>Settings</b><small>InfoDeck 1.4</small></div><div class="ib"><svg class="ic"><use href="#i-search"/></svg></div></div>
+    <div class="body">
+      <div class="sgrp open">
+        <div class="sghd"><span class="si b"><svg class="ic s"><use href="#i-folder"/></svg></span>
+          <div class="l"><b>Organise</b><small>Categories 5 · Tags 9</small></div><svg class="ic chev"><use href="#i-down"/></svg></div>
+        <div class="sgbody">
+          <div class="srow"><div class="l"><b>Categories</b><small>Add, rename, colour, reorder, delete</small></div><span class="val">5</span><svg class="ic ch"><use href="#i-chev"/></svg>
+            <b class="n" style="position:absolute;right:14px">1</b></div>
+          <div class="srow"><div class="l"><b>Tags</b><small>Rename, merge, delete — no card is lost</small></div><span class="val">9</span><svg class="ic ch"><use href="#i-chev"/></svg></div>
+          <div class="srow"><div class="l"><b>Default category for new cards</b><small>Used when you tap “+” from Home</small></div><span class="val">Insurance</span><svg class="ic ch"><use href="#i-chev"/></svg>
+            <b class="n g" style="position:absolute;right:14px">2</b></div>
+          <div class="srow"><div class="l"><b>Group Home by</b><small>Category · Tag · Expiry month · None</small></div><span class="val">Category</span><svg class="ic ch"><use href="#i-chev"/></svg></div>
+        </div>
+      </div>
+
+      <div class="sgrp"><div class="sghd"><span class="si b"><svg class="ic s"><use href="#i-eye"/></svg></span>
+        <div class="l"><b>Look and feel</b><small>Text size Comfortable · Density Cozy</small></div><svg class="ic chev"><use href="#i-down"/></svg></div></div>
+      <div class="sgrp"><div class="sghd"><span class="si a"><svg class="ic s"><use href="#i-alarm"/></svg></span>
+        <div class="l"><b>Reminders</b><small>Ring 09:00 · snooze 1 h</small></div><svg class="ic chev"><use href="#i-down"/></svg></div></div>
+
+      <div class="daygrp" style="margin-top:12px">CATEGORIES SCREEN — REACHED FROM HERE</div>
+      <div class="mrow"><span class="dot c-blue"></span><div class="l"><b>Insurance</b><small>4 cards · next 11-Oct-2026</small></div><span class="cnt">4</span><svg class="ic ch s"><use href="#i-more"/></svg></div>
+      <div class="mrow"><span class="dot c-teal"></span><div class="l"><b>Vehicle</b><small>3 cards · next 20-Oct-2026</small></div><span class="cnt">3</span><svg class="ic ch s"><use href="#i-more"/></svg>
+        <b class="n" style="position:absolute;right:6px;top:-6px">3</b></div>
+
+      <div class="bnav">
+        <div class="it"><svg class="ic s"><use href="#i-home"/></svg></div>
+        <div class="it"><svg class="ic s"><use href="#i-cal"/></svg></div>
+        <div class="it on"><svg class="ic s"><use href="#i-gear"/></svg><span class="lbl">Settings</span></div>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="new">Categories row</td><td>Opens the existing manage screen — which keeps the bottom bar visible, so you are never “lost” inside Settings</td></tr>
+    <tr><td class="sr">2</td><td class="new">Two new rows</td><td>Default category for “+”, and the Home grouping — both were only reachable from Home before <i class="q">Q8</i></td></tr>
+    <tr><td class="sr">3</td><td class="k">Sub-screens</td><td>Categories and Tags keep their own search icon, their own “+”, and the same slim 56 dp bar</td></tr>
+    <tr><td class="sr">4</td><td class="k">Editors are the exception</td><td>The card editor and the danger sheets hide the bottom bar, because their Discard · Undo · Save bar sits exactly there. Everything else keeps it <i class="q">Q9</i></td></tr>
+  </table>
+</figure>
+
+<!-- S7 -->
+<figure class="full">
+  <h3>S7 · Density, and where the bars stack<small>item 4's “what you missed”</small></h3>
+  <div class="duo">
+    <div class="phone" style="height:660px">
+      <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+      <div class="tbar" style="padding-top:24px"><div class="t"><b>InfoDeck</b><small>Compact density</small></div>
+        <div class="ib"><svg class="ic"><use href="#i-search"/></svg></div><div class="ib"><svg class="ic"><use href="#i-more"/></svg></div></div>
+      <div class="body">
+        <div class="strip"><span class="fchip alert"><span class="num">1</span>Overdue</span><span class="fchip"><span class="num">3</span>Month</span>
+          <span class="vbtn"><svg class="ic"><use href="#i-density"/></svg>Compact</span></div>
+        <div class="idc compact"><div class="l"><div class="tt">Bike Insurance — ICICI Lombard</div><div class="kv">Policy Expiry <b>12-Oct-2025</b> · Insurance</div></div>
+          <div class="ring" style="background:conic-gradient(var(--err) 0 100%,#EEF1F6 0)"><div class="inner2"><b style="color:var(--err)">310</b><small>AGO</small></div></div></div>
+        <div class="idc compact"><div class="l"><div class="tt">Laptop Warranty — Dell XPS</div><div class="kv">Warranty End <b>07-Sep-2026</b> · Warranties</div></div>
+          <div class="ring" style="background:conic-gradient(var(--warn) 0 78%,#EEF1F6 0)"><div class="inner2"><b style="color:var(--warn)">20</b><small>DAYS</small></div></div></div>
+        <div class="idc compact"><div class="l"><div class="tt">Car Insurance — HDFC Ergo</div><div class="kv">Policy Expiry <b>11-Oct-2026</b> · Insurance</div></div>
+          <div class="ring" style="background:conic-gradient(var(--ok) 0 42%,#EEF1F6 0)"><div class="inner2"><b style="color:var(--ok)">54</b><small>DAYS</small></div></div></div>
+        <div class="idc compact"><div class="l"><div class="tt">Pollution Certificate — WB 24 AB 1234</div><div class="kv">Valid Till <b>20-Oct-2026</b> · Vehicle</div></div>
+          <div class="ring" style="background:conic-gradient(var(--ok) 0 38%,#EEF1F6 0)"><div class="inner2"><b style="color:var(--ok)">63</b><small>DAYS</small></div></div></div>
+        <div class="idc compact"><div class="l"><div class="tt">Passport — K. D. Bhunia</div><div class="kv">Expiry <b>25-Aug-2027</b> · Identity Docs</div></div>
+          <div class="ring" style="background:conic-gradient(var(--ok) 0 12%,#EEF1F6 0)"><div class="inner2"><b style="color:var(--ok)">372</b><small>DAYS</small></div></div></div>
+        <div class="idc compact"><div class="l"><div class="tt">Wi-Fi Password — Home</div><div class="kv">Network <b>Bhunia_5G</b> · Uncategorised</div></div>
+          <div class="ring" style="background:#EEF1F6"><div class="inner2"><small>—</small></div></div></div>
+        <div class="idc compact"><div class="l"><div class="tt">Health Insurance — Star</div><div class="kv">Policy Expiry <b>28-Feb-2027</b> · Insurance</div></div>
+          <div class="ring" style="background:conic-gradient(var(--ok) 0 18%,#EEF1F6 0)"><div class="inner2"><b style="color:var(--ok)">194</b><small>DAYS</small></div></div></div>
+        <b class="n" style="position:absolute;left:10px;top:44px">1</b>
+        <div class="bnav"><div class="it on"><svg class="ic s"><use href="#i-home"/></svg><span class="lbl">Home</span></div>
+          <div class="it"><svg class="ic s"><use href="#i-cal"/></svg></div><div class="it"><svg class="ic s"><use href="#i-gear"/></svg></div></div>
+      </div>
+    </div>
+
+    <div class="phone" style="height:660px">
+      <div class="sb dark"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+      <div class="body" style="padding-top:34px">
+        <div class="daygrp">HOW THE BARS STACK — NOTHING OVERLAPS</div>
+        <div style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 2px 7px rgba(25,40,80,.07)">
+          <div style="height:44px;background:#F1F4FA;color:var(--ink2);font-size:11px;font-weight:800;display:flex;align-items:center;padding:0 12px">Scrolling list — pads 62 dp at the bottom</div>
+          <div style="height:44px;background:#E4F3EB;color:#14603C;font-size:11px;font-weight:800;display:flex;align-items:center;padding:0 12px">Bottom bar 50 dp — always visible</div>
+          <div style="height:44px;background:#EAEEF8;color:var(--pri-d);font-size:11px;font-weight:800;display:flex;align-items:center;padding:0 12px">System nav bar — measured once, never guessed</div>
+        </div>
+        <b class="n" style="position:relative;top:-100px;left:300px">2</b>
+
+        <div class="daygrp" style="margin-top:16px">ON AN EDITOR</div>
+        <div style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 2px 7px rgba(25,40,80,.07)">
+          <div style="height:44px;background:#F1F4FA;color:var(--ink2);font-size:11px;font-weight:800;display:flex;align-items:center;padding:0 12px">Form</div>
+          <div style="height:52px;background:#EDEBFB;color:var(--pri-d);font-size:11px;font-weight:800;display:flex;align-items:center;padding:0 12px">Discard · Undo · Save — 50 dp</div>
+          <div style="height:34px;background:#FBECEA;color:#8A1F19;font-size:11px;font-weight:800;display:flex;align-items:center;padding:0 12px">Bottom bar hidden here, on purpose</div>
+        </div>
+        <b class="n d" style="position:relative;top:-84px;left:300px">3</b>
+
+        <div class="daygrp" style="margin-top:16px">ON A SHEET</div>
+        <div style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 2px 7px rgba(25,40,80,.07)">
+          <div style="height:40px;background:#F1F4FA;color:var(--ink2);font-size:11px;font-weight:800;display:flex;align-items:center;padding:0 12px">Sheet content</div>
+          <div style="height:40px;background:#EDEBFB;color:var(--pri-d);font-size:11px;font-weight:800;display:flex;align-items:center;padding:0 12px">Discard · Undo · Save</div>
+          <div style="height:56px;background:#F3FAF6;color:#14603C;font-size:11px;font-weight:800;display:flex;align-items:center;padding:0 12px">25 % clear space — the standing rule, untouched</div>
+        </div>
+        <b class="n g" style="position:relative;top:-100px;left:300px">4</b>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="new">Density — Compact</td><td>My proposal, not something you asked for: chips move onto the meta line and rows lose 16 dp each, so <b>7 cards</b> fit where 6 did. Cozy (as S1) and Roomy also available <i class="q">Q11</i></td></tr>
+    <tr><td class="sr">2</td><td class="k">List padding</td><td>62 dp at the bottom of every list — the bar and the “+” can never cover the last card</td></tr>
+    <tr><td class="sr">3</td><td class="del">Editors hide the bar</td><td>Two 50 dp bars stacked would be 100 dp of buttons and an easy mis-tap. The editor owns the bottom while it is open</td></tr>
+    <tr><td class="sr">4</td><td class="k">Sheets</td><td>Unchanged: <code>max(25 % screen height, nav bar + 24 dp)</code> below the action bar</td></tr>
+  </table>
+</figure>
+
+</div><!-- /frames -->
+
+<h2 class="sec">B · Specification</h2>
+
+<h3 class="sub">C1 · Your nine corrections, one line each</h3>
+<table class="tb">
+  <tr><th class="sr">#</th><th>You said</th><th>What it becomes</th><th>Space</th></tr>
+  <tr><td class="sr">1</td><td class="k">Filters take too much space</td><td class="rec">Three 62 dp stat blocks → count-chips on one 30 dp strip; a zero-count chip is hidden</td><td class="num">−62 dp</td></tr>
+  <tr><td class="sr">2</td><td class="k">Bottom panel too big</td><td class="rec">66 dp → 50 dp; icons only, word shown on the selected tab</td><td class="num">−16 dp</td></tr>
+  <tr><td class="sr">3</td><td class="k">Search → icon</td><td class="rec">56 dp pill → magnifier in the top bar, expands in place</td><td class="num">−56 dp</td></tr>
+  <tr><td class="sr">4</td><td class="k">More space, and plan the rest</td><td class="rec">Hero 168 → 56 dp, Group+Sort+Filter → one “View” button, count line dropped, collapsing top bar. Extras in §C7</td><td class="num">−128 dp</td></tr>
+  <tr><td class="sr">5</td><td class="k">“+” for a new card</td><td class="rec">Round 52 dp “+”, no wording, on Home and Upcoming</td><td class="num">−34 dp</td></tr>
+  <tr><td class="sr">6</td><td class="k">Upcoming has no search</td><td class="rec">Same search control; Upcoming/History become chips on the strip</td><td class="num">−38 dp</td></tr>
+  <tr><td class="sr">7</td><td class="k">Tags and Categories into Settings</td><td class="rec">New “Organise” group holds both; bottom bar drops to three destinations</td><td class="num">—</td></tr>
+  <tr><td class="sr">8</td><td class="k">Bottom bar always visible</td><td class="rec">Present on Home, Upcoming, Settings and every Settings sub-screen. Hidden only on editors and sheets, where the action bar takes that space</td><td class="num">—</td></tr>
+  <tr><td class="sr">9</td><td class="k">Settings grouped, collapsible</td><td class="rec">Eight groups, all collapsed, each with a summary line; one open at a time</td><td class="num">fits on one screen</td></tr>
+</table>
+
+<h3 class="sub">C2 · The filter strip</h3>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Rule</th><th>Detail</th></tr>
+  <tr><td class="sr">1</td><td class="k">Height</td><td>30 dp, one line, horizontally scrollable, pinned while the list scrolls</td></tr>
+  <tr><td class="sr">2</td><td class="k">Contents</td><td>Overdue · Month · No alarm, each with its count; then the <b>View</b> button (group + sort + filters) right-aligned</td></tr>
+  <tr><td class="sr">3</td><td class="k">Zero rule</td><td>A chip whose count is 0 is not drawn — an empty “Overdue 0” is noise</td></tr>
+  <tr><td class="sr">4</td><td class="k">State</td><td>Tapping toggles that filter; the active chip fills with the brand colour and the View badge shows the total number of active filters</td></tr>
+  <tr><td class="sr">5</td><td class="k">Words</td><td>“Month” and “No alarm” instead of “This month” and “No reminder”, so three chips fit without scrolling on a 360 dp screen <i class="q">Q1</i></td></tr>
+</table>
+
+<h3 class="sub">C3 · Bottom bar</h3>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Rule</th><th>Detail</th></tr>
+  <tr><td class="sr">1</td><td class="k">Height</td><td>50 dp + the real system nav bar underneath, measured once from the decor view as always</td></tr>
+  <tr><td class="sr">2</td><td class="k">Destinations</td><td>Home · Upcoming · Settings <i class="q">Q2</i></td></tr>
+  <tr><td class="sr">3</td><td class="k">Labels</td><td>Only the selected tab shows its word, inside a tinted pill; the rest are icons</td></tr>
+  <tr><td class="sr">4</td><td class="k">Always visible</td><td>Home, Upcoming, Settings, Categories, Tags, Text size, Error logs, Upcoming history</td></tr>
+  <tr><td class="sr">5</td><td class="k">Hidden only</td><td>Card editor, card view, selection mode, and any sheet — all of which own the bottom themselves <i class="q">Q9</i></td></tr>
+  <tr><td class="sr">6</td><td class="k">State</td><td>Each tab remembers its scroll position and its filters; returning to Home puts you back where you were</td></tr>
+</table>
+
+<h3 class="sub">C4 · Search</h3>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Screen</th><th>What it searches</th></tr>
+  <tr><td class="sr">1</td><td class="k">Home</td><td>Card labels, data names and values, dates, tags, category names and <b>file names</b> — bucketed Cards / Tags / Files</td></tr>
+  <tr><td class="sr">2</td><td class="k">Upcoming</td><td>Card label, category and the reminder rule text</td></tr>
+  <tr><td class="sr">3</td><td class="k">Settings</td><td>Row titles and their group, so “backup” lands you in Data and backup</td></tr>
+  <tr><td class="sr">4</td><td class="k">Categories / Tags</td><td>Name, with live counts</td></tr>
+  <tr><td class="sr">5</td><td class="k">Behaviour</td><td>Icon → field inside the same bar, never a new row. Back or ✕ collapses. Matches are highlighted</td></tr>
+</table>
+
+<h3 class="sub">C5 · Settings groups</h3>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Group</th><th>Holds</th></tr>
+  <tr><td class="sr">1</td><td class="k">Organise</td><td><b>Categories</b>, <b>Tags</b>, default category for “+”, Home grouping</td></tr>
+  <tr><td class="sr">2</td><td class="k">Look and feel</td><td>Text size, theme, density, card style, one-section-open switch</td></tr>
+  <tr><td class="sr">3</td><td class="k">Reminders</td><td>Default ring time, vibrate, snooze, test ring, notification and exact-alarm permissions</td></tr>
+  <tr><td class="sr">4</td><td class="k">Typing</td><td>Auto-capitalise and its scope</td></tr>
+  <tr><td class="sr">5</td><td class="k">Data and backup</td><td>Backup, restore, last backup, attached-files size</td></tr>
+  <tr><td class="sr">6</td><td class="k">Security</td><td>App lock</td></tr>
+  <tr><td class="sr">7</td><td class="k">Diagnostics and About</td><td>Error logs, About Me block, version and release date</td></tr>
+  <tr><td class="sr">8</td><td class="k">Danger zone</td><td>Put settings back to normal, Erase everything</td></tr>
+</table>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Rule</th><th>Detail</th></tr>
+  <tr><td class="sr">1</td><td class="k">Collapsed by default</td><td>Every group starts closed; the last one you opened is remembered <i class="q">Q6</i></td></tr>
+  <tr><td class="sr">2</td><td class="k">One at a time</td><td>Opening a group closes the previous, matching Home</td></tr>
+  <tr><td class="sr">3</td><td class="k">Summary lines</td><td>Each header states its current values, so most questions are answered without opening it</td></tr>
+</table>
+
+<h3 class="sub">C6 · Three companions</h3>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Item</th><th>Exception handling</th><th>Logger.e</th><th>Tests</th></tr>
+  <tr><td class="sr">1</td><td class="k">Compact chrome</td><td>Chip list is built from counts, never from a fixed array; a zero or negative count simply drops the chip</td><td>logs a negative count, which would mean a bad query</td><td>JUnit on the visible-chip rule (0 hides, n shows, all-zero leaves only View) and on the collapsing-bar threshold</td></tr>
+  <tr><td class="sr">2</td><td class="k">Bottom bar</td><td>Destination resolution is total — an unknown route falls back to Home rather than a blank screen</td><td>logs an unknown route</td><td>JUnit on the visible/hidden rule per route; device pass that it survives rotation and back</td></tr>
+  <tr><td class="sr">3</td><td class="k">Search everywhere</td><td>Empty and whitespace queries return the full list; a query longer than 100 chars is trimmed</td><td>logs a search failure</td><td>JUnit on bucket counts, file-name matching and the trim rule</td></tr>
+  <tr><td class="sr">4</td><td class="k">Grouped settings</td><td>Unknown stored group id falls back to all-collapsed</td><td>logs the unknown id</td><td>JUnit that every settings row belongs to exactly one group and that no row was lost in the move</td></tr>
+</table>
+
+<h2 class="sec">C · §C7 — what you did not say, that I would add</h2>
+<div class="idea-box"><b>You asked me to plan the rest.</b> These are mine, not yours — each is optional and each has a question number, so you can strike any of them without unpicking the round.</div>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Idea</th><th>Why</th><th>Q</th></tr>
+  <tr><td class="sr">1</td><td class="new">Card density — Compact / Cozy / Roomy</td><td>7 cards instead of 6 without touching your text size. Compact folds the chips onto the meta line</td><td><i class="q">Q11</i></td></tr>
+  <tr><td class="sr">2</td><td class="new">Collapsing top bar</td><td>Another 12 dp back the moment you scroll; returns instantly when you scroll up</td><td><i class="q">Q4</i></td></tr>
+  <tr><td class="sr">3</td><td class="new">Hide zero-count chips</td><td>With nothing overdue, that chip should not occupy space at all</td><td><i class="q">Q1</i></td></tr>
+  <tr><td class="sr">4</td><td class="new">Settings search</td><td>Eight collapsed groups need a way in when you half-remember where something lives</td><td><i class="q">Q7</i></td></tr>
+  <tr><td class="sr">5</td><td class="new">Files in search results</td><td>You attach PDFs; the file name is often what you remember, not the card label</td><td><i class="q">Q5</i></td></tr>
+  <tr><td class="sr">6</td><td class="new">Per-tab memory</td><td>Home remembers its scroll and filters while you visit Upcoming and come back</td><td><i class="q">Q12</i></td></tr>
+  <tr><td class="sr">7</td><td class="new">Swipe a card right to snooze its next reminder</td><td>One gesture for the thing you do most. <b>No swipe-to-delete, ever</b> — that stays behind the danger layer</td><td><i class="q">Q13</i></td></tr>
+  <tr><td class="sr">8</td><td class="new">Default category for “+”</td><td>With the FAB wordless, it should not have to ask which category every time</td><td><i class="q">Q8</i></td></tr>
+  <tr><td class="sr">9</td><td class="new">Long-press “+” for a quick card</td><td>Label and one date, saved in two taps, for when you are standing at a counter</td><td><i class="q">Q14</i></td></tr>
+  <tr><td class="sr">10</td><td class="new">Overdue badge on the Home tab icon</td><td>The bar is always on screen now, so it can carry the count</td><td><i class="q">Q15</i></td></tr>
+</table>
+
+<h2 class="sec">D · Open questions</h2>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Q</th><th>Question</th><th>Options</th><th>My recommendation</th></tr>
+  <tr><td class="sr">1</td><td class="q">Q1</td><td>Filter chips</td><td>(a) counts + short words, hide zeros &nbsp; (b) icons only &nbsp; (c) keep full words</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">2</td><td class="q">Q2</td><td>Bottom destinations</td><td>(a) Home · Upcoming · Settings &nbsp; (b) add a fourth for Search &nbsp; (c) four with Tags kept</td><td class="rec">(a) — matches correction 7</td></tr>
+  <tr><td class="sr">3</td><td class="q">Q3</td><td>Group and Sort merged into “View”</td><td>(a) one sheet with both &nbsp; (b) keep two separate chips</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">4</td><td class="q">Q4</td><td>Collapsing top bar</td><td>(a) yes &nbsp; (b) fixed 56 dp</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">5</td><td class="q">Q5</td><td>Files in search results</td><td>(a) yes, as a bucket &nbsp; (b) cards only</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">6</td><td class="q">Q6</td><td>Settings groups on arrival</td><td>(a) all collapsed &nbsp; (b) first one open &nbsp; (c) remember exactly what was open</td><td class="rec">(a), remembering the last opened one</td></tr>
+  <tr><td class="sr">7</td><td class="q">Q7</td><td>Settings search</td><td>(a) yes &nbsp; (b) no</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">8</td><td class="q">Q8</td><td>Default category for “+”</td><td>(a) a setting &nbsp; (b) always last-used &nbsp; (c) always ask</td><td class="rec">(a), defaulting to last-used</td></tr>
+  <tr><td class="sr">9</td><td class="q">Q9</td><td>Bottom bar on editors</td><td>(a) hidden, action bar takes the space &nbsp; (b) visible, editor bar sits above it</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">10</td><td class="q">Q10</td><td><b>Your item “3.”</b> — blank since three rounds</td><td>—</td><td class="rec">One line and it joins the build</td></tr>
+  <tr><td class="sr">11</td><td class="q">Q11</td><td>Density setting</td><td>(a) Compact / Cozy / Roomy &nbsp; (b) Cozy only</td><td class="rec">(a), default Cozy</td></tr>
+  <tr><td class="sr">12</td><td class="q">Q12</td><td>Per-tab scroll and filter memory</td><td>(a) yes &nbsp; (b) reset each visit</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">13</td><td class="q">Q13</td><td>Swipe right to snooze</td><td>(a) yes &nbsp; (b) no gestures</td><td class="rec">(a) — and never swipe-to-delete</td></tr>
+  <tr><td class="sr">14</td><td class="q">Q14</td><td>Long-press “+” for a quick card</td><td>(a) yes &nbsp; (b) no</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">15</td><td class="q">Q15</td><td>Overdue badge on the Home tab</td><td>(a) yes &nbsp; (b) no</td><td class="rec">(a)</td></tr>
+</table>
+
+<h2 class="sec">E · If accepted</h2>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Field</th><th>Value</th></tr>
+  <tr><td class="sr">1</td><td class="k">Queue</td><td>N40 compact chrome (strip, top bar, “+”, collapsing) · N41 slim persistent bottom bar · N42 search everywhere as an icon · N43 Settings grouped and collapsible with Organise · N44 the §C7 extras you keep</td></tr>
+  <tr><td class="sr">2</td><td class="k">Release</td><td><b>1.4</b>, versionCode <b>1004000</b>, <code>InfoDeck-1.4.apk</code></td></tr>
+  <tr><td class="sr">3</td><td class="k">Database</td><td>No schema change — layout and navigation only</td></tr>
+  <tr><td class="sr">4</td><td class="k">Still queued from before</td><td>Section icon tiles, motion polish, illustrated empty states, Undo after card delete, Filter-sheet tag block, “Backup with files”</td></tr>
+  <tr><td class="sr">5</td><td class="k">Trigger</td><td>Nothing is built until you say <b>build</b> / <b>release</b></td></tr>
+</table>
+
+</div>
+</body>
+</html>

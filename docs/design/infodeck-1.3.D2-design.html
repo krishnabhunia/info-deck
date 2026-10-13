@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InfoDeck — v1.3 D2 design · two-button action bar, Undo relocated</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100..900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#131A26; --ink2:#5A6675; --hint:#96A0AF;
+    --pri:#2F4FCD; --pri-2:#5A6BF0; --pri-3:#7A5AF8; --pri-d:#1E357F;
+    --pri-c:#E7EBFF; --on-pri-c:#22337F;
+    --ok:#1E8E5A; --ok-c:#E3F5EC;
+    --warn:#A9700D; --warn-c:#FDF2DC;
+    --err:#C0392F; --err-c:#FCEAE8;
+    --bg:#F5F7FB; --card:#FFFFFF; --line:#E6EAF2; --outline:#C3CBDA;
+    --page:#E3E7F0; --tag:#22337F; --q:#7A5A00; --q-bg:#FFF3C4; --q-bd:#E2C35C;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--page);font-family:Roboto,"Segoe UI",system-ui,-apple-system,sans-serif;color:var(--ink);padding:26px 18px 70px}
+  .wrap{max-width:1180px;margin:0 auto}
+  header.page h1{font-size:24px;font-weight:800;color:var(--pri-d)}
+  header.page p{font-size:13.5px;color:var(--ink2);margin-top:5px;line-height:1.55}
+  .stamp{display:inline-block;margin:10px 8px 0 0;font-size:12px;font-weight:700;color:#7A2E00;background:#FFE1CC;border:1px solid #E8B08C;border-radius:20px;padding:3px 12px}
+  .stamp.g{color:var(--on-pri-c);background:var(--pri-c);border-color:#B9C3F5}
+  .stamp.r{color:#8A1F19;background:var(--err-c);border-color:#E7ADA8}
+  h2.sec{font-size:18px;font-weight:800;color:var(--pri-d);margin:38px 0 12px;padding-bottom:6px;border-bottom:2px solid #C9D1DD}
+  h3.sub{font-size:15px;color:var(--pri-d);margin-top:20px}
+  .rej-box{background:var(--err-c);border:1px solid #E7ADA8;border-radius:10px;padding:12px 14px;font-size:13.5px;line-height:1.55;margin:10px 0 4px}
+  .rej-box b{color:#8A1F19}
+  .idea-box{background:#EEF2FF;border:1px solid #B9C3F5;border-radius:10px;padding:12px 14px;font-size:13.5px;line-height:1.55;margin:10px 0 4px}
+  .idea-box b{color:var(--pri-d)}
+
+  table.tb{width:100%;border-collapse:collapse;font-size:12.5px;background:#fff;margin:6px 0 4px}
+  table.tb th{background:#E9EDF8;color:var(--pri-d);text-align:left;padding:6px 8px;border:1px solid #BFC9D8;font-size:12px}
+  table.tb td{padding:6px 8px;border:1px solid #D2D9E3;vertical-align:top;line-height:1.45}
+  table.tb .sr{width:1%;white-space:nowrap;text-align:center}
+  table.tb td.k{white-space:nowrap;font-weight:700;color:var(--tag)}
+  table.tb td.q{white-space:nowrap;font-weight:700;color:var(--q)}
+  table.tb td.rec{color:var(--ok);font-weight:600}
+  table.tb td.new{white-space:nowrap;font-weight:700;color:var(--ok)}
+  table.tb td.del{white-space:nowrap;font-weight:700;color:var(--err)}
+  table.tb td.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+  table.tb tr:nth-child(even) td{background:#FAFBFD}
+  code{font-family:Consolas,Menlo,monospace;font-size:12px;background:#EEF1F5;padding:1px 4px;border-radius:3px}
+
+  .frames{display:grid;grid-template-columns:repeat(auto-fit,minmax(520px,1fr));gap:34px 28px;margin-top:14px}
+  figure{display:flex;flex-direction:column;align-items:center;gap:8px}
+  figure h3{font-size:15px;font-weight:800;color:var(--pri-d);align-self:flex-start}
+  figure h3 small{font-weight:500;color:var(--ink2);font-size:12.5px;margin-left:6px}
+  figure table.tb{font-size:12px}
+  figure.full{grid-column:1 / -1}
+  figure.full h3{align-self:center}
+  figure.full table.tb{max-width:880px}
+  .duo{display:flex;gap:26px;justify-content:center;flex-wrap:wrap}
+
+  b.n{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:8px;background:var(--tag);color:#fff;font-size:10px;font-weight:800;line-height:1;flex-shrink:0;font-style:normal}
+  b.n.d{background:var(--err)}
+  b.n.g{background:var(--ok)}
+  i.q{display:inline-flex;align-items:center;font-style:normal;font-size:10px;font-weight:800;color:var(--q);background:var(--q-bg);border:1px solid var(--q-bd);border-radius:9px;padding:1px 6px;line-height:1.3}
+
+  .phone{width:378px;height:770px;background:var(--bg);border:9px solid #12151C;border-radius:38px;overflow:hidden;position:relative;box-shadow:0 16px 38px rgba(20,30,50,.22);display:flex;flex-direction:column;flex-shrink:0}
+  .sb{height:22px;color:#fff;font-size:10.5px;font-weight:600;display:flex;align-items:center;justify-content:space-between;padding:0 16px;flex-shrink:0;position:absolute;left:0;right:0;top:0;z-index:4}
+  .sb.dark{color:var(--ink)}
+  .tbar{background:linear-gradient(135deg,var(--pri) 0%,var(--pri-2) 60%,var(--pri-3) 100%);color:#fff;padding:26px 6px 8px 10px;display:flex;align-items:center;gap:2px;flex-shrink:0;border-radius:0 0 18px 18px;position:relative}
+  .tbar .t{flex:1;min-width:0}
+  .tbar .t b{display:block;font-size:17px;font-weight:800;letter-spacing:-.2px;line-height:1.15}
+  .tbar .t small{display:block;font-size:10.5px;opacity:.92}
+  .tbar .ib{width:36px;height:36px;border-radius:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .ic{width:21px;height:21px;fill:currentColor;flex-shrink:0}
+  .ic.s{width:17px;height:17px}
+  .body{flex:1;overflow:hidden;position:relative;padding:10px 12px 0}
+
+  .fld{background:#fff;border-radius:13px;padding:9px 12px;margin-bottom:9px;box-shadow:0 2px 6px rgba(25,40,80,.06);position:relative}
+  .fld .fl{font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--pri);margin-bottom:2px}
+  .fld .v{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .fld .v.edited{color:var(--pri-d)}
+  .fld.row{display:flex;align-items:center;gap:10px}
+  .fld .x{color:var(--ink2);width:18px;height:18px;flex-shrink:0}
+  .grp{display:flex;gap:9px;margin-bottom:9px}
+  .grp .fld{margin-bottom:0}
+  .lab{font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--pri);margin:12px 0 6px 4px;display:flex;align-items:center;gap:6px}
+  .lab .add{margin-left:auto;font-size:12px;font-weight:800;color:var(--pri);text-transform:none;letter-spacing:0}
+  .tchip{display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 11px;border-radius:14px;background:var(--pri-c);font-size:12px;font-weight:700;color:var(--on-pri-c)}
+  .tchip .x{color:var(--hint);font-size:12px}
+  .editdot{position:absolute;left:-3px;top:50%;transform:translateY(-50%);width:6px;height:26px;border-radius:3px;background:var(--pri)}
+
+  /* action bar */
+  .abar{position:absolute;left:0;right:0;bottom:0;padding:11px 12px 13px;background:linear-gradient(180deg,rgba(245,247,251,0),var(--bg) 20%);display:flex;gap:9px}
+  .abtn{flex:1;height:50px;border-radius:14px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:14px;font-weight:800;white-space:nowrap;overflow:hidden}
+  .abtn .ic{width:16px;height:16px}
+  .abtn.cancel{border:1.5px solid var(--outline);color:var(--ink2);background:#fff}
+  .abtn.disc{border:1.5px solid #E2B4B0;color:var(--err);background:#fff}
+  .abtn.undo{border:1.5px solid var(--outline);color:var(--ink2);background:#fff;opacity:.42}
+  .abtn.save{background:linear-gradient(135deg,var(--pri),var(--pri-3));color:#fff;box-shadow:0 6px 14px rgba(47,79,205,.3)}
+  .abtn.save.off{background:#C7CEE4;box-shadow:none}
+  .abtn.big{font-size:18px}
+  .barlab{position:absolute;left:12px;font-size:9.5px;font-weight:800;color:var(--pri-d);background:var(--pri-c);border-radius:6px;padding:1px 6px}
+
+  /* snackbars */
+  .toast{background:#18202E;color:#fff;border-radius:14px;padding:12px 14px;font-size:12.5px;display:flex;align-items:center;gap:10px;box-shadow:0 10px 22px rgba(0,0,0,.3);margin-bottom:9px;position:relative}
+  .toast b{margin-left:auto;color:#9DB4FF;font-weight:800;font-size:12.5px;white-space:nowrap}
+  .toast .ic{width:17px;height:17px;flex-shrink:0}
+  .toast .ic.g{color:#7FE0AC}
+  .toast .ic.r{color:#FFA79E}
+  .toast.float{position:absolute;left:12px;right:12px;bottom:74px;margin:0}
+
+  .dlg{position:absolute;left:20px;right:20px;top:50%;transform:translateY(-50%);background:#fff;border-radius:22px;padding:20px;box-shadow:0 18px 46px rgba(0,0,0,.35)}
+  .dlg .di{width:44px;height:44px;border-radius:15px;display:flex;align-items:center;justify-content:center;margin-bottom:12px}
+  .dlg .di.err{background:var(--err-c);color:var(--err)}
+  .dlg h5{font-size:16.5px;font-weight:800;margin-bottom:6px}
+  .dlg p{font-size:13px;color:var(--ink2);line-height:1.5}
+  .dlg ul{margin:8px 0 0 16px;font-size:12.5px;color:var(--ink2);line-height:1.6}
+  .dlg .acts{display:flex;gap:9px;margin-top:16px}
+  .dlg .acts .b{flex:1;height:46px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:13.5px;font-weight:800}
+  .dlg .acts .b.keep{border:1.5px solid var(--outline);color:var(--ink2)}
+  .dlg .acts .b.go{background:var(--err);color:#fff}
+  .dim{position:absolute;inset:0;background:rgba(12,18,30,.5)}
+  .sheet{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:24px 24px 0 0;padding:10px 16px 0;max-height:92%}
+  .grab{width:36px;height:4px;border-radius:2px;background:#D3D9E4;margin:0 auto 12px}
+  .sheet h4{font-size:17px;font-weight:800;margin-bottom:8px;display:flex;align-items:center;gap:9px}
+  .opt{display:flex;align-items:center;gap:11px;padding:9px 2px;border-bottom:1px solid var(--line);min-height:46px}
+  .opt:last-of-type{border-bottom:0}
+  .opt .l{flex:1;min-width:0}
+  .opt .l b{display:block;font-size:14px;font-weight:600}
+  .opt .l small{display:block;font-size:11.5px;color:var(--ink2)}
+  .rad{width:20px;height:20px;border-radius:10px;border:2px solid var(--outline);flex-shrink:0}
+  .rad.on{border-color:var(--pri);border-width:7px}
+  .sbs{height:30px;margin:12px -16px 0;border-top:1px dashed #C9D1DD;display:flex;align-items:center;justify-content:center;font-size:10.5px;color:var(--hint)}
+  .aa{background:#fff;border-radius:18px;padding:14px;box-shadow:0 3px 10px rgba(25,40,80,.08);text-align:center}
+  .aa .name{font-size:20px;font-weight:800;color:var(--pri-d)}
+  .aa .sub{font-size:11px;color:var(--ink2);margin-top:2px}
+  .aabtns{display:flex;align-items:center;justify-content:center;gap:16px;margin-top:10px}
+  .aabtn{width:58px;height:58px;border-radius:20px;background:var(--pri-c);color:var(--pri);display:flex;align-items:center;justify-content:center;font-weight:800}
+  .miniprev{background:#fff;border-radius:14px;padding:20px 10px 10px;box-shadow:0 2px 7px rgba(25,40,80,.07);position:relative;margin-top:10px}
+  .miniprev .plab{position:absolute;left:12px;top:7px;font-size:9px;font-weight:800;color:var(--hint);letter-spacing:.06em}
+  .idc{display:flex;gap:10px;align-items:center;background:#fff;border-radius:13px;padding:9px 11px;box-shadow:none;border:1px solid var(--line);position:relative;overflow:hidden}
+  .idc .tt{font-size:14px;font-weight:700}
+  .idc .kv{font-size:11px;color:var(--ink2);margin-top:1px}
+  .ring{width:42px;height:42px;border-radius:21px;flex-shrink:0;display:flex;align-items:center;justify-content:center;margin-left:auto}
+  .ring .inner2{width:34px;height:34px;border-radius:17px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .ring .inner2 b{font-size:12px;font-weight:800;line-height:1;color:var(--ok)}
+  .ring .inner2 small{font-size:7.5px;font-weight:700;color:var(--ink2)}
+  .bnav{position:absolute;left:0;right:0;bottom:0;height:50px;background:#fff;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-around}
+  .bnav .it{display:flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:16px;color:var(--hint);font-size:11.5px;font-weight:800}
+  .bnav .it.on{background:var(--pri-c);color:var(--pri)}
+  .widthbar{display:flex;gap:9px;margin-top:6px}
+  .wb{flex:1;height:46px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:13.5px;font-weight:800;white-space:nowrap;overflow:hidden;border:1.5px solid var(--outline);color:var(--ink2);background:#fff;position:relative}
+  .wb.save{background:linear-gradient(135deg,var(--pri),var(--pri-3));color:#fff;border:0}
+  .wb.cut:after{content:"";position:absolute;right:0;top:0;bottom:0;width:26px;background:linear-gradient(90deg,rgba(255,255,255,0),#FDECEA)}
+  .wb .px{position:absolute;bottom:2px;right:5px;font-size:8.5px;font-weight:800;color:var(--hint)}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></symbol>
+  <symbol id="i-save" viewBox="0 0 24 24"><path d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm3-10H5V5h10v4z"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 24 24"><path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62A7.94 7.94 0 0 1 12.5 11c3.54 0 6.55 2.31 7.6 5.5l2.37-.78A10.02 10.02 0 0 0 12.5 8z"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></symbol>
+  <symbol id="i-tick" viewBox="0 0 24 24"><path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></symbol>
+  <symbol id="i-move" viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2zm-5 9v-2h-4v-2h4V9l3 3-3 3z"/></symbol>
+  <symbol id="i-restore" viewBox="0 0 24 24"><path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6a7 7 0 1 1 2.05 4.95l-1.42 1.42A9 9 0 1 0 13 3zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></symbol>
+  <symbol id="i-filter" viewBox="0 0 24 24"><path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/></symbol>
+  <symbol id="i-group" viewBox="0 0 24 24"><path d="M3 5h8v2H3V5zm0 6h8v2H3v-2zm0 6h8v2H3v-2zm10-9h8v2h-8V8zm0 6h8v2h-8v-2z"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2V6a2 2 0 0 0-2-2zm0 16H5V9h14v11z"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.48.48 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1 1 12 8.4a3.6 3.6 0 0 1 0 7.2z"/></symbol>
+</svg>
+
+<div class="wrap">
+<header class="page">
+  <h1>InfoDeck — v1.3 · D2 design</h1>
+  <p>You were right: the third button does not earn its place. The bar becomes <b>two buttons</b> — one that goes back, one that saves — and Undo moves to where a change is actually hard to reverse: <b>a snackbar after the fact</b>. This design shows every state, every place Undo survives, and what it costs in width.</p>
+  <span class="stamp r">Supersedes the Save · Undo · Discard bar shipped in 1.3</span>
+  <span class="stamp">DESIGN ONLY · nothing built · no version bump</span>
+  <span class="stamp g">Reply by tag: “S2.1 → no”, “Q3 → b”, or “defaults” = all recommended</span>
+</header>
+
+<div class="rej-box"><b>Two things still missing from your side:</b> your bug list this round starts at 1 and stops — is there a 2? And item “3.” from four rounds ago has never been filled in. Both are parked as Q7 and Q8.</div>
+
+<h2 class="sec">A · Screens</h2>
+<div class="frames">
+
+<!-- S1 -->
+<figure class="full">
+  <h3>S1 · One button, two labels<small>the left button follows the state of the form</small></h3>
+  <div class="duo">
+    <div class="phone" style="height:600px">
+      <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+      <div class="tbar"><div class="ib"><svg class="ic"><use href="#i-close"/></svg></div>
+        <div class="t"><b>Edit card</b><small>nothing changed yet</small></div>
+        <div class="ib"><svg class="ic"><use href="#i-more"/></svg></div></div>
+      <div class="body">
+        <div class="fld"><div class="fl">Label</div><div class="v">Car Insurance — HDFC Ergo</div></div>
+        <div class="lab">Tags</div>
+        <div style="display:flex;gap:7px"><span class="tchip">#renewal <span class="x">✕</span></span><span class="tchip">#vehicle <span class="x">✕</span></span></div>
+        <div class="lab">Data <span class="add">+ Add</span></div>
+        <div class="grp"><div class="fld" style="flex:0 0 112px"><div class="fl">Name</div><div class="v">Policy No</div></div>
+          <div class="fld" style="flex:1"><div class="fl">Value</div><div class="v">HD-2291-KX</div></div></div>
+        <div class="lab">Dates <span class="add">+ Add</span></div>
+        <div class="grp"><div class="fld" style="flex:0 0 112px"><div class="fl">Name</div><div class="v">Policy Expiry</div></div>
+          <div class="fld" style="flex:1"><div class="fl">Date ★</div><div class="v">11-Oct-2026</div></div></div>
+
+        <div class="abar">
+          <span class="barlab" style="top:-2px">CLEAN STATE</span>
+          <span class="abtn cancel"><svg class="ic"><use href="#i-close"/></svg>Cancel</span>
+          <span class="abtn save off"><svg class="ic"><use href="#i-save"/></svg>Save</span>
+          <b class="n" style="position:absolute;left:2px;bottom:52px">1</b>
+          <b class="n" style="position:absolute;right:2px;bottom:52px">2</b>
+        </div>
+      </div>
+    </div>
+
+    <div class="phone" style="height:600px">
+      <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+      <div class="tbar"><div class="ib"><svg class="ic"><use href="#i-close"/></svg></div>
+        <div class="t"><b>Edit card</b><small>3 unsaved changes</small></div>
+        <div class="ib"><svg class="ic"><use href="#i-more"/></svg></div></div>
+      <div class="body">
+        <div class="fld"><span class="editdot"></span><div class="fl">Label</div><div class="v edited">Car Insurance — HDFC ERGO 2026</div></div>
+        <div class="lab">Tags</div>
+        <div style="display:flex;gap:7px"><span class="tchip">#renewal <span class="x">✕</span></span><span class="tchip">#vehicle <span class="x">✕</span></span>
+          <span class="tchip" style="background:var(--ok-c);color:var(--ok)">#kyc <span class="x">✕</span></span></div>
+        <div class="lab">Data <span class="add">+ Add</span></div>
+        <div class="grp"><div class="fld" style="flex:0 0 112px"><div class="fl">Name</div><div class="v">Policy No</div></div>
+          <div class="fld" style="flex:1"><div class="fl">Value</div><div class="v">HD-2291-KX</div></div></div>
+        <div class="lab">Dates <span class="add">+ Add</span></div>
+        <div class="grp"><div class="fld" style="flex:0 0 112px"><div class="fl">Name</div><div class="v">Policy Expiry</div></div>
+          <div class="fld" style="flex:1"><span class="editdot"></span><div class="fl">Date ★</div><div class="v edited">18-Oct-2026</div></div></div>
+
+        <div class="abar">
+          <span class="barlab" style="top:-2px;background:var(--err-c);color:var(--err)">DIRTY STATE</span>
+          <span class="abtn disc"><svg class="ic"><use href="#i-close"/></svg>Discard</span>
+          <span class="abtn save"><svg class="ic"><use href="#i-save"/></svg>Save</span>
+          <b class="n d" style="position:absolute;left:2px;bottom:52px">3</b>
+          <b class="n" style="position:absolute;right:2px;bottom:52px">4</b>
+        </div>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="new">“Cancel” while clean</td><td>Neutral grey outline. Closes at once, no dialog — there is nothing to lose <i class="q">Q1</i></td></tr>
+    <tr><td class="sr">2</td><td class="k">Save greyed</td><td>Nothing changed, so nothing to save. The grey is information, not decoration</td></tr>
+    <tr><td class="sr">3</td><td class="del">“Discard” once dirty</td><td>Same button, red outline, and now it <b>asks first</b>. The label change is the signal that you have something to lose</td></tr>
+    <tr><td class="sr">4</td><td class="new">Save live</td><td>Brand gradient, enabled. Header counts the pending changes; edited fields carry a small blue rail so you can see what you touched <i class="q">Q2</i></td></tr>
+    <tr><td class="sr">5</td><td class="k">Two buttons, not three</td><td>Each is <b>161 dp</b> wide instead of 104 dp — see S5 for what that fixes at large text sizes</td></tr>
+  </table>
+</figure>
+
+<!-- S2 -->
+<figure>
+  <h3>S2 · The one case Undo really covered<small>now handled where it happens</small></h3>
+  <div class="phone">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="tbar"><div class="ib"><svg class="ic"><use href="#i-close"/></svg></div>
+      <div class="t"><b>Edit card</b><small>4 unsaved changes</small></div>
+      <div class="ib"><svg class="ic"><use href="#i-more"/></svg></div></div>
+    <div class="body">
+      <div class="fld"><div class="fl">Label</div><div class="v">Car Insurance — HDFC Ergo</div></div>
+
+      <div class="lab">Data <span class="add">+ Add</span></div>
+      <div class="grp"><div class="fld" style="flex:0 0 112px"><div class="fl">Name</div><div class="v">Policy No</div></div>
+        <div class="fld row" style="flex:1"><div style="flex:1;min-width:0"><div class="fl">Value</div><div class="v">HD-2291-KX</div></div>
+        <svg class="ic x"><use href="#i-close"/></svg></div></div>
+      <div class="grp"><div class="fld" style="flex:0 0 112px"><div class="fl">Name</div><div class="v">Garage</div></div>
+        <div class="fld row" style="flex:1"><div style="flex:1;min-width:0"><div class="fl">Value</div><div class="v">Barrackpore Motors</div></div>
+        <svg class="ic x"><use href="#i-close"/></svg></div>
+        <b class="n" style="position:absolute;right:-4px;top:-8px">1</b></div>
+
+      <div class="lab">Dates <span class="add">+ Add</span></div>
+      <div class="grp"><div class="fld" style="flex:0 0 112px"><div class="fl">Name</div><div class="v">Policy Expiry</div></div>
+        <div class="fld" style="flex:1"><div class="fl">Date ★</div><div class="v">11-Oct-2026</div></div></div>
+
+      <div class="toast float" style="bottom:82px">
+        <svg class="ic r"><use href="#i-trash"/></svg>
+        Removed “Claim ref — CLM/2026/8841”
+        <b>UNDO</b>
+        <b class="n g" style="position:absolute;left:-6px;top:-8px">2</b>
+      </div>
+
+      <div class="abar">
+        <span class="abtn disc"><svg class="ic"><use href="#i-close"/></svg>Discard</span>
+        <span class="abtn save"><svg class="ic"><use href="#i-save"/></svg>Save</span>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="k">The ✕ that destroys typing</td><td>Removing a data row, a date, a tag or a file is the only edit you cannot simply re-type your way out of — the content is gone</td></tr>
+    <tr><td class="sr">2</td><td class="new">Inline Undo, 5 s</td><td>The removed row is quoted by name so you know exactly what comes back. This is the whole job the third button was doing, done at the moment it matters instead of parked in the bar forever <i class="q">Q3</i></td></tr>
+    <tr><td class="sr">3</td><td class="k">Everything else</td><td>Typed a wrong label? Re-type it. Picked a wrong date? Pick again. No undo needed for edits that leave the field in front of you</td></tr>
+    <tr><td class="sr">4</td><td class="k">Still unsaved</td><td>The removal joins the pending count; Discard would drop it along with everything else</td></tr>
+  </table>
+</figure>
+
+<!-- S3 -->
+<figure>
+  <h3>S3 · Discard asks, and says what it drops<small>only in the dirty state</small></h3>
+  <div class="phone">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="tbar"><div class="ib"><svg class="ic"><use href="#i-close"/></svg></div>
+      <div class="t"><b>Edit card</b><small>3 unsaved changes</small></div></div>
+    <div class="body">
+      <div class="dim" style="top:-70px"></div>
+      <div class="dlg">
+        <div class="di err"><svg class="ic"><use href="#i-warn"/></svg></div>
+        <h5>Discard 3 changes?</h5>
+        <p>These go back to how they were when you opened the card:</p>
+        <ul>
+          <li>Label — “HDFC ERGO 2026” → “HDFC Ergo”</li>
+          <li>Policy Expiry — 18-Oct-2026 → 11-Oct-2026</li>
+          <li>Tag #kyc — removed again</li>
+        </ul>
+        <div class="acts"><span class="b keep">Keep editing</span><span class="b go">Discard</span></div>
+        <b class="n d" style="position:absolute;right:10px;top:10px">1</b>
+      </div>
+      <div class="abar">
+        <span class="abtn disc"><svg class="ic"><use href="#i-close"/></svg>Discard</span>
+        <span class="abtn save"><svg class="ic"><use href="#i-save"/></svg>Save</span>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="new">It lists them</td><td>Not “unsaved changes” — the actual three, old value → new value. That is what makes losing an all-or-nothing Discard acceptable without a per-step Undo <i class="q">Q4</i></td></tr>
+    <tr><td class="sr">2</td><td class="k">Long lists</td><td>More than five changes shows the first five and “and 4 more”</td></tr>
+    <tr><td class="sr">3</td><td class="k">Back gesture</td><td>Identical to pressing Discard, including this dialog</td></tr>
+    <tr><td class="sr">4</td><td class="k">Clean state</td><td>No dialog at all — Cancel closes immediately</td></tr>
+  </table>
+</figure>
+
+<!-- S4 -->
+<figure>
+  <h3>S4 · Where Undo lives now<small>five snackbars, all after the fact</small></h3>
+  <div class="phone">
+    <div class="sb dark"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="body" style="padding-top:34px">
+      <div class="lab" style="margin-top:0">After a delete</div>
+      <div class="toast"><svg class="ic r"><use href="#i-trash"/></svg>Deleted “Car Insurance — HDFC Ergo”<b>UNDO</b>
+        <b class="n g" style="position:absolute;right:-4px;top:-8px">1</b></div>
+      <div class="toast"><svg class="ic r"><use href="#i-trash"/></svg>Deleted 3 cards<b>UNDO</b></div>
+
+      <div class="lab">After a bulk move</div>
+      <div class="toast"><svg class="ic"><use href="#i-move"/></svg>Moved 3 cards to Vehicle<b>UNDO</b>
+        <b class="n" style="position:absolute;right:-4px;top:-8px">2</b></div>
+
+      <div class="lab">After a removal inside an editor</div>
+      <div class="toast"><svg class="ic r"><use href="#i-trash"/></svg>Removed “Claim ref”<b>UNDO</b>
+        <b class="n" style="position:absolute;right:-4px;top:-8px">3</b></div>
+
+      <div class="lab">After a reset</div>
+      <div class="toast"><svg class="ic"><use href="#i-restore"/></svg>Text back to Standard<b>UNDO</b></div>
+      <div class="toast"><svg class="ic"><use href="#i-restore"/></svg>3 filters cleared<b>UNDO</b>
+        <b class="n" style="position:absolute;right:-4px;top:-8px">4</b></div>
+
+      <div class="lab">After a save</div>
+      <div class="toast"><svg class="ic g"><use href="#i-tick"/></svg>Saved · text size Comfortable<b>UNDO</b>
+        <b class="n" style="position:absolute;right:-4px;top:-8px">5</b></div>
+
+      <div class="lab" style="color:var(--err)">Never offered</div>
+      <div class="toast" style="background:#3A2320"><svg class="ic r"><use href="#i-warn"/></svg>Everything erased
+        <b class="n d" style="position:absolute;right:-4px;top:-8px">6</b></div>
+
+      <div class="bnav"><div class="it on"><svg class="ic s"><use href="#i-home"/></svg>Home</div>
+        <div class="it"><svg class="ic s"><use href="#i-cal"/></svg></div><div class="it"><svg class="ic s"><use href="#i-gear"/></svg></div></div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Place</th><th>What Undo restores</th></tr>
+    <tr><td class="sr">1</td><td class="new">Card deleted</td><td>The whole card — data, dates, schedulers, tags and its file copies. 5 s <i class="q">Q5</i></td></tr>
+    <tr><td class="sr">2</td><td class="new">Cards moved</td><td>Each card back to the category it came from, not just the last one</td></tr>
+    <tr><td class="sr">3</td><td class="new">Row removed in an editor</td><td>The exact row, in its original position, still unsaved</td></tr>
+    <tr><td class="sr">4</td><td class="new">Reset performed</td><td>Text settings or filters as they were a moment ago</td></tr>
+    <tr><td class="sr">5</td><td class="k">Save</td><td>Already shipped in 1.3 — reverts to the previously saved values</td></tr>
+    <tr><td class="sr">6</td><td class="del">Erase everything</td><td><b>No Undo, by design.</b> That is what the typed ERASE is for</td></tr>
+  </table>
+</figure>
+
+<!-- S5 -->
+<figure>
+  <h3>S5 · What the third button was costing<small>widths on a 360 dp screen</small></h3>
+  <div class="phone" style="height:700px">
+    <div class="sb dark"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="body" style="padding-top:34px">
+      <div class="lab" style="margin-top:0;color:var(--err)">v1.3 — three buttons at Standard text</div>
+      <div class="widthbar">
+        <span class="wb" style="font-size:12.5px">Discard<span class="px">104 dp</span></span>
+        <span class="wb" style="font-size:12.5px;opacity:.45">Undo<span class="px">104 dp</span></span>
+        <span class="wb save" style="font-size:12.5px">Save<span class="px">104 dp</span></span>
+      </div>
+
+      <div class="lab" style="color:var(--err)">v1.3 — three buttons at Large text</div>
+      <div class="widthbar">
+        <span class="wb cut" style="font-size:16px">Discar<span class="px">104 dp</span></span>
+        <span class="wb" style="font-size:16px;opacity:.45">Undo<span class="px">104 dp</span></span>
+        <span class="wb save" style="font-size:16px">Save<span class="px">104 dp</span></span>
+        <b class="n d" style="position:absolute;left:6px">1</b>
+      </div>
+
+      <div class="lab" style="color:var(--ok);margin-top:16px">Proposed — two buttons at Standard</div>
+      <div class="widthbar">
+        <span class="wb" style="font-size:13.5px">Discard<span class="px">161 dp</span></span>
+        <span class="wb save" style="font-size:13.5px">Save<span class="px">161 dp</span></span>
+      </div>
+
+      <div class="lab" style="color:var(--ok)">Proposed — two buttons at Large</div>
+      <div class="widthbar">
+        <span class="wb" style="font-size:17px">Discard<span class="px">161 dp</span></span>
+        <span class="wb save" style="font-size:17px">Save<span class="px">161 dp</span></span>
+      </div>
+
+      <div class="lab" style="color:var(--ok)">Proposed — two buttons at Huge</div>
+      <div class="widthbar">
+        <span class="wb" style="font-size:21px">Discard<span class="px">161 dp</span></span>
+        <span class="wb save" style="font-size:21px">Save<span class="px">161 dp</span></span>
+        <b class="n g" style="position:absolute;left:6px">2</b>
+      </div>
+
+      <div class="lab" style="margin-top:18px">Tap targets</div>
+      <table style="width:100%;border-collapse:collapse;font-size:11.5px;background:#fff;border-radius:10px;overflow:hidden">
+        <tr style="background:#E9EDF8"><td style="padding:6px 8px;font-weight:800">Bar</td><td style="padding:6px 8px;font-weight:800">Each button</td><td style="padding:6px 8px;font-weight:800">Mis-tap risk</td></tr>
+        <tr><td style="padding:6px 8px">Three</td><td style="padding:6px 8px">104 × 50 dp</td><td style="padding:6px 8px;color:var(--err);font-weight:700">Discard sits 9 dp from Undo</td></tr>
+        <tr><td style="padding:6px 8px;background:#F7FBF8">Two</td><td style="padding:6px 8px;background:#F7FBF8">161 × 50 dp</td><td style="padding:6px 8px;background:#F7FBF8;color:var(--ok);font-weight:700">Discard is a screen-width away from Save</td></tr>
+      </table>
+      <b class="n" style="position:relative;left:300px;top:-46px">3</b>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="del">Truncation at Large</td><td>“Discard” no longer fits in 104 dp once your own text-size setting is above Standard — the very setting you asked me to make flexible</td></tr>
+    <tr><td class="sr">2</td><td class="new">Two buttons survive Huge</td><td>161 dp holds “Discard” at 1.85 × with room to spare</td></tr>
+    <tr><td class="sr">3</td><td class="new">Fewer mis-taps</td><td>With three buttons the destructive one sits next to a harmless one. With two, the destructive and the primary are at opposite edges</td></tr>
+  </table>
+</figure>
+
+<!-- S6 -->
+<figure class="full">
+  <h3>S6 · The same bar everywhere<small>sheets and the text screen</small></h3>
+  <div class="duo">
+    <div class="phone" style="height:600px">
+      <div class="sb dark"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+      <div class="body" style="padding-top:34px">
+        <div class="dim"></div>
+        <div class="sheet">
+          <div class="grab"></div>
+          <h4><svg class="ic" style="color:var(--pri)"><use href="#i-group"/></svg>View</h4>
+          <div class="opt"><span class="rad on"></span><div class="l"><b>Group by category</b><small>One section per category</small></div></div>
+          <div class="opt"><span class="rad"></span><div class="l"><b>Group by tag</b><small>A card with two tags shows under both</small></div></div>
+          <div class="opt"><span class="rad"></span><div class="l"><b>No grouping</b><small>Just the cards</small></div></div>
+          <div style="display:flex;gap:9px;margin-top:14px">
+            <span class="abtn cancel" style="flex:1"><svg class="ic"><use href="#i-close"/></svg>Cancel</span>
+            <span class="abtn save" style="flex:1"><svg class="ic"><use href="#i-save"/></svg>Save</span>
+          </div>
+          <div class="sbs">bottom clearance = max(25 % screen height, nav bar + 24 dp)</div>
+          <b class="n" style="position:absolute;left:6px;top:6px">1</b>
+        </div>
+      </div>
+    </div>
+
+    <div class="phone" style="height:600px">
+      <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+      <div class="tbar"><div class="ib"><svg class="ic"><use href="#i-back"/></svg></div>
+        <div class="t"><b>Text size</b><small>1 unsaved change</small></div></div>
+      <div class="body">
+        <div class="aa">
+          <div class="name">Comfortable</div>
+          <div class="sub">a little larger than standard · 115 %</div>
+          <div class="aabtns"><span class="aabtn" style="font-size:17px">A</span><span class="aabtn" style="font-size:27px">A</span></div>
+        </div>
+        <div class="miniprev"><span class="plab">PREVIEW</span>
+          <div class="idc"><div><div class="tt">Car Insurance — HDFC Ergo</div><div class="kv">Policy Expiry 11-Oct-2026</div></div>
+            <div class="ring" style="background:conic-gradient(var(--ok) 0 42%,#EEF1F6 0)"><div class="inner2"><b>54</b><small>DAYS</small></div></div></div>
+        </div>
+        <b class="n" style="position:absolute;left:16px;top:96px">2</b>
+        <div class="abar">
+          <span class="abtn disc"><svg class="ic"><use href="#i-close"/></svg>Discard</span>
+          <span class="abtn save"><svg class="ic"><use href="#i-save"/></svg>Save</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="k">Sheets</td><td>Same two buttons. Sheets rarely go dirty enough to need a per-step undo, and the bottom clearance rule is untouched</td></tr>
+    <tr><td class="sr">2</td><td class="new">Text screen</td><td>The two A buttons already <b>are</b> the step-back control — pressing the small A is undo, spelled in the language of the screen. A separate Undo button here was pure duplication</td></tr>
+    <tr><td class="sr">3</td><td class="k">Where the bar appears</td><td>Card editor · text size · what-to-enlarge · category and tag editors · scheduler sheet · view and filter sheets</td></tr>
+  </table>
+</figure>
+
+</div><!-- /frames -->
+
+<h2 class="sec">B · Specification</h2>
+
+<h3 class="sub">C1 · The two-button rule</h3>
+<table class="tb">
+  <tr><th class="sr">#</th><th>State</th><th>Left button</th><th>Right button</th><th>Confirms?</th></tr>
+  <tr><td class="sr">1</td><td class="k">Nothing changed</td><td class="rec">Cancel — grey outline</td><td>Save — greyed</td><td>No, closes at once</td></tr>
+  <tr><td class="sr">2</td><td class="k">Something changed</td><td class="rec">Discard — red outline</td><td>Save — gradient</td><td class="rec">Yes, listing the changes</td></tr>
+  <tr><td class="sr">3</td><td class="k">Form invalid</td><td>Discard</td><td>Save — greyed, with the reason under the offending field</td><td>—</td></tr>
+  <tr><td class="sr">4</td><td class="k">Back gesture</td><td colspan="3">Behaves exactly as the left button in its current state</td></tr>
+  <tr><td class="sr">5</td><td class="k">Geometry</td><td colspan="3">Two equal buttons, 161 × 50 dp on a 360 dp screen, 14 dp radius, 9 dp gap, scaled by the layout factor and never below 44 dp</td></tr>
+  <tr><td class="sr">6</td><td class="k">Delete</td><td colspan="3">Never in this bar. Still ⋮ → Danger zone → sheet → confirm</td></tr>
+</table>
+
+<h3 class="sub">C2 · Undo, relocated</h3>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Trigger</th><th>Message</th><th>Window</th><th>Restores</th></tr>
+  <tr><td class="sr">1</td><td class="k">Card deleted</td><td>Deleted “&lt;label&gt;”</td><td>5 s</td><td>Card with data, dates, schedulers, tags, file copies</td></tr>
+  <tr><td class="sr">2</td><td class="k">Cards deleted in bulk</td><td>Deleted N cards</td><td>5 s</td><td>All N, each with everything attached</td></tr>
+  <tr><td class="sr">3</td><td class="k">Cards moved</td><td>Moved N cards to &lt;category&gt;</td><td>5 s</td><td>Each card to its own previous category</td></tr>
+  <tr><td class="sr">4</td><td class="k">Row removed in an editor</td><td>Removed “&lt;name&gt;”</td><td>5 s</td><td>The row, in position, still unsaved</td></tr>
+  <tr><td class="sr">5</td><td class="k">Reset text / clear filters</td><td>Text back to Standard · N filters cleared</td><td>5 s</td><td>The previous settings</td></tr>
+  <tr><td class="sr">6</td><td class="k">Save</td><td>Saved · &lt;what&gt;</td><td>5 s</td><td>The previously saved values</td></tr>
+  <tr><td class="sr">7</td><td class="del">Erase everything</td><td>Everything erased</td><td>—</td><td class="del">Nothing. Deliberately final</td></tr>
+</table>
+
+<h3 class="sub">C3 · What is removed, what is kept</h3>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Piece</th><th>Fate</th></tr>
+  <tr><td class="sr">1</td><td class="del">Undo button in the bar</td><td>Deleted from all 8 call sites</td></tr>
+  <tr><td class="sr">2</td><td class="rec"><code>UndoStack</code></td><td><b>Kept</b> and repurposed as the snapshot store behind the snackbars — its 8 tests stay green, retargeted from the bar to the snackbar paths</td></tr>
+  <tr><td class="sr">3</td><td class="rec">Dirty counting</td><td>Kept — it drives the header line, the Discard dialog and the Save enabled state</td></tr>
+  <tr><td class="sr">4</td><td class="new">Change list in the Discard dialog</td><td>New — old value → new value per change, five shown then “and N more”</td></tr>
+  <tr><td class="sr">5</td><td class="new">Dynamic left label</td><td>New — Cancel while clean, Discard once dirty</td></tr>
+</table>
+
+<h3 class="sub">C4 · Project-wide</h3>
+<div class="idea-box"><b>The standard reverts.</b> The Save · Undo · Discard bar I proposed for every app becomes <b>Cancel/Discard + Save</b>. Remindly, App &amp; Contact Cleaner, Kalam, ChargeWatch and Watchlist adopt the simpler two-button bar at their next release — one fewer control to build and to explain, and it matches what those apps already had before the 1.2 D1 round <i class="q">Q6</i>.</div>
+
+<h3 class="sub">C5 · Three companions</h3>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Item</th><th>Exception handling</th><th>Logger.e</th><th>Tests</th></tr>
+  <tr><td class="sr">1</td><td class="k">Two-button bar</td><td>Label resolution is total — an unknown state renders “Cancel” and closes safely; Save validates before writing</td><td>logs a failed save and any invalid state reaching the bar</td><td>JUnit that the label follows the dirty flag, that Save is disabled while clean or invalid, and that the back gesture routes to the same handler</td></tr>
+  <tr><td class="sr">2</td><td class="k">Undo snackbars</td><td>Restore runs in one transaction; a partial restore is impossible; a second Undo tap is ignored</td><td>logs a failed restore with what it was restoring</td><td>JUnit on snapshot → restore equality for card, bulk, move, row and settings; a test that Erase offers no Undo</td></tr>
+  <tr><td class="sr">3</td><td class="k">Discard dialog</td><td>Change list is built from the snapshot diff, capped at five entries; an empty diff means no dialog at all</td><td>logs a diff that cannot be rendered</td><td>JUnit on the diff builder — count, ordering, the “and N more” cap, and that a clean form yields zero entries</td></tr>
+</table>
+
+<h2 class="sec">C · Open questions</h2>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Q</th><th>Question</th><th>Options</th><th>My recommendation</th></tr>
+  <tr><td class="sr">1</td><td class="q">Q1</td><td>Left button label</td><td>(a) Cancel while clean, Discard when dirty &nbsp; (b) always “Cancel” &nbsp; (c) always “Discard”</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">2</td><td class="q">Q2</td><td>Blue rail on edited fields</td><td>(a) yes &nbsp; (b) no marker</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">3</td><td class="q">Q3</td><td>Inline Undo when a row is removed</td><td>(a) yes, 5 s &nbsp; (b) a confirm dialog instead &nbsp; (c) neither</td><td class="rec">(a) — a dialog for every row removal would be worse than the button you just cut</td></tr>
+  <tr><td class="sr">4</td><td class="q">Q4</td><td>Discard dialog lists the actual changes</td><td>(a) yes, up to five &nbsp; (b) just a count</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">5</td><td class="q">Q5</td><td>Undo window</td><td>(a) 5 s &nbsp; (b) 8 s &nbsp; (c) until the next action</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">6</td><td class="q">Q6</td><td>Does the two-button bar go project-wide?</td><td>(a) yes, all apps at their next release &nbsp; (b) InfoDeck only</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">7</td><td class="q">Q7</td><td><b>Your bug list stopped at 1</b> — is there a bug 2?</td><td>—</td><td class="rec">Send it and it joins this round</td></tr>
+  <tr><td class="sr">8</td><td class="q">Q8</td><td><b>Item “3.”</b> from four rounds ago — still blank</td><td>—</td><td class="rec">Same</td></tr>
+</table>
+
+<h2 class="sec">D · If accepted</h2>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Field</th><th>Value</th></tr>
+  <tr><td class="sr">1</td><td class="k">Queue</td><td>N45 two-button bar + relocated Undo — folds into the same release as N40–N44 from the previous round</td></tr>
+  <tr><td class="sr">2</td><td class="k">Release</td><td><b>1.4</b>, versionCode <b>1004000</b>, <code>InfoDeck-1.4.apk</code></td></tr>
+  <tr><td class="sr">3</td><td class="k">Database</td><td>No schema change</td></tr>
+  <tr><td class="sr">4</td><td class="k">Trigger</td><td>Nothing is built until you say <b>build</b> / <b>release</b></td></tr>
+</table>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,137 @@
+package com.krishna.infodeck.backup
+
+import android.content.Context
+import android.net.Uri
+import com.krishna.infodeck.core.Logger
+import com.krishna.infodeck.data.AppDatabase
+import com.krishna.infodeck.data.CardEntity
+import com.krishna.infodeck.data.CategoryEntity
+import com.krishna.infodeck.data.DataVarEntity
+import com.krishna.infodeck.data.DateVarEntity
+import com.krishna.infodeck.data.RingDirection
+import com.krishna.infodeck.data.RingStatus
+import com.krishna.infodeck.data.RingUnit
+import com.krishna.infodeck.data.SchedulerEntity
+import com.krishna.infodeck.data.UNCATEGORISED_ID
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+
+@Serializable data class BCategory(val id: Long, val name: String, val colorIndex: Int, val sortOrder: Int, val builtIn: Boolean)
+@Serializable data class BData(val name: String, val value: String, val order: Int)
+@Serializable data class BDate(val localId: Long, val name: String, val epochDay: Long, val order: Int)
+@Serializable data class BSched(
+    val dateLocalId: Long, val unit: String, val amount: Int, val direction: String,
+    val ringMinute: Int, val enabled: Boolean
+)
+@Serializable data class BCard(
+    val id: Long, val categoryId: Long, val label: String, val keyDateLocalId: Long?,
+    val manualOrder: Int, val createdAt: Long, val updatedAt: Long,
+    val data: List<BData>, val dates: List<BDate>, val schedulers: List<BSched>
+)
+@Serializable data class BackupFile(
+    val app: String = "InfoDeck",
+    val version: Int = 1,
+    val exportedAt: Long,
+    val categories: List<BCategory>,
+    val cards: List<BCard>
+)
+
+/** JSON backup / restore through the system file picker. No network, ever. */
+object BackupIo {
+
+    private val json = Json { prettyPrint = true; ignoreUnknownKeys = true; encodeDefaults = true }
+
+    suspend fun build(db: AppDatabase): BackupFile {
+        val dao = db.dao()
+        val cats = dao.categories().map { BCategory(it.id, it.name, it.colorIndex, it.sortOrder, it.builtIn) }
+        val cards = dao.cardsFlowOnce().map { c ->
+            val dates = dao.dateVars(c.id)
+            BCard(
+                id = c.id, categoryId = c.categoryId, label = c.label,
+                keyDateLocalId = c.keyDateVarId, manualOrder = c.manualOrder,
+                createdAt = c.createdAt, updatedAt = c.updatedAt,
+                data = dao.dataVars(c.id).map { BData(it.name, it.value, it.order) },
+                dates = dates.map { BDate(it.id, it.name, it.epochDay, it.order) },
+                schedulers = dao.schedulers(c.id).map {
+                    BSched(it.dateVarId, it.unit.name, it.amount, it.direction.name, it.ringMinute, it.enabled)
+                }
+            )
+        }
+        return BackupFile(exportedAt = System.currentTimeMillis(), categories = cats, cards = cards)
+    }
+
+    fun encode(b: BackupFile): String = json.encodeToString(b)
+
+    fun decode(text: String): BackupFile? = try {
+        json.decodeFromString(BackupFile.serializer(), text)
+    } catch (t: Throwable) {
+        Logger.e("BackupIo.decode", "not a valid InfoDeck backup", t); null
+    }
+
+    suspend fun export(context: Context, uri: Uri, db: AppDatabase): Boolean = try {
+        val text = encode(build(db))
+        context.contentResolver.openOutputStream(uri)?.use { it.write(text.toByteArray()) }
+            ?: throw IllegalStateException("no output stream")
+        true
+    } catch (t: Throwable) {
+        Logger.e("BackupIo.export", "write failed", t); false
+    }
+
+    /** replaceAll = wipe first; otherwise merge (new rows are added, ids re-generated). */
+    suspend fun import(context: Context, uri: Uri, db: AppDatabase, replaceAll: Boolean): Int {
+        return try {
+            val text = context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
+                ?: throw IllegalStateException("no input stream")
+            val parsed = decode(text) ?: return -1
+            val dao = db.dao()
+            if (replaceAll) dao.resetAll()
+
+            val catMap = HashMap<Long, Long>()
+            catMap[UNCATEGORISED_ID] = UNCATEGORISED_ID
+            parsed.categories.filter { !it.builtIn }.forEach { c ->
+                val existing = dao.categories().firstOrNull { it.name.equals(c.name, ignoreCase = true) }
+                catMap[c.id] = existing?.id ?: dao.insertCategory(
+                    CategoryEntity(name = c.name, colorIndex = c.colorIndex, sortOrder = c.sortOrder)
+                )
+            }
+
+            var count = 0
+            parsed.cards.forEach { c ->
+                val catId = catMap[c.categoryId] ?: UNCATEGORISED_ID
+                val cardId = dao.insertCard(
+                    CardEntity(
+                        categoryId = catId, label = c.label, manualOrder = c.manualOrder,
+                        createdAt = c.createdAt, updatedAt = c.updatedAt
+                    )
+                )
+                c.data.forEach { dao.insertDataVar(DataVarEntity(cardId = cardId, name = it.name, value = it.value, order = it.order)) }
+                val dateMap = HashMap<Long, Long>()
+                c.dates.forEach {
+                    dateMap[it.localId] = dao.insertDateVar(
+                        DateVarEntity(cardId = cardId, name = it.name, epochDay = it.epochDay, order = it.order)
+                    )
+                }
+                val keyId = c.keyDateLocalId?.let { dateMap[it] } ?: dateMap.values.firstOrNull()
+                dao.card(cardId)?.let { dao.updateCard(it.copy(keyDateVarId = keyId)) }
+                c.schedulers.forEach { s ->
+                    val dId = dateMap[s.dateLocalId] ?: return@forEach
+                    dao.insertScheduler(
+                        SchedulerEntity(
+                            cardId = cardId, dateVarId = dId,
+                            unit = runCatching { RingUnit.valueOf(s.unit) }.getOrDefault(RingUnit.SAME_DAY),
+                            amount = s.amount,
+                            direction = runCatching { RingDirection.valueOf(s.direction) }.getOrDefault(RingDirection.BEFORE),
+                            ringMinute = s.ringMinute, enabled = s.enabled,
+                            status = if (s.enabled) RingStatus.SCHEDULED else RingStatus.OFF
+                        )
+                    )
+                }
+                count++
+            }
+            count
+        } catch (t: Throwable) {
+            Logger.e("BackupIo.import", "restore failed", t); -1
+        }
+    }
+}

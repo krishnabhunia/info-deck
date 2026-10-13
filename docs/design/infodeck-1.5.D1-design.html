@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InfoDeck — v1.5 D1 design · lighter header, roomier bottom bar, colourful icons</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100..900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#131A26; --ink2:#5A6675; --hint:#96A0AF;
+    --indigo:#3B5BDB; --indigo-c:#E8ECFD;
+    --teal:#0E9384; --teal-c:#DDF3F0;
+    --violet:#7A5AF8; --violet-c:#EEE9FE;
+    --green:#12A150; --green-c:#DFF5E8;
+    --amber:#B76E00; --amber-c:#FDF0DA;
+    --rose:#E5484D; --rose-c:#FDE7E8;
+    --purple:#9333EA; --purple-c:#F3E8FE;
+    --sky:#0284C7; --sky-c:#E0F2FE;
+    --slate:#64748B; --slate-c:#EEF1F5;
+    --bg:#F6F8FC; --card:#FFFFFF; --line:#E9EDF4; --outline:#C6CEDC;
+    --page:#E3E7F0; --tag:#22337F; --q:#7A5A00; --q-bg:#FFF3C4; --q-bd:#E2C35C;
+    --pri:#3B5BDB; --pri-d:#1E357F;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--page);font-family:Roboto,"Segoe UI",system-ui,sans-serif;color:var(--ink);padding:26px 18px 70px}
+  .wrap{max-width:1180px;margin:0 auto}
+  header.page h1{font-size:24px;font-weight:800;color:var(--pri-d)}
+  header.page p{font-size:13.5px;color:var(--ink2);margin-top:5px;line-height:1.55}
+  .stamp{display:inline-block;margin:10px 8px 0 0;font-size:12px;font-weight:700;color:#7A2E00;background:#FFE1CC;border:1px solid #E8B08C;border-radius:20px;padding:3px 12px}
+  .stamp.g{color:#22337F;background:var(--indigo-c);border-color:#B9C3F5}
+  .stamp.r{color:#8A1F19;background:var(--rose-c);border-color:#E7ADA8}
+  h2.sec{font-size:18px;font-weight:800;color:var(--pri-d);margin:38px 0 12px;padding-bottom:6px;border-bottom:2px solid #C9D1DD}
+  h3.sub{font-size:15px;color:var(--pri-d);margin-top:20px}
+  .idea-box{background:var(--indigo-c);border:1px solid #B9C3F5;border-radius:10px;padding:12px 14px;font-size:13.5px;line-height:1.55;margin:10px 0 4px}
+  .idea-box b{color:var(--pri-d)}
+  .warn-box{background:#FFF6E5;border:1px solid #E8C98C;border-radius:10px;padding:12px 14px;font-size:13.5px;line-height:1.55;margin:10px 0 4px}
+  .warn-box b{color:#7A4A00}
+
+  table.tb{width:100%;border-collapse:collapse;font-size:12.5px;background:#fff;margin:6px 0 4px}
+  table.tb th{background:#E9EDF8;color:var(--pri-d);text-align:left;padding:6px 8px;border:1px solid #BFC9D8;font-size:12px}
+  table.tb td{padding:6px 8px;border:1px solid #D2D9E3;vertical-align:top;line-height:1.45}
+  table.tb .sr{width:1%;white-space:nowrap;text-align:center}
+  table.tb td.k{white-space:nowrap;font-weight:700;color:var(--tag)}
+  table.tb td.q{white-space:nowrap;font-weight:700;color:var(--q)}
+  table.tb td.rec{color:var(--green);font-weight:600}
+  table.tb td.new{white-space:nowrap;font-weight:700;color:var(--green)}
+  table.tb td.del{white-space:nowrap;font-weight:700;color:var(--rose)}
+  table.tb td.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+  table.tb tr:nth-child(even) td{background:#FAFBFD}
+  code{font-family:Consolas,Menlo,monospace;font-size:12px;background:#EEF1F5;padding:1px 4px;border-radius:3px}
+
+  .frames{display:grid;grid-template-columns:repeat(auto-fit,minmax(520px,1fr));gap:34px 28px;margin-top:14px}
+  figure{display:flex;flex-direction:column;align-items:center;gap:8px}
+  figure h3{font-size:15px;font-weight:800;color:var(--pri-d);align-self:flex-start}
+  figure h3 small{font-weight:500;color:var(--ink2);font-size:12.5px;margin-left:6px}
+  figure table.tb{font-size:12px}
+  figure.full{grid-column:1 / -1}
+  figure.full h3{align-self:center}
+  figure.full table.tb{max-width:880px}
+  .duo{display:flex;gap:26px;justify-content:center;flex-wrap:wrap}
+
+  b.n{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:8px;background:var(--tag);color:#fff;font-size:10px;font-weight:800;flex-shrink:0;font-style:normal}
+  b.n.d{background:var(--rose)}
+  b.n.g{background:var(--green)}
+  i.q{display:inline-flex;font-style:normal;font-size:10px;font-weight:800;color:var(--q);background:var(--q-bg);border:1px solid var(--q-bd);border-radius:9px;padding:1px 6px}
+
+  .phone{width:378px;height:790px;background:var(--bg);border:9px solid #12151C;border-radius:38px;overflow:hidden;position:relative;box-shadow:0 16px 38px rgba(20,30,50,.22);display:flex;flex-direction:column;flex-shrink:0}
+  .sb{height:22px;color:var(--ink2);font-size:10.5px;font-weight:700;display:flex;align-items:center;justify-content:space-between;padding:0 16px;flex-shrink:0;background:#fff}
+  /* NEW: white 48 dp bar, colour carried by the icons, 3 dp gradient hairline */
+  .nbar{height:48px;background:#fff;display:flex;align-items:center;gap:2px;padding:0 6px 0 12px;flex-shrink:0;position:relative}
+  .nbar b.t{font-size:17.5px;font-weight:800;letter-spacing:-.3px;flex:1}
+  .nbar .ib{width:38px;height:38px;border-radius:13px;display:flex;align-items:center;justify-content:center;position:relative;flex-shrink:0}
+  .hair{height:3px;background:linear-gradient(90deg,var(--indigo),var(--violet) 45%,var(--teal));flex-shrink:0}
+  .ic{width:21px;height:21px;fill:currentColor;flex-shrink:0}
+  .ic.s{width:18px;height:18px}
+  .ic.xs{width:14px;height:14px}
+  .body{flex:1;overflow:hidden;position:relative;padding:8px 12px 0}
+  .dot{position:absolute;top:7px;right:7px;width:8px;height:8px;border-radius:4px;background:var(--rose);border:1.5px solid #fff}
+
+  .strip{display:flex;gap:5px;align-items:center;padding:0 1px 8px}
+  .fchip{display:inline-flex;align-items:center;gap:5px;height:30px;padding:0 9px;border-radius:15px;background:#fff;font-size:12px;font-weight:700;color:var(--ink2);box-shadow:0 1px 4px rgba(25,40,80,.07);white-space:nowrap}
+  .fchip .num{font-size:10.5px;font-weight:800}
+  .fchip.rose{background:var(--rose-c);color:var(--rose)}
+  .fchip.amber{background:var(--amber-c);color:var(--amber)}
+  .fchip.slate{background:var(--slate-c);color:var(--slate)}
+  .vbtn{margin-left:auto;display:inline-flex;align-items:center;gap:4px;height:30px;padding:0 9px;border-radius:15px;background:var(--indigo-c);font-size:12px;font-weight:800;color:var(--indigo)}
+  .vbtn .ic{width:14px;height:14px}
+
+  .idc{display:flex;gap:10px;align-items:center;background:#fff;border-radius:15px;padding:10px 11px;margin-bottom:9px;box-shadow:0 2px 8px rgba(25,40,80,.07);position:relative;overflow:hidden}
+  .idc .tile{width:38px;height:38px;border-radius:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff}
+  .idc .l{flex:1;min-width:0}
+  .idc .tt{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .idc .kv{font-size:11.5px;color:var(--ink2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .idc .kv b{color:var(--ink);font-weight:700}
+  .idc .rw{display:flex;gap:5px;margin-top:6px}
+  .chip{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:11px}
+  .chip .ic{width:11px;height:11px}
+  .c-ind{background:var(--indigo-c);color:var(--indigo)}
+  .c-tea{background:var(--teal-c);color:var(--teal)}
+  .c-vio{background:var(--violet-c);color:var(--violet)}
+  .c-gre{background:var(--green-c);color:var(--green)}
+  .c-amb{background:var(--amber-c);color:var(--amber)}
+  .c-ros{background:var(--rose-c);color:var(--rose)}
+  .c-pur{background:var(--purple-c);color:var(--purple)}
+  .c-sky{background:var(--sky-c);color:var(--sky)}
+  .c-sla{background:var(--slate-c);color:var(--slate)}
+  .g-ind{background:linear-gradient(150deg,#5670E8,#3B5BDB)}
+  .g-tea{background:linear-gradient(150deg,#22B3A2,#0E9384)}
+  .g-vio{background:linear-gradient(150deg,#9B82FA,#7A5AF8)}
+  .g-amb{background:linear-gradient(150deg,#E9A13B,#B76E00)}
+  .g-ros{background:linear-gradient(150deg,#F0736F,#E5484D)}
+  .g-pur{background:linear-gradient(150deg,#B15BF2,#9333EA)}
+  .g-sky{background:linear-gradient(150deg,#38AEE8,#0284C7)}
+  .g-gre{background:linear-gradient(150deg,#3CC272,#12A150)}
+  .ring{width:44px;height:44px;border-radius:22px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+  .ring .in{width:35px;height:35px;border-radius:18px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .ring .in b{font-size:12.5px;font-weight:800;line-height:1}
+  .ring .in small{font-size:7.5px;font-weight:700;color:var(--ink2)}
+
+  /* NEW: 58 dp bottom bar, labels back, colour per tab */
+  .bnav{position:absolute;left:0;right:0;bottom:0;height:58px;background:#fff;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-around;box-shadow:0 -3px 14px rgba(25,40,80,.07)}
+  .bnav .it{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;font-weight:800;color:var(--hint)}
+  .bnav .it .pill{width:56px;height:28px;border-radius:14px;display:flex;align-items:center;justify-content:center}
+  .bnav .it.on .pill{background:var(--indigo-c)}
+  .bnav .it.on{color:var(--indigo)}
+  .bnav .it.on .ic{color:var(--indigo)}
+  .bnav .it.up .ic{color:var(--amber)}
+  .bnav .it.set .ic{color:var(--teal)}
+  .fab{position:absolute;right:14px;bottom:70px;width:54px;height:54px;border-radius:27px;background:linear-gradient(140deg,#5670E8,#7A5AF8);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(59,91,219,.4)}
+  .fab .ic{width:26px;height:26px}
+
+  .meas{position:absolute;right:4px;background:rgba(59,91,219,.10);border:1px dashed var(--indigo);border-radius:4px;font-size:9px;font-weight:800;color:var(--pri-d);display:flex;align-items:center;justify-content:center;z-index:5}
+  .gain{background:var(--green-c);border:1px dashed var(--green);border-radius:8px;padding:6px;font-size:10.5px;font-weight:800;color:#0B6B36;text-align:center}
+
+  .bar{height:34px;border-radius:8px;display:flex;align-items:center;padding:0 10px;font-size:10.5px;font-weight:800;color:#fff;margin-bottom:6px}
+  .lab{font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--indigo);margin:12px 0 7px 3px}
+  .scard{background:#fff;border-radius:15px;box-shadow:0 2px 8px rgba(25,40,80,.07);overflow:hidden}
+  .srow{display:flex;align-items:center;gap:11px;padding:10px 12px;min-height:52px;border-bottom:1px solid var(--line)}
+  .srow:last-child{border-bottom:0}
+  .srow .tile{width:36px;height:36px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .srow .l{flex:1;min-width:0}
+  .srow .l b{display:block;font-size:13.5px;font-weight:700}
+  .srow .l small{display:block;font-size:11px;color:var(--ink2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .srow .val{font-size:12.5px;font-weight:800;white-space:nowrap}
+  .chev{width:18px;height:18px;color:var(--hint)}
+  .actrow{display:flex;gap:8px;margin:4px 0 10px}
+  .actbtn{flex:1;height:52px;border-radius:15px;background:#fff;box-shadow:0 2px 8px rgba(25,40,80,.07);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:10.5px;font-weight:800;color:var(--ink2)}
+  .actbtn.share{flex:1.6;background:linear-gradient(140deg,#3CC272,#12A150);color:#fff;box-shadow:0 6px 16px rgba(18,161,80,.32)}
+  .swatch{width:100%;display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+  .sw{width:150px;background:#fff;border-radius:14px;padding:11px;box-shadow:0 2px 8px rgba(25,40,80,.08);text-align:center}
+  .sw .tile{width:46px;height:46px;border-radius:15px;display:flex;align-items:center;justify-content:center;margin:0 auto;color:#fff}
+  .sw b{display:block;font-size:12px;font-weight:800;margin-top:7px}
+  .sw small{display:block;font-size:10px;color:var(--ink2);margin-top:2px;line-height:1.35}
+  .sw code{font-size:9.5px}
+  .dark{background:#12161F}
+  .dark .nbar{background:#191F2B;color:#E7ECF5}
+  .dark .nbar b.t{color:#E7ECF5}
+  .dark .sb{background:#191F2B;color:#9AA6B8}
+  .dark .idc{background:#1D2431;box-shadow:none}
+  .dark .idc .tt{color:#E7ECF5}
+  .dark .idc .kv{color:#9AA6B8}
+  .dark .bnav{background:#191F2B;border-color:#2A3242}
+  .dark .body{background:#12161F}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2V6a2 2 0 0 0-2-2zm0 16H5V9h14v11z"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.48.48 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1 1 12 8.4a3.6 3.6 0 0 1 0 7.2z"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 1 3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></symbol>
+  <symbol id="i-car" viewBox="0 0 24 24"><path d="M18.92 6.01A1.5 1.5 0 0 0 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm11 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zM5 11l1.5-4.5h11L19 11H5z"/></symbol>
+  <symbol id="i-laptop" viewBox="0 0 24 24"><path d="M20 18a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2H0v2h24v-2h-4zM4 6h16v10H4V6z"/></symbol>
+  <symbol id="i-id" viewBox="0 0 24 24"><path d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zM9 8a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zm4.5 9h-9v-.75c0-1.5 3-2.25 4.5-2.25s4.5.75 4.5 2.25V17zM19 15h-4v-2h4v2zm0-4h-4V9h4v2z"/></symbol>
+  <symbol id="i-wifi" viewBox="0 0 24 24"><path d="M1 9l2 2a12.73 12.73 0 0 1 18 0l2-2A15.57 15.57 0 0 0 1 9zm8 8 3 3 3-3a4.24 4.24 0 0 0-6 0zm-4-4 2 2a7.07 7.07 0 0 1 10 0l2-2a9.9 9.9 0 0 0-14 0z"/></symbol>
+  <symbol id="i-alarm" viewBox="0 0 24 24"><path d="M12.5 8H11v6l4.75 2.85.75-1.23-4-2.37V8zM12 4c-4.97 0-9 4.03-9 9s4.02 9 9 9 9-4.03 9-9-4.03-9-9-9zm0 16c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></symbol>
+  <symbol id="i-tag" viewBox="0 0 24 24"><path d="M17.63 5.84A2 2 0 0 0 16 5H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h11a2 2 0 0 0 1.63-.84L22 12l-4.37-6.16z"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M10 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-8l-2-2z"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z"/></symbol>
+  <symbol id="i-qr" viewBox="0 0 24 24"><path d="M3 11h8V3H3v8zm2-6h4v4H5V5zM3 21h8v-8H3v8zm2-6h4v4H5v-4zM13 3v8h8V3h-8zm6 6h-4V5h4v4zm0 10h2v2h-2zM13 13h2v2h-2zm2 2h2v2h-2zm-2 2h2v2h-2zm2 2h2v2h-2zm2-2h2v2h-2zm0-4h2v2h-2zm2 2h2v2h-2z"/></symbol>
+  <symbol id="i-share" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 1 0-3-3c0 .24.04.47.09.7L8.04 9.81A2.99 2.99 0 0 0 3 12a3 3 0 0 0 5.04 2.19l7.12 4.16c-.05.21-.08.43-.08.65a2.92 2.92 0 1 0 2.92-2.92z"/></symbol>
+  <symbol id="i-db" viewBox="0 0 24 24"><path d="M12 2C7.58 2 4 3.79 4 6s3.58 4 8 4 8-1.79 8-4-3.58-4-8-4zM4 8v4c0 2.21 3.58 4 8 4s8-1.79 8-4V8c0 2.21-3.58 4-8 4S4 10.21 4 8zm0 6v4c0 2.21 3.58 4 8 4s8-1.79 8-4v-4c0 2.21-3.58 4-8 4s-8-1.79-8-4z"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zm0 12a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9zm0-7a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></symbol>
+  <symbol id="i-bug" viewBox="0 0 24 24"><path d="M20 8h-2.81a6 6 0 0 0-1.82-1.96L17 4.41 15.59 3l-2.17 2.17a6 6 0 0 0-2.83 0L8.41 3 7 4.41l1.62 1.63A6 6 0 0 0 6.81 8H4v2h2.09c-.05.33-.09.66-.09 1v1H4v2h2v1c0 .34.04.67.09 1H4v2h2.81a6 6 0 0 0 10.38 0H20v-2h-2.09c.05-.33.09-.66.09-1v-1h2v-2h-2v-1c0-.34-.04-.67-.09-1H20V8z"/></symbol>
+  <symbol id="i-text" viewBox="0 0 24 24"><path d="M2.5 4v3h5v12h3V7h5V4h-13zm19 5h-9v3h3v7h3v-7h3V9z"/></symbol>
+  <symbol id="i-tune" viewBox="0 0 24 24"><path d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z"/></symbol>
+</svg>
+
+<div class="wrap">
+<header class="page">
+  <h1>InfoDeck — v1.5 · D1 design</h1>
+  <p>Three corrections: <b>1)</b> the blue header block goes away entirely — a white <b>48 dp</b> bar with a 3 dp gradient hairline, so the colour lives in the icons instead of a slab; <b>2)</b> the bottom bar grows back from 50 dp to <b>58 dp</b> with its words returned; <b>3)</b> a proper <b>colour system</b> — nine hues, each with a fixed meaning, on tiles, chips, sections and tabs.</p>
+  <span class="stamp">DESIGN ONLY · nothing built · no version bump</span>
+  <span class="stamp g">Reply by tag: “S1.4 → smaller”, “Q3 → b”, or “defaults” = all recommended</span>
+  <span class="stamp r">Item 2 was ambiguous — both readings are drawn in S3, pick one</span>
+</header>
+
+<div class="idea-box"><b>Why the blue slab has to go, not just shrink.</b> A gradient block needs height to look deliberate — squeeze it under 48 dp and it reads as a mistake. Removing it entirely gives back 56 dp <i>and</i> solves your third point at the same time: with no blue field competing, coloured icons finally register.</div>
+
+<h2 class="sec">A · Screens</h2>
+<div class="frames">
+
+<!-- S1 -->
+<figure>
+  <h3>S1 · Home — the whole change together<small>corrections 1, 2 and 3</small></h3>
+  <div class="phone">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="nbar">
+      <b class="t">InfoDeck</b>
+      <span class="ib" style="background:var(--indigo-c);color:var(--indigo)"><svg class="ic s"><use href="#i-search"/></svg></span>
+      <span class="ib" style="background:var(--amber-c);color:var(--amber)"><svg class="ic s"><use href="#i-bell"/></svg><span class="dot"></span></span>
+      <span class="ib" style="color:var(--slate)"><svg class="ic s"><use href="#i-more"/></svg></span>
+      
+      <b class="n" style="position:absolute;left:100px;bottom:2px">1</b>
+    </div>
+    <div class="hair"></div>
+    <div class="body">
+      <div class="strip">
+        <span class="fchip rose"><span class="num">1</span>Overdue</span>
+        <span class="fchip amber"><span class="num">3</span>Month</span>
+        <span class="fchip slate"><span class="num">5</span>No alarm</span>
+        <span class="vbtn"><svg class="ic"><use href="#i-tune"/></svg>View</span>
+        <b class="n" style="position:relative;top:-16px">2</b>
+      </div>
+
+      <div class="idc">
+        <span class="tile g-ros"><svg class="ic s"><use href="#i-car"/></svg></span>
+        <div class="l"><div class="tt">Bike Insurance — ICICI Lombard</div>
+          <div class="kv">Policy Expiry <b>12-Oct-2025</b></div>
+          <div class="rw"><span class="chip c-ind"><svg class="ic"><use href="#i-shield"/></svg>Insurance</span>
+            <span class="chip c-vio"><svg class="ic"><use href="#i-tag"/></svg>renewal</span></div></div>
+        <div class="ring" style="background:conic-gradient(var(--rose) 0 100%,#EEF1F6 0)"><div class="in"><b style="color:var(--rose)">310</b><small>AGO</small></div></div>
+        <b class="n" style="position:absolute;left:6px;top:6px">3</b>
+      </div>
+
+      <div class="idc">
+        <span class="tile g-amb"><svg class="ic s"><use href="#i-laptop"/></svg></span>
+        <div class="l"><div class="tt">Laptop Warranty — Dell XPS</div>
+          <div class="kv">Warranty End <b>07-Sep-2026</b></div>
+          <div class="rw"><span class="chip c-amb"><svg class="ic"><use href="#i-alarm"/></svg>25-Aug</span>
+            <span class="chip c-pur"><svg class="ic"><use href="#i-file"/></svg>1 file</span></div></div>
+        <div class="ring" style="background:conic-gradient(var(--amber) 0 78%,#EEF1F6 0)"><div class="in"><b style="color:var(--amber)">20</b><small>DAYS</small></div></div>
+      </div>
+
+      <div class="idc">
+        <span class="tile g-ind"><svg class="ic s"><use href="#i-car"/></svg></span>
+        <div class="l"><div class="tt">Car Insurance — HDFC Ergo</div>
+          <div class="kv">Policy Expiry <b>11-Oct-2026</b></div>
+          <div class="rw"><span class="chip c-ind"><svg class="ic"><use href="#i-shield"/></svg>Insurance</span>
+            <span class="chip c-amb"><svg class="ic"><use href="#i-alarm"/></svg>11-Sep</span></div></div>
+        <div class="ring" style="background:conic-gradient(var(--green) 0 42%,#EEF1F6 0)"><div class="in"><b style="color:var(--green)">54</b><small>DAYS</small></div></div>
+      </div>
+
+      <div class="idc">
+        <span class="tile g-tea"><svg class="ic s"><use href="#i-id"/></svg></span>
+        <div class="l"><div class="tt">Passport — K. D. Bhunia</div>
+          <div class="kv">Expiry <b>25-Aug-2027</b></div>
+          <div class="rw"><span class="chip c-tea"><svg class="ic"><use href="#i-id"/></svg>Identity</span>
+            <span class="chip c-pur"><svg class="ic"><use href="#i-file"/></svg>2 files</span></div></div>
+        <div class="ring" style="background:conic-gradient(var(--green) 0 12%,#EEF1F6 0)"><div class="in"><b style="color:var(--green)">372</b><small>DAYS</small></div></div>
+      </div>
+
+      <div class="idc">
+        <span class="tile g-sky"><svg class="ic s"><use href="#i-wifi"/></svg></span>
+        <div class="l"><div class="tt">Wi-Fi Password — Home</div>
+          <div class="kv">Network <b>Bhunia_5G</b></div>
+          <div class="rw"><span class="chip c-sla">Uncategorised</span></div></div>
+        <div class="ring" style="background:#EEF1F6"><div class="in"><small>—</small></div></div>
+      </div>
+
+      <div class="fab"><svg class="ic"><use href="#i-plus"/></svg></div>
+      <div class="bnav">
+        <div class="it on"><span class="pill"><svg class="ic s"><use href="#i-home"/></svg></span>Home</div>
+        <div class="it up"><span class="pill"><svg class="ic s"><use href="#i-cal"/></svg></span>Upcoming</div>
+        <div class="it set"><span class="pill"><svg class="ic s"><use href="#i-gear"/></svg></span>Settings</div>
+        
+        <b class="n" style="position:absolute;left:6px;top:-8px">4</b>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="new">White 48 dp bar</td><td>The blue slab is gone. Title, then three coloured icon buttons, then a 3 dp gradient hairline that keeps the brand present without spending height <i class="q">Q2</i></td></tr>
+    <tr><td class="sr">2</td><td class="new">Coloured filter chips</td><td>Each chip now carries its own tint — rose for overdue, amber for this month, slate for no alarm. Colour does the work the text used to</td></tr>
+    <tr><td class="sr">3</td><td class="new">Card icon tiles</td><td>Every card gets a rounded gradient tile in its <b>category colour</b> with a matching glyph. This is the single biggest change to how the list feels <i class="q">Q4</i></td></tr>
+    <tr><td class="sr">4</td><td class="new">58 dp bottom bar</td><td>Up from 50 dp, with the words back under every icon and a colour per tab — indigo Home, amber Upcoming, teal Settings</td></tr>
+    <tr><td class="sr">5</td><td class="k">Net effect</td><td>8 dp <b>given back</b> to the bar, 56 dp <b>taken</b> from the header — still 48 dp better off than 1.5</td></tr>
+  </table>
+</figure>
+
+<!-- S2 -->
+<figure>
+  <h3>S2 · Where the header height went<small>correction 1, measured</small></h3>
+  <div class="phone">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="nbar"><b class="t">Header budget</b></div>
+    <div class="hair"></div>
+    <div class="body" style="padding-top:14px">
+      <div class="lab" style="color:var(--rose)">v1.2 — the gradient hero</div>
+      <div class="bar" style="background:linear-gradient(135deg,#2F4FCD,#7A5AF8);height:60px">Hero title, summary, stat blocks, search pill — 168 dp</div>
+
+      <div class="lab" style="color:var(--amber)">v1.5 today — the slim blue bar</div>
+      <div class="bar" style="background:linear-gradient(135deg,#2F4FCD,#7A5AF8);height:40px">Gradient bar with title + subtitle — 56 dp</div>
+
+      <div class="lab" style="color:var(--green)">Proposed — no blue block at all</div>
+      <div class="bar" style="background:#fff;color:var(--ink);border:1px solid var(--line);height:30px">White bar, title + 3 coloured icons — 48 dp</div>
+      <div class="bar" style="background:linear-gradient(90deg,var(--indigo),var(--violet),var(--teal));height:8px;font-size:8px">gradient hairline — 3 dp</div>
+      <b class="n g" style="position:relative;left:300px;top:-30px">1</b>
+
+      <div class="lab">And when you scroll</div>
+      <div class="bar" style="background:#fff;color:var(--ink);border:1px solid var(--line);height:26px">Title shrinks to 15 sp, bar to 40 dp, hairline stays</div>
+      <b class="n" style="position:relative;left:300px;top:-24px">2</b>
+
+      <div class="gain" style="margin-top:14px">56 dp → 48 dp on every screen,<br>and the screen no longer feels top-heavy</div>
+
+      <div class="lab" style="margin-top:14px">What the icons carry now</div>
+      <div class="scard">
+        <div class="srow"><span class="tile" style="background:var(--indigo-c);color:var(--indigo)"><svg class="ic s"><use href="#i-search"/></svg></span>
+          <div class="l"><b>Search</b><small>indigo — navigation and neutral actions</small></div></div>
+        <div class="srow"><span class="tile" style="background:var(--amber-c);color:var(--amber)"><svg class="ic s"><use href="#i-bell"/></svg></span>
+          <div class="l"><b>Upcoming</b><small>amber — time, rose dot when overdue</small></div></div>
+        <div class="srow"><span class="tile" style="background:var(--slate-c);color:var(--slate)"><svg class="ic s"><use href="#i-more"/></svg></span>
+          <div class="l"><b>More</b><small>slate — deliberately quiet</small></div>
+          <b class="n" style="position:absolute;right:14px">3</b></div>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="new">48 dp + 3 dp</td><td>The hairline is the only brand colour left at the top, and it costs 3 dp instead of 56</td></tr>
+    <tr><td class="sr">2</td><td class="new">Shrinks further on scroll</td><td>40 dp while you are moving through the list, back to 48 dp when you scroll up <i class="q">Q3</i></td></tr>
+    <tr><td class="sr">3</td><td class="k">Not everything is loud</td><td>The overflow stays slate. If every icon shouts, none of them do</td></tr>
+    <tr><td class="sr">4</td><td class="k">Status bar</td><td>Now light with dark icons, matching the white bar — no more dark blue strip at the very top</td></tr>
+  </table>
+</figure>
+
+<!-- S3 -->
+<figure class="full">
+  <h3>S3 · “The bottom card deck got highly compressed” — two readings<small>tell me which one you meant</small></h3>
+  <div class="duo">
+    <div class="phone" style="height:560px">
+      <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+      <div class="nbar"><b class="t">Reading A — the tab bar</b></div>
+      <div class="hair"></div>
+      <div class="body">
+        <div class="lab" style="margin-top:2px;color:var(--rose)">v1.5 today — 50 dp, icons only</div>
+        <div style="background:#fff;border-radius:12px;height:50px;display:flex;align-items:center;justify-content:space-around;box-shadow:0 2px 8px rgba(25,40,80,.07)">
+          <span style="display:flex;align-items:center;gap:6px;background:var(--indigo-c);color:var(--indigo);height:32px;padding:0 12px;border-radius:16px;font-size:11px;font-weight:800"><svg class="ic s"><use href="#i-home"/></svg>Home</span>
+          <svg class="ic s" style="color:var(--hint)"><use href="#i-cal"/></svg>
+          <svg class="ic s" style="color:var(--hint)"><use href="#i-gear"/></svg>
+        </div>
+        <div class="lab" style="color:var(--green)">Proposed — 58 dp, words back, colour per tab</div>
+        <div style="background:#fff;border-radius:12px;height:58px;display:flex;align-items:center;justify-content:space-around;box-shadow:0 2px 8px rgba(25,40,80,.07)">
+          <span style="display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;font-weight:800;color:var(--indigo)"><span style="width:56px;height:28px;border-radius:14px;background:var(--indigo-c);display:flex;align-items:center;justify-content:center"><svg class="ic s"><use href="#i-home"/></svg></span>Home</span>
+          <span style="display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;font-weight:800;color:var(--hint)"><span style="width:56px;height:28px;display:flex;align-items:center;justify-content:center;color:var(--amber)"><svg class="ic s"><use href="#i-cal"/></svg></span>Upcoming</span>
+          <span style="display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;font-weight:800;color:var(--hint)"><span style="width:56px;height:28px;display:flex;align-items:center;justify-content:center;color:var(--teal)"><svg class="ic s"><use href="#i-gear"/></svg></span>Settings</span>
+        </div>
+        <b class="n g" style="position:relative;left:300px;top:-70px">1</b>
+        <div class="gain" style="margin-top:14px">+8 dp, and every destination is readable again</div>
+      </div>
+    </div>
+
+    <div class="phone" style="height:560px">
+      <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+      <div class="nbar"><b class="t">Reading B — the card rows</b></div>
+      <div class="hair"></div>
+      <div class="body">
+        <div class="lab" style="margin-top:2px;color:var(--rose)">v1.5 today — 62 dp rows</div>
+        <div class="idc" style="padding:7px 11px;margin-bottom:6px">
+          <span class="tile g-ind" style="width:32px;height:32px;border-radius:11px"><svg class="ic xs"><use href="#i-car"/></svg></span>
+          <div class="l"><div class="tt" style="font-size:13px">Car Insurance — HDFC Ergo</div>
+            <div class="kv" style="font-size:10.5px">Policy Expiry <b>11-Oct-2026</b></div></div>
+          <div class="ring" style="width:36px;height:36px;background:conic-gradient(var(--green) 0 42%,#EEF1F6 0)"><div class="in" style="width:29px;height:29px"><b style="font-size:11px;color:var(--green)">54</b></div></div>
+        </div>
+
+        <div class="lab" style="color:var(--green)">Proposed — 76 dp rows, chips back</div>
+        <div class="idc">
+          <span class="tile g-ind"><svg class="ic s"><use href="#i-car"/></svg></span>
+          <div class="l"><div class="tt">Car Insurance — HDFC Ergo</div>
+            <div class="kv">Policy Expiry <b>11-Oct-2026</b></div>
+            <div class="rw"><span class="chip c-ind">Insurance</span><span class="chip c-amb">11-Sep</span></div></div>
+          <div class="ring" style="background:conic-gradient(var(--green) 0 42%,#EEF1F6 0)"><div class="in"><b style="color:var(--green)">54</b><small>DAYS</small></div></div>
+        </div>
+        <div class="idc">
+          <span class="tile g-amb"><svg class="ic s"><use href="#i-laptop"/></svg></span>
+          <div class="l"><div class="tt">Laptop Warranty — Dell XPS</div>
+            <div class="kv">Warranty End <b>07-Sep-2026</b></div>
+            <div class="rw"><span class="chip c-amb">25-Aug</span><span class="chip c-pur">1 file</span></div></div>
+          <div class="ring" style="background:conic-gradient(var(--amber) 0 78%,#EEF1F6 0)"><div class="in"><b style="color:var(--amber)">20</b><small>DAYS</small></div></div>
+        </div>
+        <b class="n" style="position:relative;left:300px;top:-150px">2</b>
+        <div class="gain" style="margin-top:8px">+14 dp per row · 5 cards visible instead of 6</div>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Reading</th><th>What changes</th><th>Cost</th></tr>
+    <tr><td class="sr">1</td><td class="k">A — the tab bar</td><td>50 → 58 dp, labels under every icon, a colour per tab. This is what I think you meant, since you asked me to shrink it two rounds ago</td><td class="num">−8 dp</td></tr>
+    <tr><td class="sr">2</td><td class="k">B — the card rows</td><td>62 → 76 dp, the chip row returns, bigger tile and ring</td><td class="num">one card fewer</td></tr>
+    <tr><td class="sr">3</td><td class="rec">If you want both</td><td colspan="2">The header still pays for it: −56 dp header, +8 bar, +14 per row = the list ends up level with 1.5 while looking twice as generous <i class="q">Q1</i></td></tr>
+  </table>
+</figure>
+
+<!-- S4 -->
+<figure class="full">
+  <h3>S4 · The colour system<small>correction 3 · nine hues, each with one job</small></h3>
+  <div class="swatch">
+    <div class="sw"><span class="tile g-ind"><svg class="ic s"><use href="#i-home"/></svg></span><b>Indigo</b><small>Home, navigation, primary actions, Insurance</small><code>#3B5BDB</code></div>
+    <div class="sw"><span class="tile g-amb"><svg class="ic s"><use href="#i-alarm"/></svg></span><b>Amber</b><small>Anything with a clock — reminders, Upcoming, warranties</small><code>#B76E00</code></div>
+    <div class="sw"><span class="tile g-ros"><svg class="ic s"><use href="#i-warn"/></svg></span><b>Rose</b><small>Overdue, danger, delete</small><code>#E5484D</code></div>
+    <div class="sw"><span class="tile g-gre"><svg class="ic s"><use href="#i-share"/></svg></span><b>Green</b><small>Share, healthy dates, success</small><code>#12A150</code></div>
+    <div class="sw"><span class="tile g-vio"><svg class="ic s"><use href="#i-qr"/></svg></span><b>Violet</b><small>QR, tags</small><code>#7A5AF8</code></div>
+    <div class="sw"><span class="tile g-pur"><svg class="ic s"><use href="#i-file"/></svg></span><b>Purple</b><small>Files and attachments</small><code>#9333EA</code></div>
+    <div class="sw"><span class="tile g-tea"><svg class="ic s"><use href="#i-id"/></svg></span><b>Teal</b><small>Settings, copy, identity documents</small><code>#0E9384</code></div>
+    <div class="sw"><span class="tile g-sky"><svg class="ic s"><use href="#i-wifi"/></svg></span><b>Sky</b><small>Categories, data and backup</small><code>#0284C7</code></div>
+    <div class="sw"><span class="tile" style="background:linear-gradient(150deg,#8B98AB,#64748B)"><svg class="ic s"><use href="#i-more"/></svg></span><b>Slate</b><small>Quiet things — overflow, disabled, uncategorised</small><code>#64748B</code></div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Rule</th><th>Detail</th></tr>
+    <tr><td class="sr">1</td><td class="k">Two forms of every hue</td><td>A <b>gradient tile</b> with a white glyph for the leading icon on a row, and a <b>12 % tint chip</b> with a saturated glyph for small labels. Never a bare coloured glyph on white</td></tr>
+    <tr><td class="sr">2</td><td class="k">Colour means something</td><td>A hue is never decorative. Amber always means time, rose always means trouble, purple always means a file</td></tr>
+    <tr><td class="sr">3</td><td class="k">Category colours</td><td>The eight category colours you already pick from are re-cut to these hues, so a card's tile and its chip always agree <i class="q">Q4</i></td></tr>
+    <tr><td class="sr">4</td><td class="k">Readable</td><td>Every text colour sits on its own tint at 4.5:1 or better; the glyph on a gradient tile is white at 3:1 or better</td></tr>
+    <tr><td class="sr">5</td><td class="k">Stays grey</td><td>Body text, chevrons, checkboxes, dividers, secondary lines. Colour is for identity, not for paragraphs</td></tr>
+    <tr><td class="sr">6</td><td class="k">Dark theme</td><td>Tints become 18 % of the hue on a #1D2431 surface; the glyph lightens by two steps so nothing muddies (S6)</td></tr>
+  </table>
+</figure>
+
+<!-- S5 -->
+<figure>
+  <h3>S5 · Card view and Settings, in colour<small>correction 3</small></h3>
+  <div class="phone" style="height:860px">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="nbar">
+      <b class="t" style="font-size:15.5px">Car Insurance — HDFC Ergo</b>
+      <span class="ib" style="background:var(--green-c);color:var(--green)"><svg class="ic s"><use href="#i-share"/></svg></span>
+      <span class="ib" style="color:var(--slate)"><svg class="ic s"><use href="#i-more"/></svg></span>
+    </div>
+    <div class="hair"></div>
+    <div class="body">
+      <div class="actrow">
+        <span class="actbtn"><svg class="ic s" style="color:var(--indigo)"><use href="#i-edit"/></svg>Edit</span>
+        <span class="actbtn"><svg class="ic s" style="color:var(--teal)"><use href="#i-copy"/></svg>Copy</span>
+        <span class="actbtn"><svg class="ic s" style="color:var(--violet)"><use href="#i-qr"/></svg>QR</span>
+        <span class="actbtn share"><svg class="ic s"><use href="#i-share"/></svg>Share</span>
+        <b class="n" style="position:absolute;left:14px;top:-4px">1</b>
+      </div>
+
+      <div class="lab">Data</div>
+      <div class="scard">
+        <div class="srow"><span class="tile" style="background:var(--sky-c);color:var(--sky)"><svg class="ic s"><use href="#i-db"/></svg></span>
+          <div class="l"><small>Policy No</small><b>HD-2291-KX-2026</b></div>
+          <svg class="ic s" style="color:var(--violet)"><use href="#i-qr"/></svg>
+          <svg class="ic s" style="color:var(--teal)"><use href="#i-copy"/></svg>
+          <b class="n" style="position:absolute;right:14px;top:6px">2</b></div>
+        <div class="srow"><span class="tile" style="background:var(--sky-c);color:var(--sky)"><svg class="ic s"><use href="#i-car"/></svg></span>
+          <div class="l"><small>Registration</small><b>WB 24 AB 1234</b></div>
+          <svg class="ic s" style="color:var(--violet)"><use href="#i-qr"/></svg>
+          <svg class="ic s" style="color:var(--teal)"><use href="#i-copy"/></svg></div>
+      </div>
+
+      <div class="lab">Dates</div>
+      <div class="scard">
+        <div class="srow"><span class="tile" style="background:var(--green-c);color:var(--green)"><svg class="ic s"><use href="#i-cal"/></svg></span>
+          <div class="l"><small>Policy Expiry ★</small><b>11-Oct-2026 · in 54 days</b></div>
+          <span class="val" style="color:var(--green)">54 d</span></div>
+      </div>
+
+      <div class="lab">Reminders</div>
+      <div class="scard">
+        <div class="srow"><span class="tile" style="background:var(--amber-c);color:var(--amber)"><svg class="ic s"><use href="#i-alarm"/></svg></span>
+          <div class="l"><b>30 days before Policy Expiry</b><small>11-Sep-2026 · 09:00</small></div></div>
+      </div>
+
+      <div class="lab">Files</div>
+      <div class="scard">
+        <div class="srow"><span class="tile" style="background:var(--purple-c);color:var(--purple)"><svg class="ic s"><use href="#i-file"/></svg></span>
+          <div class="l"><b>Policy document.pdf</b><small>1.8 MB · 18-Aug-2026</small></div>
+          <span class="val" style="color:var(--purple)">Open</span>
+          <b class="n" style="position:absolute;right:14px;top:6px">3</b></div>
+      </div>
+
+      <div class="lab">Settings groups get the same treatment</div>
+      <div class="scard">
+        <div class="srow"><span class="tile" style="background:var(--sky-c);color:var(--sky)"><svg class="ic s"><use href="#i-folder"/></svg></span>
+          <div class="l"><b>Organise</b><small>Categories 5 · Tags 9</small></div><svg class="ic chev"><use href="#i-more"/></svg></div>
+        <div class="srow"><span class="tile" style="background:var(--indigo-c);color:var(--indigo)"><svg class="ic s"><use href="#i-eye"/></svg></span>
+          <div class="l"><b>Look and feel</b><small>Text Comfortable · theme System</small></div></div>
+        <div class="srow"><span class="tile" style="background:var(--amber-c);color:var(--amber)"><svg class="ic s"><use href="#i-alarm"/></svg></span>
+          <div class="l"><b>Reminders</b><small>Ring 09:00 · snooze 1 h</small></div></div>
+        <div class="srow"><span class="tile" style="background:var(--rose-c);color:var(--rose)"><svg class="ic s"><use href="#i-warn"/></svg></span>
+          <div class="l"><b>Danger zone</b><small>Put settings back · Erase everything</small></div>
+          <b class="n d" style="position:absolute;right:14px;top:6px">4</b></div>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="new">Action row in colour</td><td>Edit indigo · Copy teal · QR violet · <b>Share green and filled</b> — your order kept, with the primary now green rather than another blue</td></tr>
+    <tr><td class="sr">2</td><td class="new">Row icons</td><td>Sky for data, green for dates, amber for reminders, purple for files — you can find a section without reading its header</td></tr>
+    <tr><td class="sr">3</td><td class="k">Action glyphs match</td><td>The QR glyph is violet everywhere it appears, the copy glyph teal. One meaning, one colour</td></tr>
+    <tr><td class="sr">4</td><td class="k">Danger stays rose</td><td>The only red in the app, so red always means the same thing</td></tr>
+  </table>
+</figure>
+
+<!-- S6 -->
+<figure>
+  <h3>S6 · Dark theme<small>the same hues, lifted</small></h3>
+  <div class="phone dark" style="height:560px">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="nbar">
+      <b class="t">InfoDeck</b>
+      <span class="ib" style="background:rgba(59,91,219,.22);color:#8FA6F5"><svg class="ic s"><use href="#i-search"/></svg></span>
+      <span class="ib" style="background:rgba(183,110,0,.22);color:#E9B15C"><svg class="ic s"><use href="#i-bell"/></svg></span>
+      <span class="ib" style="color:#8894A8"><svg class="ic s"><use href="#i-more"/></svg></span>
+    </div>
+    <div class="hair"></div>
+    <div class="body">
+      <div class="strip">
+        <span class="fchip" style="background:rgba(229,72,77,.22);color:#F2908F"><span class="num">1</span>Overdue</span>
+        <span class="fchip" style="background:rgba(183,110,0,.22);color:#E9B15C"><span class="num">3</span>Month</span>
+        <span class="vbtn" style="background:rgba(59,91,219,.22);color:#8FA6F5"><svg class="ic"><use href="#i-tune"/></svg>View</span>
+      </div>
+      <div class="idc">
+        <span class="tile g-ros"><svg class="ic s"><use href="#i-car"/></svg></span>
+        <div class="l"><div class="tt">Bike Insurance — ICICI Lombard</div>
+          <div class="kv">Policy Expiry <b style="color:#E7ECF5">12-Oct-2025</b></div>
+          <div class="rw"><span class="chip" style="background:rgba(59,91,219,.22);color:#8FA6F5">Insurance</span>
+            <span class="chip" style="background:rgba(122,90,248,.22);color:#B6A2FC">renewal</span></div></div>
+        <div class="ring" style="background:conic-gradient(#F2908F 0 100%,#2A3242 0)"><div class="in" style="background:#1D2431"><b style="color:#F2908F">310</b><small style="color:#8894A8">AGO</small></div></div>
+      </div>
+      <div class="idc">
+        <span class="tile g-ind"><svg class="ic s"><use href="#i-car"/></svg></span>
+        <div class="l"><div class="tt">Car Insurance — HDFC Ergo</div>
+          <div class="kv">Policy Expiry <b style="color:#E7ECF5">11-Oct-2026</b></div>
+          <div class="rw"><span class="chip" style="background:rgba(18,161,80,.22);color:#69D89B">54 days</span></div></div>
+        <div class="ring" style="background:conic-gradient(#69D89B 0 42%,#2A3242 0)"><div class="in" style="background:#1D2431"><b style="color:#69D89B">54</b><small style="color:#8894A8">DAYS</small></div></div>
+      </div>
+      <b class="n" style="position:absolute;left:14px;top:150px">1</b>
+      <div class="bnav">
+        <div class="it on" style="color:#8FA6F5"><span class="pill" style="background:rgba(59,91,219,.22)"><svg class="ic s" style="color:#8FA6F5"><use href="#i-home"/></svg></span>Home</div>
+        <div class="it"><span class="pill"><svg class="ic s" style="color:#E9B15C"><use href="#i-cal"/></svg></span>Upcoming</div>
+        <div class="it"><span class="pill"><svg class="ic s" style="color:#5FCFC2"><use href="#i-gear"/></svg></span>Settings</div>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="new">Same hues, lifted two steps</td><td>Tints go to 18 % on a #1D2431 card and glyphs lighten, so nothing muddies. The gradient tiles keep their saturation — they are the only strong colour in dark mode</td></tr>
+    <tr><td class="sr">2</td><td class="k">Hairline</td><td>Stays exactly the same, which is what ties the two themes together</td></tr>
+    <tr><td class="sr">3</td><td class="k">Contrast</td><td>Checked at 4.5:1 for every tinted label on its dark surface</td></tr>
+  </table>
+</figure>
+
+</div><!-- /frames -->
+
+<h2 class="sec">B · Specification</h2>
+
+<h3 class="sub">C1 · Height budget</h3>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Element</th><th>v1.5</th><th>Proposed</th><th>Change</th></tr>
+  <tr><td class="sr">1</td><td class="k">Top bar</td><td>56 dp gradient</td><td class="rec">48 dp white + 3 dp hairline</td><td class="num">−5 dp</td></tr>
+  <tr><td class="sr">2</td><td class="k">Top bar, scrolled</td><td>56 dp</td><td class="rec">40 dp</td><td class="num">−16 dp</td></tr>
+  <tr><td class="sr">3</td><td class="k">Bottom bar</td><td>50 dp icons only</td><td class="rec">58 dp with labels</td><td class="num">+8 dp</td></tr>
+  <tr><td class="sr">4</td><td class="k">Card row (reading B)</td><td>62 dp</td><td class="rec">76 dp</td><td class="num">+14 dp each</td></tr>
+  <tr><td class="sr">5</td><td class="k">Net, reading A only</td><td colspan="2">−5 header, +8 bar</td><td class="num">+3 dp</td></tr>
+  <tr><td class="sr">6</td><td class="k">Net, both readings</td><td colspan="2">one card fewer on screen, everything easier to hit and read</td><td class="num">—</td></tr>
+</table>
+
+<h3 class="sub">C2 · Colour, applied</h3>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Surface</th><th>Colour rule</th></tr>
+  <tr><td class="sr">1</td><td class="k">Card leading tile</td><td>Gradient in the card's category hue, white glyph, 38 dp, 13 dp radius</td></tr>
+  <tr><td class="sr">2</td><td class="k">Chips</td><td>12 % tint of the hue that owns the meaning, saturated glyph and label</td></tr>
+  <tr><td class="sr">3</td><td class="k">Filter strip</td><td>Rose overdue · amber month · slate no-alarm · indigo View</td></tr>
+  <tr><td class="sr">4</td><td class="k">Bottom bar</td><td>Indigo Home · amber Upcoming · teal Settings; the active tab adds a tinted pill</td></tr>
+  <tr><td class="sr">5</td><td class="k">Action row</td><td>Edit indigo · Copy teal · QR violet · Share green gradient</td></tr>
+  <tr><td class="sr">6</td><td class="k">Section rows</td><td>Sky data · green dates · amber reminders · purple files · rose danger</td></tr>
+  <tr><td class="sr">7</td><td class="k">Countdown ring</td><td>Green → amber → rose, unchanged in behaviour</td></tr>
+  <tr><td class="sr">8</td><td class="k">Never coloured</td><td>Body text, secondary lines, chevrons, checkboxes, dividers</td></tr>
+</table>
+
+<h3 class="sub">C3 · Three companions</h3>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Item</th><th>Exception handling</th><th>Logger.e</th><th>Tests</th></tr>
+  <tr><td class="sr">1</td><td class="k">Compressed header</td><td>Collapse threshold is clamped; a null title renders the app name rather than an empty bar</td><td>logs an out-of-range collapse fraction</td><td>JUnit on the collapse curve (48 → 40 dp) and its clamps; device pass on both themes</td></tr>
+  <tr><td class="sr">2</td><td class="k">Bottom bar at 58 dp</td><td>Label truncation is impossible — the label drops before it clips</td><td>logs a destination with no label</td><td>JUnit that each tab maps to exactly one hue and one label; device pass at Huge text</td></tr>
+  <tr><td class="sr">3</td><td class="k">Colour system</td><td>An unknown hue index falls back to slate rather than transparent; dark-theme variants are derived, never hard-coded twice</td><td>logs an unknown hue or a missing tint</td><td>JUnit on hue → tint/glyph mapping for all nine, light and dark, plus a contrast assertion of 4.5:1 on every tinted label</td></tr>
+</table>
+
+<h2 class="sec">C · Open questions</h2>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Q</th><th>Question</th><th>Options</th><th>My recommendation</th></tr>
+  <tr><td class="sr">1</td><td class="q">Q1</td><td><b>“Bottom card deck”</b> — which did you mean?</td><td>(a) the tab bar, 50 → 58 dp &nbsp; (b) the card rows, 62 → 76 dp &nbsp; (c) both</td><td class="rec">(c) — the header pays for both</td></tr>
+  <tr><td class="sr">2</td><td class="q">Q2</td><td>Kill the blue bar entirely?</td><td>(a) white bar + 3 dp hairline &nbsp; (b) keep a thin gradient bar at 48 dp &nbsp; (c) white bar, no hairline at all</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">3</td><td class="q">Q3</td><td>Shrink further on scroll</td><td>(a) 48 → 40 dp &nbsp; (b) fixed 48 dp</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">4</td><td class="q">Q4</td><td>Category colours re-cut to the nine hues</td><td>(a) yes, one palette everywhere &nbsp; (b) keep the old eight category colours as they are</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">5</td><td class="q">Q5</td><td>Card leading tile</td><td>(a) gradient tile with a glyph &nbsp; (b) flat tinted tile &nbsp; (c) no tile, colour only on the rail</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">6</td><td class="q">Q6</td><td>Share button colour</td><td>(a) green &nbsp; (b) keep the indigo/violet brand gradient</td><td class="rec">(a) — it separates the primary action from navigation</td></tr>
+  <tr><td class="sr">7</td><td class="q">Q7</td><td>Icons per category</td><td>(a) I pick a glyph per category automatically &nbsp; (b) you choose one per category &nbsp; (c) first letter instead of a glyph</td><td class="rec">(b), defaulting to (a)</td></tr>
+  <tr><td class="sr">8</td><td class="q">Q8</td><td><b>Your bug 2</b> and <b>item “3.”</b></td><td>—</td><td class="rec">Both still blank</td></tr>
+</table>
+
+<h2 class="sec">D · If accepted</h2>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Field</th><th>Value</th></tr>
+  <tr><td class="sr">1</td><td class="k">Queue</td><td>N53 white 48 dp header with hairline and scroll-collapse · N54 bottom bar back to 58 dp with labels and per-tab colour · N55 the nine-hue colour system across cards, chips, sections, actions and both themes · N56 category glyphs</td></tr>
+  <tr><td class="sr">2</td><td class="k">Release</td><td><b>1.6</b>, versionCode <b>1006000</b>, <code>InfoDeck-1.6.apk</code></td></tr>
+  <tr><td class="sr">3</td><td class="k">Database</td><td>No schema change — presentation only</td></tr>
+  <tr><td class="sr">4</td><td class="k">Still queued</td><td>N46 alert modes · N47 app icons · N48 auto-fill · N49 drawer (never approved) · Settings ▸ Sharing · CSV export · per-card share memory · QR brightness · dead-code sweep</td></tr>
+  <tr><td class="sr">5</td><td class="k">Trigger</td><td>Nothing is built until you say <b>build</b> / <b>release</b></td></tr>
+</table>
+
+</div>
+</body>
+</html>

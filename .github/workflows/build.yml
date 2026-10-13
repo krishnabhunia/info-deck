@@ -1,0 +1,327 @@
+# InfoDeck — the ONE workflow for Windows, macOS and Android (docs/standards/workflows.md).
+#
+#   Pull request  -> beta build      vX.Y-beta.N   GitHub pre-release
+#   Merge to main -> normal release  vX.Y          GitHub release
+#
+# The version bump comes from ONE label on the PR (docs/versioning.md):
+#   release:feature  y+1      release:fix  z+1      release:major  x+1 (Krishna only)
+#   release:none     docs/CI only — version unchanged, nothing published
+#
+# Platforms whose source folder holds no code are skipped. InfoDeck is Android-only today,
+# so the Windows and macOS jobs show as "skipped" until code lands in windows/ or macOS/.
+#
+# The Actions "Artifacts" box gets exactly one file: InfoDeck_<version>.zip.
+
+name: Build
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: build-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: write        # tags, releases, the VERSION bump commit on PR branches
+  actions: write         # deleting the intermediate part-* artifacts
+  pull-requests: write
+  issues: write          # creating the release:* labels
+
+env:
+  SOFTWARE_NAME: InfoDeck
+  # Release signing certificate of the APK already installed on Krishna's phone.
+  # Every published APK must match it, or Android refuses to install it as an update.
+  EXPECTED_CERT_SHA1: "82:50:BD:7B:80:41:21:D7:7C:91:52:FA:3C:6F:C7:6B:19:DD:14:9A"
+
+jobs:
+  # ------------------------------------------------------------------ prepare
+  prepare:
+    name: Prepare (version, platforms, secret scan)
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.ver.outputs.version }}
+      display: ${{ steps.ver.outputs.display }}
+      publish: ${{ steps.ver.outputs.publish }}
+      prerelease: ${{ steps.ver.outputs.prerelease }}
+      has_android: ${{ steps.detect.outputs.android }}
+      has_windows: ${{ steps.detect.outputs.windows }}
+      has_macos: ${{ steps.detect.outputs.macos }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Secret scan
+        run: bash common/scripts/secret_scan.sh
+
+      - name: Version rules self-test
+        run: python3 common/scripts/version.py selftest
+
+      - name: Make sure the release labels exist
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh label create "release:feature" --color 1D76DB --description "New or changed feature - y+1" 2>/dev/null || true
+          gh label create "release:fix"     --color 0E8A16 --description "Bug fixes only - z+1" 2>/dev/null || true
+          gh label create "release:major"   --color B60205 --description "Major version - x+1 (Krishna only)" 2>/dev/null || true
+          gh label create "release:none"    --color C5DEF5 --description "Docs/CI only - no version, no release" 2>/dev/null || true
+
+      - name: Detect which platforms have source
+        id: detect
+        run: |
+          # A platform counts only if its folder holds something besides README files.
+          has() { [ -d "$1" ] && [ -n "$(find "$1" -type f ! -iname 'README*' -print -quit)" ] && echo true || echo false; }
+          echo "android=$(has android)" >> "$GITHUB_OUTPUT"
+          echo "windows=$(has windows)" >> "$GITHUB_OUTPUT"
+          echo "macos=$(has macOS)"     >> "$GITHUB_OUTPUT"
+          echo "### Platforms" >> "$GITHUB_STEP_SUMMARY"
+          echo "Android: $(has android) · Windows: $(has windows) · macOS: $(has macOS)" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Work out the version
+        id: ver
+        env:
+          LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            git fetch -q origin main
+            if git cat-file -e origin/main:VERSION 2>/dev/null; then
+              base=$(git show origin/main:VERSION | tr -d '[:space:]')
+              kinds=$(echo "$LABELS" | python3 -c 'import json,sys; print(" ".join(l.split(":",1)[1] for l in json.load(sys.stdin) if l.startswith("release:")))')
+              n=$(echo "$kinds" | wc -w)
+              if [ "$n" -ne 1 ]; then
+                echo "::error::Add exactly ONE label: release:feature, release:fix, release:major or release:none (found: '${kinds}')"
+                exit 1
+              fi
+              version=$(python3 common/scripts/version.py next "$base" "$kinds")
+            else
+              # Bootstrap: main has no VERSION yet (the initial import) - take the PR's own.
+              kinds="bootstrap"
+              version=$(tr -d '[:space:]' < VERSION)
+            fi
+            if [ "$kinds" = "none" ]; then
+              echo "publish=false" >> "$GITHUB_OUTPUT"; display="$version"
+            else
+              echo "publish=true" >> "$GITHUB_OUTPUT"; display="${version}-beta.${{ github.run_number }}"
+            fi
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          else
+            version=$(tr -d '[:space:]' < VERSION)
+            python3 common/scripts/version.py check "$version"
+            display="$version"
+            if git ls-remote --exit-code --tags origin "refs/tags/v${version}" >/dev/null 2>&1; then
+              echo "Tag v${version} already exists - nothing new to release."
+              echo "publish=false" >> "$GITHUB_OUTPUT"
+            else
+              echo "publish=true" >> "$GITHUB_OUTPUT"
+            fi
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "display=$display" >> "$GITHUB_OUTPUT"
+          echo "### Version" >> "$GITHUB_STEP_SUMMARY"
+          echo "Building **${{ env.SOFTWARE_NAME }} ${display}** (versionCode $(python3 common/scripts/version.py code "$version"))" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Write the bumped VERSION back to the PR branch
+        if: >-
+          github.event_name == 'pull_request' &&
+          github.event.pull_request.head.repo.full_name == github.repository
+        run: |
+          want="${{ steps.ver.outputs.version }}"
+          git fetch -q origin "${{ github.head_ref }}"
+          have=$(git show "origin/${{ github.head_ref }}:VERSION" | tr -d '[:space:]')
+          if [ "$have" != "$want" ]; then
+            git checkout -q -B "${{ github.head_ref }}" "origin/${{ github.head_ref }}"
+            echo "$want" > VERSION
+            git config user.name  "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -qam "Bump VERSION to $want"
+            git push -q origin "HEAD:${{ github.head_ref }}"
+            echo "VERSION on the PR branch updated: $have -> $want" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  # ------------------------------------------------------------------ windows
+  windows:
+    name: Windows (portable + x64)
+    needs: prepare
+    if: needs.prepare.outputs.has_windows == 'true'
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        shell: bash
+        run: |
+          echo "::error::windows/ has source but no build is defined yet - add it here"
+          exit 1
+
+  # ------------------------------------------------------------------ macos
+  macos:
+    name: macOS (dmg)
+    needs: prepare
+    if: needs.prepare.outputs.has_macos == 'true'
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: |
+          echo "::error::macOS/ has source but no build is defined yet - add it here"
+          exit 1
+
+  # ------------------------------------------------------------------ android
+  android:
+    name: Android (test, build, sign)
+    needs: prepare
+    if: needs.prepare.outputs.has_android == 'true'
+    runs-on: ubuntu-latest
+    outputs:
+      signed: ${{ steps.sign.outputs.signed }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Use the computed version
+        run: echo "${{ needs.prepare.outputs.version }}" > VERSION
+
+      - name: Restore the signing key from secrets
+        id: sign
+        env:
+          KEYSTORE_B64: ${{ secrets.INFODECK_KEYSTORE_B64 }}
+        run: |
+          if [ -n "${KEYSTORE_B64}" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/infodeck.keystore"
+            echo "INFODECK_KEYSTORE=$RUNNER_TEMP/infodeck.keystore" >> "$GITHUB_ENV"
+            echo "signed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::Secret INFODECK_KEYSTORE_B64 is not set - the APK will be built UNSIGNED and will not be published. See docs/release-process.md."
+            echo "signed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Unit tests
+        working-directory: android
+        run: ./gradlew :app:testReleaseUnitTest --console=plain
+
+      - name: Build release APK
+        working-directory: android
+        env:
+          INFODECK_STOREPASS: ${{ secrets.INFODECK_STOREPASS }}
+          INFODECK_KEYPASS: ${{ secrets.INFODECK_KEYPASS }}
+        run: ./gradlew :app:assembleRelease -PversionNameOverride="${{ needs.prepare.outputs.display }}" --console=plain
+
+      - name: Verify the APK
+        id: apk
+        run: |
+          set -euo pipefail
+          dir=android/app/build/outputs/apk/release
+          if [ "${{ steps.sign.outputs.signed }}" = "true" ]; then apk="$dir/app-release.apk"; else apk="$dir/app-release-unsigned.apk"; fi
+          aapt2=$(ls "$ANDROID_HOME"/build-tools/*/aapt2 | sort -V | tail -1)
+          badging=$("$aapt2" dump badging "$apk")
+          echo "$badging" | head -1
+          echo "$badging" | grep -q "versionName='${{ needs.prepare.outputs.display }}'" || { echo "::error::versionName mismatch"; exit 1; }
+          echo "INTERNET permission entries: $(echo "$badging" | grep -c "android.permission.INTERNET" || true)"
+          if [ "${{ steps.sign.outputs.signed }}" = "true" ]; then
+            bash common/scripts/check_cert.sh "$apk" "$EXPECTED_CERT_SHA1"
+          fi
+          mkdir -p out && cp "$apk" "out/${SOFTWARE_NAME}_${{ needs.prepare.outputs.display }}.apk"
+
+      - name: Test report summary
+        if: always()
+        run: |
+          python3 - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import glob, xml.etree.ElementTree as ET
+          t = f = e = 0
+          for p in glob.glob("android/app/build/test-results/testReleaseUnitTest/*.xml"):
+              r = ET.parse(p).getroot(); t += int(r.get("tests")); f += int(r.get("failures")); e += int(r.get("errors"))
+          print(f"### Unit tests\n**{t} tests, {f} failures, {e} errors**")
+          PY
+
+      # Intermediate hand-off to the package job; deleted again there so the
+      # Artifacts box ends up holding only the one zip.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: part-android
+          path: out/*.apk
+          retention-days: 1
+
+  # ------------------------------------------------------------------ package
+  package:
+    name: Package and publish
+    needs: [prepare, windows, macos, android]
+    if: >-
+      !cancelled() &&
+      needs.android.result != 'failure' && needs.windows.result != 'failure' && needs.macos.result != 'failure' &&
+      (needs.android.result == 'success' || needs.windows.result == 'success' || needs.macos.result == 'success')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: part-*
+          path: parts
+
+      - name: Lay out the artifact
+        id: lay
+        run: |
+          set -euo pipefail
+          base="${SOFTWARE_NAME}_${{ needs.prepare.outputs.display }}"
+          apk=$(ls parts/part-android/*.apk 2>/dev/null | head -1 || true)
+          exe=$(ls parts/part-windows/*x64*.exe 2>/dev/null | head -1 || true)
+          portable=$(ls parts/part-windows/*portable*.exe 2>/dev/null | head -1 || true)
+          dmg=$(ls parts/part-macos/*.dmg 2>/dev/null | head -1 || true)
+          bash common/scripts/package.sh "$SOFTWARE_NAME" "${{ needs.prepare.outputs.display }}" "stage" "$apk" "$exe" "$portable" "$dmg"
+          (cd stage && zip -qr "../$base.zip" .)
+          echo "base=$base" >> "$GITHUB_OUTPUT"
+
+      # GitHub zips an artifact on download, so uploading the folders gives exactly
+      # one file in the Artifacts box: <base>.zip -> Android/<base>.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.lay.outputs.base }}
+          path: stage/
+
+      - uses: geekyeggo/delete-artifact@v5
+        with:
+          name: part-*
+
+      - name: Publish the GitHub release
+        if: needs.prepare.outputs.publish == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if [ "${{ needs.android.outputs.signed }}" != "true" ]; then
+            echo "::warning::Not published: the APK is unsigned. Add the three INFODECK_* secrets (docs/release-process.md)."
+            echo "### Not published - signing secrets missing" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          tag="v${{ needs.prepare.outputs.display }}"
+          flags=""
+          [ "${{ needs.prepare.outputs.prerelease }}" = "true" ] && flags="--prerelease"
+          notes="${{ env.SOFTWARE_NAME }} ${{ needs.prepare.outputs.display }}"
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            notes="$notes - beta from PR #${{ github.event.pull_request.number }}: ${{ github.event.pull_request.title }}"
+          else
+            notes="$notes - see docs/CHANGELOG.md"
+          fi
+          gh release create "$tag" "${{ steps.lay.outputs.base }}.zip" \
+            --target "${{ github.event.pull_request.head.sha || github.sha }}" \
+            --title "${{ env.SOFTWARE_NAME }} ${{ needs.prepare.outputs.display }}" \
+            --notes "$notes" $flags
+          echo "### Published $tag" >> "$GITHUB_STEP_SUMMARY"

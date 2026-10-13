@@ -1,0 +1,5 @@
+-keepattributes *Annotation*, InnerClasses
+-dontwarn kotlinx.serialization.**
+-keep,includedescriptorclasses class com.krishna.infodeck.**$$serializer { *; }
+-keepclassmembers class com.krishna.infodeck.** { *** Companion; }
+-keepclasseswithmembers class com.krishna.infodeck.** { kotlinx.serialization.KSerializer serializer(...); }

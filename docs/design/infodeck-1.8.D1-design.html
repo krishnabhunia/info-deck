@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InfoDeck — v1.8 D1 design · search, fixed</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100..900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#131A26; --ink2:#5A6675; --hint:#96A0AF;
+    --indigo:#3B5BDB; --indigo-c:#E8ECFD;
+    --teal:#0E9384; --teal-c:#DDF3F0;
+    --violet:#7A5AF8; --violet-c:#EEE9FE;
+    --green:#12A150; --green-c:#DFF5E8;
+    --amber:#B76E00; --amber-c:#FDF0DA;
+    --rose:#E5484D; --rose-c:#FDE7E8;
+    --purple:#9333EA; --purple-c:#F3E8FE;
+    --slate:#64748B; --slate-c:#EEF1F5;
+    --bg:#F6F8FC; --line:#E9EDF4; --outline:#C6CEDC;
+    --page:#E3E7F0; --tag:#22337F; --q:#7A5A00; --q-bg:#FFF3C4; --q-bd:#E2C35C;
+    --pri-d:#1E357F;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--page);font-family:Roboto,"Segoe UI",system-ui,sans-serif;color:var(--ink);padding:26px 18px 70px}
+  .wrap{max-width:1180px;margin:0 auto}
+  header.page h1{font-size:24px;font-weight:800;color:var(--pri-d)}
+  header.page p{font-size:13.5px;color:var(--ink2);margin-top:5px;line-height:1.55}
+  .stamp{display:inline-block;margin:10px 8px 0 0;font-size:12px;font-weight:700;color:#7A2E00;background:#FFE1CC;border:1px solid #E8B08C;border-radius:20px;padding:3px 12px}
+  .stamp.g{color:#22337F;background:var(--indigo-c);border-color:#B9C3F5}
+  h2.sec{font-size:18px;font-weight:800;color:var(--pri-d);margin:38px 0 12px;padding-bottom:6px;border-bottom:2px solid #C9D1DD}
+  h3.sub{font-size:15px;color:var(--pri-d);margin-top:20px}
+  .rej-box{background:var(--rose-c);border:1px solid #E7ADA8;border-radius:10px;padding:12px 14px;font-size:13.5px;line-height:1.55;margin:10px 0 4px}
+  .rej-box b{color:#8A1F19}
+
+  table.tb{width:100%;border-collapse:collapse;font-size:12.5px;background:#fff;margin:6px 0 4px}
+  table.tb th{background:#E9EDF8;color:var(--pri-d);text-align:left;padding:6px 8px;border:1px solid #BFC9D8;font-size:12px}
+  table.tb td{padding:6px 8px;border:1px solid #D2D9E3;vertical-align:top;line-height:1.45}
+  table.tb .sr{width:1%;white-space:nowrap;text-align:center}
+  table.tb td.k{white-space:nowrap;font-weight:700;color:var(--tag)}
+  table.tb td.q{white-space:nowrap;font-weight:700;color:var(--q)}
+  table.tb td.rec{color:var(--green);font-weight:600}
+  table.tb td.new{white-space:nowrap;font-weight:700;color:var(--green)}
+  table.tb td.del{white-space:nowrap;font-weight:700;color:var(--rose)}
+  table.tb tr:nth-child(even) td{background:#FAFBFD}
+  code{font-family:Consolas,Menlo,monospace;font-size:12px;background:#EEF1F5;padding:1px 4px;border-radius:3px}
+
+  .frames{display:grid;grid-template-columns:repeat(auto-fit,minmax(520px,1fr));gap:34px 28px;margin-top:14px}
+  figure{display:flex;flex-direction:column;align-items:center;gap:8px}
+  figure h3{font-size:15px;font-weight:800;color:var(--pri-d);align-self:flex-start}
+  figure h3 small{font-weight:500;color:var(--ink2);font-size:12.5px;margin-left:6px}
+  figure table.tb{font-size:12px}
+  figure.full{grid-column:1 / -1}
+  figure.full h3{align-self:center}
+  figure.full table.tb{max-width:900px}
+  .duo{display:flex;gap:26px;justify-content:center;flex-wrap:wrap}
+
+  b.n{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:8px;background:var(--tag);color:#fff;font-size:10px;font-weight:800;flex-shrink:0;font-style:normal}
+  b.n.d{background:var(--rose)}
+  b.n.g{background:var(--green)}
+  i.q{display:inline-flex;font-style:normal;font-size:10px;font-weight:800;color:var(--q);background:var(--q-bg);border:1px solid var(--q-bd);border-radius:9px;padding:1px 6px}
+
+  .phone{width:378px;height:790px;background:var(--bg);border:9px solid #12151C;border-radius:38px;overflow:hidden;position:relative;box-shadow:0 16px 38px rgba(20,30,50,.22);display:flex;flex-direction:column;flex-shrink:0}
+  .phone.sm{width:352px;height:600px}
+  .sb{height:22px;color:var(--ink2);font-size:10.5px;font-weight:700;display:flex;align-items:center;justify-content:space-between;padding:0 16px;flex-shrink:0;background:#fff}
+  .nbar{height:48px;background:#fff;display:flex;align-items:center;gap:4px;padding:0 6px 0 8px;flex-shrink:0}
+  .nbar .ib{width:38px;height:38px;border-radius:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .hair{height:3px;background:linear-gradient(90deg,var(--indigo),var(--violet) 45%,var(--teal));flex-shrink:0}
+  .ic{width:21px;height:21px;fill:currentColor;flex-shrink:0}
+  .ic.s{width:17px;height:17px}
+  .ic.xs{width:13px;height:13px}
+  .body{flex:1;overflow:hidden;position:relative;padding:8px 12px 0}
+
+  /* old field */
+  .oldfield{flex:1;height:46px;background:#EEF0F4;border-bottom:1.5px solid #8A94A6;display:flex;align-items:center;padding:0 12px;font-size:13.5px;color:var(--hint);position:relative}
+  /* new pill */
+  .pill{flex:1;height:38px;border-radius:19px;background:var(--indigo-c);display:flex;align-items:center;gap:8px;padding:0 6px 0 12px;position:relative}
+  .pill .ic{color:var(--indigo)}
+  .pill .txt{flex:1;font-size:14px;color:var(--ink)}
+  .pill .txt i{display:inline-block;width:2px;height:15px;background:var(--indigo);vertical-align:-3px;margin-left:1px}
+  .pill .clr{width:26px;height:26px;border-radius:13px;background:#fff;display:flex;align-items:center;justify-content:center;color:var(--ink2)}
+  .pill .clr .ic{width:14px;height:14px;color:var(--ink2)}
+  .count{font-size:11.5px;color:var(--ink2);padding:2px 4px 8px;display:flex;align-items:center;gap:8px}
+  .count b{color:var(--indigo)}
+  .bucket{display:inline-flex;align-items:center;gap:4px;height:24px;padding:0 9px;border-radius:12px;background:#fff;font-size:11px;font-weight:700;color:var(--ink2);box-shadow:0 1px 4px rgba(25,40,80,.07)}
+  .bucket.on{background:var(--indigo);color:#fff}
+
+  .idc{display:flex;gap:9px;align-items:center;background:#fff;border-radius:14px;padding:8px 11px;margin-bottom:6px;box-shadow:0 2px 7px rgba(25,40,80,.07);position:relative;border:1px solid var(--line)}
+  .idc .tile{width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff}
+  .idc .l{flex:1;min-width:0}
+  .idc .tt{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .idc .kv{font-size:11px;color:var(--ink2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .idc .kv b{color:var(--ink);font-weight:700}
+  mark{background:#FFE9A8;color:var(--ink);border-radius:3px;padding:0 1px}
+  .where{display:inline-flex;align-items:center;font-size:9px;font-weight:800;padding:1px 5px;border-radius:8px;margin-left:4px;vertical-align:1px}
+  .w-data{background:var(--sky-c,#E0F2FE);color:#02648F}
+  .w-date{background:var(--green-c);color:#0B6B36}
+  .w-file{background:var(--purple-c);color:#6D22B0}
+  .w-tag{background:var(--violet-c);color:#5A3ED0}
+  .w-rem{background:var(--amber-c);color:#8A5300}
+  .g-ind{background:linear-gradient(150deg,#5670E8,#3B5BDB)}
+  .g-tea{background:linear-gradient(150deg,#22B3A2,#0E9384)}
+  .g-amb{background:linear-gradient(150deg,#E9A13B,#B76E00)}
+  .g-ros{background:linear-gradient(150deg,#F0736F,#E5484D)}
+  .ring{width:38px;height:38px;border-radius:19px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+  .ring .in{width:30px;height:30px;border-radius:15px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .ring .in b{font-size:11px;font-weight:800;line-height:1}
+  .ring .in small{font-size:7px;font-weight:700;color:var(--ink2)}
+  .empty{display:flex;flex-direction:column;align-items:center;text-align:center;padding:30px 20px}
+  .empty .art{width:72px;height:72px;border-radius:24px;background:linear-gradient(135deg,var(--indigo-c),#EFE7FD);display:flex;align-items:center;justify-content:center;color:var(--indigo);margin-bottom:12px}
+  .empty .art .ic{width:32px;height:32px}
+  .empty b{font-size:15px;font-weight:800}
+  .empty small{font-size:12px;color:var(--ink2);margin-top:5px;line-height:1.5}
+  .kbd{position:absolute;left:0;right:0;bottom:0;height:150px;background:#D5D9E2;border-top:1px solid #BFC5D1;display:flex;flex-direction:column;justify-content:center;gap:6px;padding:0 10px}
+  .kbd .row{display:flex;gap:5px;justify-content:center}
+  .kbd .k{width:28px;height:30px;border-radius:5px;background:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;color:var(--ink2)}
+  .kbd .k.go{width:70px;background:var(--indigo);color:#fff;font-weight:800}
+  .scard{background:#fff;border-radius:14px;box-shadow:0 2px 8px rgba(25,40,80,.07);overflow:hidden}
+  .srow{display:flex;align-items:center;gap:11px;padding:9px 12px;min-height:46px;border-bottom:1px solid var(--line)}
+  .srow:last-child{border-bottom:0}
+  .srow .tile{width:32px;height:32px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .srow .l{flex:1;min-width:0}
+  .srow .l b{display:block;font-size:13px;font-weight:700}
+  .srow .l small{display:block;font-size:11px;color:var(--ink2);margin-top:1px}
+  .srow .val{font-size:11.5px;font-weight:800;white-space:nowrap}
+  .lab{font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--indigo);margin:12px 0 7px 2px}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></symbol>
+  <symbol id="i-tick" viewBox="0 0 24 24"><path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></symbol>
+  <symbol id="i-car" viewBox="0 0 24 24"><path d="M18.92 6.01A1.5 1.5 0 0 0 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm11 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zM5 11l1.5-4.5h11L19 11H5z"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 1 3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></symbol>
+  <symbol id="i-laptop" viewBox="0 0 24 24"><path d="M20 18a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2H0v2h24v-2h-4zM4 6h16v10H4V6z"/></symbol>
+  <symbol id="i-id" viewBox="0 0 24 24"><path d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zM9 8a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zm4.5 9h-9v-.75c0-1.5 3-2.25 4.5-2.25s4.5.75 4.5 2.25V17zM19 15h-4v-2h4v2zm0-4h-4V9h4v2z"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></symbol>
+</svg>
+
+<div class="wrap">
+<header class="page">
+  <h1>InfoDeck — v1.8 · D1 design</h1>
+  <p>Search, fixed twice over. <b>1)</b> The field itself: 1.8 swaps the bar for a bare Material text box — grey block, underline, no focus, no keyboard, no result count. <b>2)</b> The bug: search only reads the label, category, tags and the <b>first</b> data variable. A policy number stored as the second variable is invisible. Mock date <b>Thu 10-Sep-2026</b>.</p>
+  <span class="stamp">DESIGN ONLY · nothing built · no version bump</span>
+  <span class="stamp g">Reply by tag: “S2.2 → no badge”, “Q2 → b”, or “defaults” = all recommended</span>
+</header>
+
+<div class="rej-box"><b>Checked in the 1.8 source.</b> The filter in <code>AppViewModel</code> tests six fields: <code>label</code>, <code>keyDateName</code>, <code>firstDataName</code>, <code>firstDataValue</code>, <code>categoryName</code> and <code>tagNames</code>. Not searched: every data variable after the first, every date <i>value</i>, every date name except the key date, file names, and the reminder rule. That is why “doesn't search from the data” is exactly right.</div>
+
+<h2 class="sec">A · Screens</h2>
+<div class="frames">
+
+<!-- S1 -->
+<figure class="full">
+  <h3>S1 · The field<small>bug 1 · what you get now, and what you should</small></h3>
+  <div class="duo">
+    <div class="phone sm">
+      <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+      <div class="nbar">
+        <span class="ib" style="color:var(--slate)"><svg class="ic s"><use href="#i-back"/></svg></span>
+        <span class="oldfield">Search<b class="n d" style="position:absolute;right:8px;top:-6px">1</b></span>
+        <span class="ib" style="color:var(--slate)"><svg class="ic s"><use href="#i-close"/></svg></span>
+      </div>
+      <div class="hair"></div>
+      <div class="body">
+        <div class="idc"><span class="tile g-ros"><svg class="ic s"><use href="#i-car"/></svg></span><div class="l"><div class="tt">Bike Insurance — ICICI Lombard</div><div class="kv">Policy Expiry <b>12-Oct-2025</b></div></div><div class="ring" style="background:conic-gradient(var(--rose) 0 100%,#EEF1F6 0)"><div class="in"><b style="color:var(--rose)">310</b><small>AGO</small></div></div></div>
+        <div class="idc"><span class="tile g-amb"><svg class="ic s"><use href="#i-laptop"/></svg></span><div class="l"><div class="tt">Laptop Warranty — Dell XPS</div><div class="kv">Warranty End <b>07-Sep-2026</b></div></div><div class="ring" style="background:conic-gradient(var(--amber) 0 78%,#EEF1F6 0)"><div class="in"><b style="color:var(--amber)">20</b><small>DAYS</small></div></div></div>
+        <div class="idc"><span class="tile g-ind"><svg class="ic s"><use href="#i-car"/></svg></span><div class="l"><div class="tt">Car Insurance — HDFC Ergo</div><div class="kv">Policy Expiry <b>11-Oct-2026</b></div></div><div class="ring" style="background:conic-gradient(var(--green) 0 42%,#EEF1F6 0)"><div class="in"><b style="color:var(--green)">54</b><small>DAYS</small></div></div></div>
+        <b class="n d" style="position:absolute;left:14px;top:140px">2</b>
+      </div>
+    </div>
+
+    <div class="phone sm">
+      <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+      <div class="nbar">
+        <span class="ib" style="color:var(--slate)"><svg class="ic s"><use href="#i-back"/></svg></span>
+        <span class="pill"><svg class="ic s"><use href="#i-search"/></svg><span class="txt">2291<i></i></span><span class="clr"><svg class="ic"><use href="#i-close"/></svg></span>
+          <b class="n g" style="position:absolute;right:-6px;top:-8px">3</b></span>
+      </div>
+      <div class="hair"></div>
+      <div class="body">
+        <div class="count"><b>2 results</b> for “2291”
+          <span class="bucket on">All 2</span><span class="bucket">Data 2</span><span class="bucket">Files 0</span>
+          <b class="n" style="position:relative;top:-14px">4</b></div>
+        <div class="idc"><span class="tile g-ind"><svg class="ic s"><use href="#i-car"/></svg></span><div class="l"><div class="tt">Car Insurance — HDFC Ergo</div><div class="kv">Policy No <b>HD-<mark>2291</mark>-KX-2026</b><span class="where w-data">DATA</span></div></div><div class="ring" style="background:conic-gradient(var(--green) 0 42%,#EEF1F6 0)"><div class="in"><b style="color:var(--green)">54</b><small>DAYS</small></div></div>
+          <b class="n g" style="position:absolute;right:-6px;top:-6px">5</b></div>
+        <div class="idc"><span class="tile g-ind"><svg class="ic s"><use href="#i-shield"/></svg></span><div class="l"><div class="tt">Health Insurance — Star</div><div class="kv">Customer ID <b>ST-<mark>2291</mark>08</b><span class="where w-data">DATA</span></div></div><div class="ring" style="background:conic-gradient(var(--green) 0 18%,#EEF1F6 0)"><div class="in"><b style="color:var(--green)">194</b><small>DAYS</small></div></div></div>
+        <div class="kbd">
+          <div class="row"><span class="k">q</span><span class="k">w</span><span class="k">e</span><span class="k">r</span><span class="k">t</span><span class="k">y</span><span class="k">u</span><span class="k">i</span><span class="k">o</span><span class="k">p</span></div>
+          <div class="row"><span class="k">a</span><span class="k">s</span><span class="k">d</span><span class="k">f</span><span class="k">g</span><span class="k">h</span><span class="k">j</span><span class="k">k</span><span class="k">l</span></div>
+          <div class="row"><span class="k">z</span><span class="k">x</span><span class="k">c</span><span class="k">v</span><span class="k">b</span><span class="k">n</span><span class="k">m</span><span class="k go">Search</span></div>
+          <b class="n" style="position:absolute;left:8px;top:-8px">6</b>
+        </div>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="del">A bare text box</td><td>Material's default filled field — grey slab, underline, 46 dp, no cursor because it never takes focus. The keyboard does not even open until you tap again</td></tr>
+    <tr><td class="sr">2</td><td class="del">Nothing tells you what matched</td><td>Rows look exactly as they do unfiltered, so you cannot tell why a card is in the list — or that the number you typed was ignored</td></tr>
+    <tr><td class="sr">3</td><td class="new">A pill, focused, with its own clear</td><td>38 dp rounded field in the indigo tint, focus and keyboard on open, cursor visible, a round ✕ inside the pill that clears the text; Back collapses it</td></tr>
+    <tr><td class="sr">4</td><td class="new">Result count and buckets</td><td>“2 results for ‘2291’” with All · Data · Files chips, so a miss is a visible “0 results”, never silence <i class="q">Q1</i></td></tr>
+    <tr><td class="sr">5</td><td class="new">The row shows what matched</td><td>The meta line becomes the <b>matching field</b> — “Policy No HD-2291-KX-2026” — with the hit highlighted and a small badge saying where it came from <i class="q">Q2</i></td></tr>
+    <tr><td class="sr">6</td><td class="k">Keyboard</td><td>Opens with the field; the action key reads Search and just hides the keyboard, since results are already live</td></tr>
+  </table>
+</figure>
+
+<!-- S2 -->
+<figure>
+  <h3>S2 · Where a hit can come from<small>bug 2 · every field on the card</small></h3>
+  <div class="phone" style="height:760px">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="nbar">
+      <span class="ib" style="color:var(--slate)"><svg class="ic s"><use href="#i-back"/></svg></span>
+      <span class="pill"><svg class="ic s"><use href="#i-search"/></svg><span class="txt">oct<i></i></span><span class="clr"><svg class="ic"><use href="#i-close"/></svg></span></span>
+    </div>
+    <div class="hair"></div>
+    <div class="body">
+      <div class="count"><b>5 results</b> for “oct”<span class="bucket on">All 5</span><span class="bucket">Data 1</span><span class="bucket">Dates 3</span><span class="bucket">Files 1</span></div>
+
+      <div class="idc"><span class="tile g-ind"><svg class="ic s"><use href="#i-car"/></svg></span><div class="l"><div class="tt">Car Insurance — HDFC Ergo</div><div class="kv">Policy Expiry <b>11-<mark>Oct</mark>-2026</b><span class="where w-date">DATE</span></div></div><div class="ring" style="background:conic-gradient(var(--green) 0 42%,#EEF1F6 0)"><div class="in"><b style="color:var(--green)">54</b><small>DAYS</small></div></div>
+        <b class="n" style="position:absolute;right:-6px;top:-6px">1</b></div>
+      <div class="idc"><span class="tile g-ros"><svg class="ic s"><use href="#i-car"/></svg></span><div class="l"><div class="tt">Bike Insurance — ICICI Lombard</div><div class="kv">Policy Expiry <b>12-<mark>Oct</mark>-2025</b><span class="where w-date">DATE</span></div></div><div class="ring" style="background:conic-gradient(var(--rose) 0 100%,#EEF1F6 0)"><div class="in"><b style="color:var(--rose)">310</b><small>AGO</small></div></div></div>
+      <div class="idc"><span class="tile g-ind"><svg class="ic s"><use href="#i-shield"/></svg></span><div class="l"><div class="tt">Health Insurance — Star</div><div class="kv">Old policy 2024 (<mark>Oct</mark>).pdf<span class="where w-file">FILE</span></div></div><div class="ring" style="background:conic-gradient(var(--green) 0 18%,#EEF1F6 0)"><div class="in"><b style="color:var(--green)">194</b><small>DAYS</small></div></div>
+        <b class="n" style="position:absolute;right:-6px;top:-6px">2</b></div>
+      <div class="idc"><span class="tile g-tea"><svg class="ic s"><use href="#i-id"/></svg></span><div class="l"><div class="tt">Driving Licence</div><div class="kv">Issued <b>03-<mark>Oct</mark>-2018</b><span class="where w-date">DATE</span></div></div><div class="ring" style="background:conic-gradient(var(--green) 0 8%,#EEF1F6 0)"><div class="in"><b style="color:var(--green)">610</b><small>DAYS</small></div></div>
+        <b class="n" style="position:absolute;right:-6px;top:-6px">3</b></div>
+      <div class="idc"><span class="tile g-amb"><svg class="ic s"><use href="#i-laptop"/></svg></span><div class="l"><div class="tt">Laptop Warranty — Dell XPS</div><div class="kv">Store <b><mark>Oct</mark>ane Electronics</b><span class="where w-data">DATA</span></div></div><div class="ring" style="background:conic-gradient(var(--amber) 0 78%,#EEF1F6 0)"><div class="in"><b style="color:var(--amber)">20</b><small>DAYS</small></div></div></div>
+
+      <div class="lab">Also searched, shown the same way</div>
+      <div class="scard">
+        <div class="srow"><span class="tile" style="background:var(--amber-c);color:var(--amber)"><svg class="ic s"><use href="#i-warn"/></svg></span><div class="l"><b>Reminder rules</b><small>“30 days before Policy Expiry”</small></div><span class="where w-rem" style="margin:0">REMINDER</span></div>
+        <div class="srow"><span class="tile" style="background:var(--violet-c);color:var(--violet)"><svg class="ic s"><use href="#i-tick"/></svg></span><div class="l"><b>Tags and category</b><small>as before</small></div><span class="where w-tag" style="margin:0">TAG</span>
+          <b class="n" style="position:absolute;right:12px;top:6px">4</b></div>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="new">Dates by their text</td><td>“oct”, “2026”, “11-oct” all hit, because the formatted date is indexed exactly as you see it on the card</td></tr>
+    <tr><td class="sr">2</td><td class="new">File names</td><td>Attachments are searchable by name; the row shows the file that matched</td></tr>
+    <tr><td class="sr">3</td><td class="new">Every date, not just the key one</td><td>“Issued” dates, start dates, anything — the badge tells you which</td></tr>
+    <tr><td class="sr">4</td><td class="k">One index per card</td><td>All names and values on the card go into one lowercase text at load time, so a search is one <code>contains</code> per card and stays instant at hundreds of cards</td></tr>
+  </table>
+</figure>
+
+<!-- S3 -->
+<figure>
+  <h3>S3 · No results, and the rules<small>bug 1 · the miss is visible</small></h3>
+  <div class="phone" style="height:840px">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="nbar">
+      <span class="ib" style="color:var(--slate)"><svg class="ic s"><use href="#i-back"/></svg></span>
+      <span class="pill"><svg class="ic s"><use href="#i-search"/></svg><span class="txt">hdfc ergo 2027<i></i></span><span class="clr"><svg class="ic"><use href="#i-close"/></svg></span></span>
+    </div>
+    <div class="hair"></div>
+    <div class="body">
+      <div class="count"><b>0 results</b> for “hdfc ergo 2027”</div>
+      <div class="empty">
+        <div class="art"><svg class="ic"><use href="#i-search"/></svg></div>
+        <b>Nothing matches all three words</b>
+        <small>“hdfc ergo” matches 1 card, “2027” matches 2 others. Try fewer words, or check a date format like 11-Oct-2026.</small>
+        <b class="n" style="position:relative;top:-46px;left:120px">1</b>
+      </div>
+
+      <div class="lab">Matching rules</div>
+      <div class="scard">
+        <div class="srow"><div class="l"><b>Case does not matter</b><small>“hdfc” finds “HDFC”</small></div></div>
+        <div class="srow"><div class="l"><b>Every word must match somewhere</b><small>“hdfc 2291” = HDFC in the label, 2291 in a value</small></div>
+          <b class="n" style="position:absolute;right:12px;top:6px">2</b></div>
+        <div class="srow"><div class="l"><b>Partial is fine</b><small>“229” finds HD-2291-KX-2026</small></div></div>
+        <div class="srow"><div class="l"><b>Digits ignore separators</b><small>“22910” finds “WB 24 AB 1234”? no — but “2291” finds “HD-2291”, and “wb24ab” finds “WB 24 AB 1234”</small></div>
+          <b class="n" style="position:absolute;right:12px;top:6px">3</b></div>
+        <div class="srow"><div class="l"><b>Accents fold</b><small>“cafe” finds “Café”</small></div></div>
+        <div class="srow"><div class="l"><b>Live, debounced 150 ms</b><small>results update as you type, never behind you</small></div></div>
+      </div>
+      <div class="lab">While searching</div>
+      <div class="scard">
+        <div class="srow"><div class="l"><b>Grouping is switched off</b><small>one flat list, best match first</small></div></div>
+        <div class="srow"><div class="l"><b>Filters still apply</b><small>the View badge stays visible so you know why a card is missing</small></div>
+          <b class="n" style="position:absolute;right:12px;top:6px">4</b></div>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="new">A useful empty state</td><td>Tells you which words matched something and which did not, instead of a blank list</td></tr>
+    <tr><td class="sr">2</td><td class="new">All words, any field</td><td>Each word may land in a different field of the same card — the natural way to narrow</td></tr>
+    <tr><td class="sr">3</td><td class="new">Separator-blind for codes</td><td>Registration and policy numbers are typed without spaces and dashes half the time; the index keeps a stripped copy of each value too <i class="q">Q3</i></td></tr>
+    <tr><td class="sr">4</td><td class="k">Flat while searching</td><td>Section headers get in the way of a result list; they return when the field closes</td></tr>
+  </table>
+</figure>
+
+</div><!-- /frames -->
+
+<h2 class="sec">B · Specification</h2>
+
+<h3 class="sub">C1 · What search reads</h3>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Field</th><th>1.8</th><th>Proposed</th></tr>
+  <tr><td class="sr">1</td><td class="k">Card label</td><td class="rec">yes</td><td class="rec">yes</td></tr>
+  <tr><td class="sr">2</td><td class="k">Category, tags</td><td class="rec">yes</td><td class="rec">yes</td></tr>
+  <tr><td class="sr">3</td><td class="k">Data variables — names and values</td><td class="del">first one only</td><td class="rec">all of them</td></tr>
+  <tr><td class="sr">4</td><td class="k">Data values with separators stripped</td><td class="del">no</td><td class="rec">yes — “wb24ab1234”</td></tr>
+  <tr><td class="sr">5</td><td class="k">Date names</td><td class="del">key date only</td><td class="rec">all</td></tr>
+  <tr><td class="sr">6</td><td class="k">Date values, as displayed</td><td class="del">no</td><td class="rec">yes — “11-oct-2026”, plus “2026-10-11”</td></tr>
+  <tr><td class="sr">7</td><td class="k">File names</td><td class="del">no</td><td class="rec">yes</td></tr>
+  <tr><td class="sr">8</td><td class="k">Reminder rule text</td><td class="del">no</td><td class="rec">yes</td></tr>
+</table>
+
+<h3 class="sub">C2 · The field</h3>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Rule</th><th>Detail</th></tr>
+  <tr><td class="sr">1</td><td class="k">Shape</td><td>38 dp pill in the indigo tint, inside the 48 dp bar; magnifier left, round ✕ right</td></tr>
+  <tr><td class="sr">2</td><td class="k">Focus</td><td>Focus and keyboard on open; IME action Search hides the keyboard; Back collapses and clears</td></tr>
+  <tr><td class="sr">3</td><td class="k">Count line</td><td>“N results for ‘q’” under the bar, with All · Data · Dates · Files bucket chips when there is more than one kind of hit <i class="q">Q1</i></td></tr>
+  <tr><td class="sr">4</td><td class="k">Row hint</td><td>Meta line shows the matching field with the hit highlighted and a badge DATA · DATE · FILE · TAG · REMINDER; the label match needs no badge <i class="q">Q2</i></td></tr>
+  <tr><td class="sr">5</td><td class="k">Empty state</td><td>Names which words matched and which did not</td></tr>
+  <tr><td class="sr">6</td><td class="k">Same field everywhere</td><td>Upcoming and Settings get the pill too — one component</td></tr>
+</table>
+
+<h3 class="sub">C3 · Matching</h3>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Rule</th><th>Detail</th></tr>
+  <tr><td class="sr">1</td><td class="k">Index</td><td>One lowercase, accent-folded string per card built at load time: every name and value above, each also in a separator-stripped form</td></tr>
+  <tr><td class="sr">2</td><td class="k">Query</td><td>Split on spaces; every word must be found in the index (AND); a word is also tried stripped of separators</td></tr>
+  <tr><td class="sr">3</td><td class="k">Order</td><td>Label hits first, then data, then dates, files, reminders; ties keep the current sort</td></tr>
+  <tr><td class="sr">4</td><td class="k">Speed</td><td>Debounced 150 ms; a single <code>contains</code> per word per card</td></tr>
+  <tr><td class="sr">5</td><td class="k">Limits</td><td>Query trimmed at 100 characters; blank query shows everything</td></tr>
+</table>
+
+<h3 class="sub">C4 · Three companions</h3>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Item</th><th>Exception handling</th><th>Logger.e</th><th>Tests</th></tr>
+  <tr><td class="sr">1</td><td class="k">Index</td><td>Null names or values contribute nothing; a card with no data still indexes its label; building never throws</td><td>logs an index build failure per card</td><td>JUnit that every field kind lands in the index, stripped forms exist, and accents fold</td></tr>
+  <tr><td class="sr">2</td><td class="k">Matching</td><td>Empty or whitespace query returns the full list; over-long query trimmed</td><td>—</td><td>JUnit on AND across words, partial hits, separator-blind codes, date text, ordering, and the “which word missed” report</td></tr>
+  <tr><td class="sr">3</td><td class="k">Row hint</td><td>If several fields match, the highest-ranked one is shown; the label match shows the normal meta line</td><td>—</td><td>JUnit on the field chosen for the hint and the highlight range</td></tr>
+</table>
+
+<h2 class="sec">C · Open questions</h2>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Q</th><th>Question</th><th>Options</th><th>My recommendation</th></tr>
+  <tr><td class="sr">1</td><td class="q">Q1</td><td>Bucket chips</td><td>(a) show when hits span kinds &nbsp; (b) always &nbsp; (c) just the count</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">2</td><td class="q">Q2</td><td>Badge on the row hint</td><td>(a) small DATA / DATE / FILE badge &nbsp; (b) highlight only</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">3</td><td class="q">Q3</td><td>Separator-blind matching</td><td>(a) yes &nbsp; (b) exact text only</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">4</td><td class="q">Q4</td><td>Grouping while searching</td><td>(a) flat list, best first &nbsp; (b) keep sections</td><td class="rec">(a)</td></tr>
+</table>
+
+<h2 class="sec">D · If accepted</h2>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Field</th><th>Value</th></tr>
+  <tr><td class="sr">1</td><td class="k">Queue</td><td>B11 search reads every field (index, AND matching, separator-blind, dates, files, reminders) · B12 search field UX (pill, focus, clear, count, buckets, row hint, empty state)</td></tr>
+  <tr><td class="sr">2</td><td class="k">Release</td><td><b>1.9</b>, versionCode <b>1009000</b></td></tr>
+  <tr><td class="sr">3</td><td class="k">Database</td><td>No schema change — the index is built in memory at load</td></tr>
+  <tr><td class="sr">4</td><td class="k">Trigger</td><td>Nothing is built until you say <b>build</b> / <b>release</b></td></tr>
+</table>
+
+</div>
+</body>
+</html>

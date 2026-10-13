@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InfoDeck — v1.1 D2 design · dynamic text size, file variables, tags</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100..900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1C2431; --ink2:#5F6B7A; --hint:#98A2AE;
+    --pri:#34518A; --pri-d:#24406F; --pri-c:#E3EAF7; --on-pri-c:#1E3866;
+    --amber:#9A5B00; --amber-c:#FFF1D6;
+    --ok:#2E7D32; --ok-c:#E6F4E1;
+    --err:#B3261E; --err-c:#FBE3E1;
+    --bg:#F3F5F8; --card:#FFFFFF; --line:#E1E5EB; --outline:#B7BFCC;
+    --page:#E4E7EE; --tag:#1A3E8C; --q:#7A5A00; --q-bg:#FFF3C4; --q-bd:#E2C35C;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--page);font-family:Roboto,"Segoe UI",system-ui,-apple-system,sans-serif;color:var(--ink);padding:26px 18px 70px}
+  .wrap{max-width:1180px;margin:0 auto}
+  header.page h1{font-size:24px;font-weight:800;color:var(--pri-d)}
+  header.page p{font-size:13.5px;color:var(--ink2);margin-top:5px;line-height:1.5}
+  .stamp{display:inline-block;margin:10px 8px 0 0;font-size:12px;font-weight:700;color:#7A2E00;background:#FFE1CC;border:1px solid #E8B08C;border-radius:20px;padding:3px 12px}
+  .stamp.g{color:#1E3866;background:#E3EAF7;border-color:#B4C4E4}
+  .stamp.r{color:#8A1F19;background:#FBE3E1;border-color:#E7ADA8}
+  h2.sec{font-size:18px;font-weight:800;color:var(--pri-d);margin:38px 0 12px;padding-bottom:6px;border-bottom:2px solid #C9D1DD}
+  h3.sub{font-size:15px;color:var(--pri-d);margin-top:20px}
+  .note{font-size:13px;color:var(--ink2);line-height:1.5;margin:6px 0 10px}
+  .warn-box{background:#FFF6E5;border:1px solid #E8C98C;border-radius:10px;padding:12px 14px;font-size:13.5px;line-height:1.55;margin:10px 0 4px}
+  .warn-box b{color:#7A4A00}
+  .rej-box{background:#FBE3E1;border:1px solid #E7ADA8;border-radius:10px;padding:12px 14px;font-size:13.5px;line-height:1.55;margin:10px 0 4px}
+  .rej-box b{color:#8A1F19}
+
+  table.tb{width:100%;border-collapse:collapse;font-size:12.5px;background:#fff;margin:6px 0 4px}
+  table.tb th{background:#E9EEF6;color:var(--pri-d);text-align:left;padding:6px 8px;border:1px solid #BFC9D8;font-size:12px}
+  table.tb td{padding:6px 8px;border:1px solid #D2D9E3;vertical-align:top;line-height:1.45}
+  table.tb .sr{width:1%;white-space:nowrap;text-align:center}
+  table.tb td.k{white-space:nowrap;font-weight:700;color:var(--tag)}
+  table.tb td.q{white-space:nowrap;font-weight:700;color:var(--q)}
+  table.tb td.rec{color:var(--ok);font-weight:600}
+  table.tb td.new{white-space:nowrap;font-weight:700;color:var(--ok)}
+  table.tb td.del{white-space:nowrap;font-weight:700;color:var(--err)}
+  table.tb tr:nth-child(even) td{background:#FAFBFD}
+  code{font-family:Consolas,Menlo,monospace;font-size:12px;background:#EEF1F5;padding:1px 4px;border-radius:3px}
+
+  .frames{display:grid;grid-template-columns:repeat(auto-fit,minmax(520px,1fr));gap:34px 28px;margin-top:14px}
+  figure{display:flex;flex-direction:column;align-items:center;gap:8px}
+  figure h3{font-size:15px;font-weight:800;color:var(--pri-d);align-self:flex-start}
+  figure h3 small{font-weight:500;color:var(--ink2);font-size:12.5px;margin-left:6px}
+  figure table.tb{font-size:12px}
+  figure.full{grid-column:1 / -1}
+  figure.full h3{align-self:center}
+  figure.full table.tb{max-width:860px}
+  .duo{display:flex;gap:26px;justify-content:center;flex-wrap:wrap}
+
+  b.n{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:8px;background:var(--tag);color:#fff;font-size:10px;font-weight:800;line-height:1;flex-shrink:0;font-style:normal}
+  b.n.d{background:var(--err)}
+  i.q{display:inline-flex;align-items:center;font-style:normal;font-size:10px;font-weight:800;color:var(--q);background:var(--q-bg);border:1px solid var(--q-bd);border-radius:9px;padding:1px 6px;line-height:1.3;flex-shrink:0}
+
+  .phone{width:378px;height:758px;background:var(--bg);border:9px solid #171A20;border-radius:36px;overflow:hidden;position:relative;box-shadow:0 12px 30px rgba(20,30,50,.20);display:flex;flex-direction:column;flex-shrink:0}
+  .sb{height:24px;background:var(--pri-d);color:#fff;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:space-between;padding:0 18px;flex-shrink:0}
+  .appbar{height:56px;background:var(--pri);color:#fff;display:flex;align-items:center;padding:0 6px 0 4px;gap:2px;flex-shrink:0}
+  .appbar.pad .t{padding-left:12px}
+  .appbar .t{font-size:17px;font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 6px;line-height:1.2}
+  .appbar .t small{display:block;font-size:11.5px;font-weight:400;opacity:.85}
+  .ic{width:24px;height:24px;fill:currentColor;flex-shrink:0}
+  .ib{width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:20px;position:relative;flex-shrink:0}
+  .cnt{position:absolute;top:5px;right:5px;min-width:16px;height:16px;border-radius:8px;background:#FFB84D;color:#1C2431;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 4px}
+  .body{flex:1;overflow:hidden;position:relative;padding:10px 12px 0}
+  .fab{position:absolute;right:16px;bottom:16px;height:48px;padding:0 18px 0 14px;border-radius:16px;background:var(--pri-c);color:var(--on-pri-c);font-weight:700;font-size:14px;display:flex;align-items:center;gap:8px;box-shadow:0 4px 12px rgba(0,0,0,.20)}
+  .spacer{height:60px}
+
+  .ctl{display:flex;align-items:center;gap:6px;padding:0 2px 8px;position:relative}
+  .cchip{display:inline-flex;align-items:center;gap:4px;height:32px;padding:0 10px;border-radius:16px;border:1.5px solid var(--outline);background:#fff;font-size:12.5px;font-weight:600;white-space:nowrap}
+  .cchip .ic{width:16px;height:16px;color:var(--ink2)}
+  .cchip.on{background:var(--pri-c);border-color:var(--pri);color:var(--on-pri-c)}
+  .fbtn{margin-left:auto;width:34px;height:32px;border-radius:16px;border:1.5px solid var(--outline);background:#fff;display:flex;align-items:center;justify-content:center;position:relative;flex-shrink:0}
+  .fbtn.on{background:var(--pri-c);border-color:var(--pri)}
+  .fbtn .ic{width:18px;height:18px;color:var(--ink2)}
+  .fbtn .bdg{position:absolute;top:-5px;right:-5px;min-width:15px;height:15px;border-radius:8px;background:var(--pri);color:#fff;font-size:9.5px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 4px}
+  .qrow{display:flex;gap:6px;padding:0 2px 8px;overflow:hidden}
+  .qchip{height:28px;padding:0 11px;border-radius:14px;border:1.5px solid var(--outline);background:#fff;font-size:12px;font-weight:600;color:var(--ink2);display:flex;align-items:center;white-space:nowrap}
+  .qchip.on{background:var(--pri-c);border-color:var(--pri);color:var(--on-pri-c)}
+  .qchip.tg{border-style:dashed}
+
+  .deck-line{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--ink2);padding:0 4px 7px;position:relative}
+  .deck-line b{color:var(--ink);font-weight:700}
+  .fcard{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:9px 11px;margin-bottom:8px;position:relative;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+  .fcard > b.n{position:absolute;right:8px;top:8px}
+  .fcard .tt{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:14px}
+  .fcard .kv{font-size:11.5px;color:var(--ink2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .fcard .kv b{color:var(--ink);font-weight:600}
+  .fcard .kv em{font-style:normal;color:var(--ok);font-weight:700}
+  .fcard .kv em.od{color:var(--err)}
+  .fcard .rw{display:flex;gap:5px;align-items:center;margin-top:6px;flex-wrap:wrap}
+  .tag{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:11px;background:var(--amber-c);color:var(--amber)}
+  .tag .ic{width:12px;height:12px}
+  .tag.cat{background:var(--pri-c);color:var(--on-pri-c)}
+  .tag.off{background:#ECEFF3;color:var(--ink2)}
+  .tag.tg{background:#fff;border:1px dashed #A9B3C1;color:var(--ink2);font-weight:600}
+  .tag.file{background:#EFEAF8;color:#5B3FA0}
+
+  /* zoom variants: text AND layout grow together */
+  .z70{--z:.70}.z115{--z:1.15}.z180{--z:1.80}
+  .zoom .fcard{padding:calc(9px * var(--z)) calc(11px * var(--z));border-radius:calc(12px * var(--z))}
+  .zoom .fcard .tt{font-size:calc(14px * var(--z))}
+  .zoom .fcard .kv{font-size:calc(11.5px * var(--z))}
+  .zoom .tag{font-size:calc(10.5px * var(--z));padding:calc(2px * var(--z)) calc(8px * var(--z))}
+  .zoom .tag .ic{width:calc(12px * var(--z));height:calc(12px * var(--z))}
+  .zoom .cchip{font-size:calc(12.5px * var(--z));height:calc(32px * var(--z));border-radius:calc(16px * var(--z))}
+  .zoom .cchip .ic{width:calc(16px * var(--z));height:calc(16px * var(--z))}
+  .zoom .qchip{font-size:calc(12px * var(--z));height:calc(28px * var(--z))}
+  .zoom .deck-line{font-size:calc(11.5px * var(--z))}
+  .zoom .appbar{height:calc(56px * var(--z))}
+  .zoom .appbar .t{font-size:calc(17px * var(--z))}
+  .zoom .ic{width:calc(24px * var(--z));height:calc(24px * var(--z))}
+  .zoom .fab{height:calc(48px * var(--z));font-size:calc(14px * var(--z))}
+
+  /* settings */
+  .lab{font-size:11.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--pri);margin:12px 0 6px 2px}
+  .scard{background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.08);position:relative}
+  .srow{display:flex;align-items:center;gap:10px;padding:9px 12px;min-height:48px;border-bottom:1px solid var(--line)}
+  .srow:last-child{border-bottom:0}
+  .srow .l{flex:1;min-width:0}
+  .srow .l b{display:block;font-size:14px;font-weight:500}
+  .srow .l small{display:block;font-size:11.5px;color:var(--ink2);line-height:1.35}
+  .srow .val{font-size:13px;color:var(--ink2);white-space:nowrap}
+  .srow .ic.ch{width:20px;height:20px;color:var(--hint)}
+  .sw{width:44px;height:24px;border-radius:12px;background:#C9CFD8;position:relative;flex-shrink:0}
+  .sw i{position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:9px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+  .sw.on{background:var(--pri)}
+  .sw.on i{left:23px}
+
+  /* slider */
+  .slide{padding:2px 4px 0}
+  .track{height:6px;border-radius:3px;background:#D8DEE7;position:relative;margin:16px 10px 6px}
+  .track .fill{position:absolute;left:0;top:0;bottom:0;border-radius:3px;background:var(--pri)}
+  .track .knob{position:absolute;top:50%;width:24px;height:24px;border-radius:12px;background:#fff;border:3px solid var(--pri);transform:translate(-50%,-50%);box-shadow:0 2px 6px rgba(0,0,0,.25)}
+  .track .tick{position:absolute;top:-5px;width:2px;height:16px;background:#AEB7C4;border-radius:1px}
+  .track .tlab{position:absolute;top:16px;font-size:10px;color:var(--hint);transform:translateX(-50%);white-space:nowrap}
+  .bigval{display:flex;align-items:center;justify-content:center;gap:16px;margin:4px 0 2px}
+  .bigval .pct{font-size:30px;font-weight:800;color:var(--pri-d);min-width:96px;text-align:center;letter-spacing:-.5px}
+  .bigval .pct small{font-size:14px;font-weight:600;color:var(--ink2);margin-left:2px}
+  .stepper{width:44px;height:44px;border-radius:22px;border:1.5px solid var(--pri);display:flex;align-items:center;justify-content:center;color:var(--pri);font-size:20px;font-weight:800}
+  .presets{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  .pchip{height:30px;padding:0 12px;border-radius:15px;border:1.5px solid var(--outline);background:#fff;font-size:12.5px;font-weight:700;color:var(--ink2);display:flex;align-items:center}
+  .pchip.on{background:var(--pri-c);border-color:var(--pri);color:var(--on-pri-c)}
+  .prevpane{background:#fff;border:1px dashed #C2CBD8;border-radius:14px;padding:22px 10px 10px;position:relative;overflow:hidden}
+  .prevpane .plab{position:absolute;right:8px;top:6px;font-size:10px;font-weight:800;color:var(--hint);letter-spacing:.05em}
+  .rolerow{display:flex;align-items:center;gap:10px;padding:6px 2px}
+  .rolerow .rn{flex:0 0 116px;font-size:12.5px;font-weight:600}
+  .rolerow .rv{font-size:12px;color:var(--ink2);white-space:nowrap;width:52px;text-align:right}
+  .rolerow .track{flex:1;margin:0 4px}
+  .minitrack{height:5px;border-radius:3px;background:#D8DEE7;position:relative;flex:1;margin:0 2px}
+  .minitrack .fill{position:absolute;left:0;top:0;bottom:0;border-radius:3px;background:var(--pri)}
+  .minitrack .knob{position:absolute;top:50%;width:16px;height:16px;border-radius:8px;background:#fff;border:2.5px solid var(--pri);transform:translate(-50%,-50%)}
+
+  /* sheets / menus / dialogs */
+  .dim{position:absolute;inset:0;background:rgba(20,26,36,.48)}
+  .sheet{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:22px 22px 0 0;padding:8px 16px 0;max-height:92%;overflow:hidden}
+  .grab{width:32px;height:4px;border-radius:2px;background:#C5CBD3;margin:0 auto 10px}
+  .sheet h4{font-size:17px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+  .sheet p.sd{font-size:12.5px;color:var(--ink2);line-height:1.45;margin-bottom:6px}
+  .opt{display:flex;align-items:center;gap:10px;padding:9px 2px;border-bottom:1px solid var(--line);min-height:46px}
+  .opt:last-of-type{border-bottom:0}
+  .opt .l{flex:1;min-width:0}
+  .opt .l b{display:block;font-size:14px;font-weight:500}
+  .opt .l small{display:block;font-size:11.5px;color:var(--ink2);line-height:1.3}
+  .chk{width:20px;height:20px;border-radius:5px;border:2px solid var(--outline);flex-shrink:0}
+  .chk.on{background:var(--pri);border-color:var(--pri);display:flex;align-items:center;justify-content:center}
+  .chk.on .ic{width:14px;height:14px;color:#fff}
+  .rad{width:20px;height:20px;border-radius:10px;border:2px solid var(--outline);flex-shrink:0}
+  .rad.on{border-color:var(--pri);border-width:6px}
+  .btn{flex:1;height:50px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14.5px}
+  .btn.out{border:1.5px solid var(--pri);color:var(--pri)}
+  .btn.fill{background:var(--pri);color:#fff}
+  .btn.delout{border:1.5px solid var(--err);color:var(--err)}
+  .btnrow{display:flex;gap:10px;margin-top:12px}
+  .sbs{height:32px;margin:10px -16px 0;border-top:1px dashed #C9D1DD;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--hint)}
+  .menu{position:absolute;right:8px;top:6px;background:#fff;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.28);padding:6px 0;min-width:210px;z-index:5}
+  .menu div{padding:10px 14px;font-size:14px;display:flex;align-items:center;gap:8px}
+  .menu div.dz{color:var(--err);font-weight:600;border-top:1px solid var(--line);margin-top:4px;padding-top:11px}
+  .menu div .ic{width:18px;height:18px}
+  .toast{position:absolute;left:12px;right:12px;bottom:18px;background:#2A3342;color:#fff;border-radius:12px;padding:11px 14px;font-size:13px;display:flex;align-items:center;gap:10px;box-shadow:0 6px 18px rgba(0,0,0,.3)}
+  .toast b{margin-left:auto;color:#8FB4FF;font-weight:800;font-size:13px}
+
+  /* editor */
+  .tf{border:1.5px solid var(--outline);border-radius:8px;height:50px;padding:0 12px;position:relative;display:flex;align-items:center;font-size:14.5px;gap:8px;background:transparent}
+  .tf .fl{position:absolute;top:-8px;left:10px;background:var(--bg);padding:0 4px;font-size:11.5px;color:var(--pri);font-weight:600}
+  .tf .v{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .er{display:flex;align-items:center;gap:6px;margin-bottom:8px;position:relative}
+  .er .tf{height:44px;font-size:13.5px}
+  .er .tf .fl{top:-7px;font-size:11px}
+  .er .tf.name{flex:0 0 104px}
+  .er .tf.val{flex:1;min-width:0}
+  .er .ic.x{color:var(--ink2);width:20px;height:20px}
+  .er .star{width:22px;height:22px;color:var(--amber)}
+  .eh{display:flex;align-items:center;gap:6px;margin:13px 2px 6px}
+  .sec-h{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--pri)}
+  .eh .sec-h{flex:1}
+  .eh .add{font-size:12.5px;font-weight:800;color:var(--pri);display:flex;align-items:center;gap:2px}
+  .eh .add .ic{width:16px;height:16px}
+  .hint{font-size:11.5px;color:var(--ink2);margin:-2px 0 8px 4px}
+
+  /* file rows */
+  .frow{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--line);border-radius:11px;padding:8px 10px;margin-bottom:7px;position:relative}
+  .frow .fi{width:34px;height:40px;border-radius:5px;display:flex;align-items:flex-end;justify-content:center;font-size:9px;font-weight:800;color:#fff;padding-bottom:4px;flex-shrink:0}
+  .frow .fi.pdf{background:#C0392B}
+  .frow .fi.doc{background:#2B5797}
+  .frow .l{flex:1;min-width:0}
+  .frow .l b{display:block;font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .frow .l small{display:block;font-size:11.5px;color:var(--ink2)}
+  .frow .op{font-size:12.5px;font-weight:800;color:var(--pri);white-space:nowrap}
+  .frow .ic.mo{width:20px;height:20px;color:var(--ink2)}
+  .frow.busy{opacity:.75}
+  .pbar{height:4px;border-radius:2px;background:#DDE3EC;margin-top:5px;position:relative;overflow:hidden}
+  .pbar i{position:absolute;left:0;top:0;bottom:0;background:var(--pri);border-radius:2px}
+
+  /* tags */
+  .tagline{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:4px}
+  .tchip{height:30px;padding:0 11px;border-radius:15px;border:1.5px dashed #A9B3C1;background:#fff;font-size:12.5px;font-weight:600;color:var(--ink2);display:flex;align-items:center;gap:5px}
+  .tchip.on{border-style:solid;border-color:var(--pri);background:var(--pri-c);color:var(--on-pri-c)}
+  .tchip .x{font-size:14px;color:var(--hint)}
+  .tchip.addt{border-color:var(--pri);color:var(--pri);border-style:solid}
+  .mrow{display:flex;align-items:center;gap:9px;background:#fff;border-radius:12px;padding:9px 10px;margin-bottom:7px;box-shadow:0 1px 3px rgba(0,0,0,.08);position:relative}
+  .mrow .l{flex:1;min-width:0}
+  .mrow .l b{display:block;font-size:14px;font-weight:600}
+  .mrow .l small{display:block;font-size:11.5px;color:var(--ink2)}
+  .mrow .ic.mo{width:20px;height:20px;color:var(--ink2)}
+  .mrow .cbadge{font-size:11.5px;font-weight:700;color:var(--ink2);background:#EDF0F4;border-radius:10px;padding:2px 8px}
+  .acc{background:var(--card);border-radius:14px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.08);overflow:hidden;position:relative}
+  .ahd{display:flex;align-items:center;gap:9px;padding:10px 10px 10px 0;min-height:52px}
+  .ahd .cbar{width:5px;align-self:stretch;border-radius:0 3px 3px 0;flex-shrink:0}
+  .ahd .l{flex:1;min-width:0}
+  .ahd .l b{display:block;font-size:14.5px;font-weight:600}
+  .ahd .l small{display:block;font-size:11.5px;color:var(--ink2)}
+  .ahd .cbadge{font-size:11.5px;font-weight:700;color:var(--ink2);background:#EDF0F4;border-radius:10px;padding:2px 8px}
+  .ahd .chev{width:22px;height:22px;color:var(--ink2)}
+  .inner{padding:8px 10px 4px}
+  .c-blue{background:#4A6FB0}.c-teal{background:#2E8A86}.c-green{background:#4E9440}.c-amber{background:#D48A18}.c-grey{background:#7B8794}
+  .pinch{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);background:rgba(26,32,44,.88);color:#fff;border-radius:16px;padding:14px 22px;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+  .pinch .p1{font-size:30px;font-weight:800;letter-spacing:-.5px}
+  .pinch .p2{font-size:11.5px;opacity:.85;margin-top:2px}
+  .finger{position:absolute;width:44px;height:44px;border-radius:22px;border:2px solid rgba(255,255,255,.9);background:rgba(255,255,255,.28)}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></symbol>
+  <symbol id="i-alarm" viewBox="0 0 24 24"><path d="M12.5 8H11v6l4.75 2.85.75-1.23-4-2.37V8zM12 4c-4.97 0-9 4.03-9 9s4.02 9 9 9c4.97 0 9-4.03 9-9s-4.03-9-9-9zm0 16c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="M10 6 8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></symbol>
+  <symbol id="i-filter" viewBox="0 0 24 24"><path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/></symbol>
+  <symbol id="i-tick" viewBox="0 0 24 24"><path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M16.59 8.59 12 13.17 7.41 8.59 6 10l6 6 6-6z"/></symbol>
+  <symbol id="i-group" viewBox="0 0 24 24"><path d="M3 5h8v2H3V5zm0 6h8v2H3v-2zm0 6h8v2H3v-2zm10-9h8v2h-8V8zm0 6h8v2h-8v-2z"/></symbol>
+  <symbol id="i-sort" viewBox="0 0 24 24"><path d="M3 18h6v-2H3v2zM3 6v2h18V6H3zm0 7h12v-2H3v2z"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></symbol>
+  <symbol id="i-share" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 17.27 6.18 3.73-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></symbol>
+  <symbol id="i-text" viewBox="0 0 24 24"><path d="M2.5 4v3h5v12h3V7h5V4h-13zm19 5h-9v3h3v7h3v-7h3V9z"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></symbol>
+  <symbol id="i-attach" viewBox="0 0 24 24"><path d="M16.5 6v11.5a4 4 0 0 1-8 0V5a2.5 2.5 0 0 1 5 0v10.5a1 1 0 0 1-2 0V6H10v9.5a2.5 2.5 0 0 0 5 0V5a4 4 0 0 0-8 0v12.5a5.5 5.5 0 0 0 11 0V6h-1.5z"/></symbol>
+  <symbol id="i-label" viewBox="0 0 24 24"><path d="M17.63 5.84A2 2 0 0 0 16 5H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h11a2 2 0 0 0 1.63-.84L22 12l-4.37-6.16z"/></symbol>
+  <symbol id="i-merge" viewBox="0 0 24 24"><path d="M17 20.41 18.41 19 15 15.59 13.59 17 17 20.41zM7.5 8H11v5.59L5.59 19 7 20.41l6-6V8h3.5L12 3.5 7.5 8z"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a.996.996 0 0 0 0-1.41l-2.34-2.34a.996.996 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></symbol>
+  <symbol id="i-open" viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></symbol>
+  <symbol id="i-zoom" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zM12 10h-2v2H9v-2H7V9h2V7h1v2h2v1z"/></symbol>
+</svg>
+
+<div class="wrap">
+<header class="page">
+  <h1>InfoDeck — v1.1 · D2 design</h1>
+  <p>Correction round. <b>The five fixed text-size stops from D1 are dropped</b> and replaced with a continuous, live, per-role sizing system that also scales the layout, not just the letters. Plus the two new variables you asked for: <b>file attachments (PDF / DOCX)</b> and <b>tags</b>. Mock date <b>Tue 18-Aug-2026</b>.</p>
+  <span class="stamp r">D1 §C1 text size — REJECTED, superseded by C1 below</span>
+  <span class="stamp">DESIGN ONLY · nothing built · no version bump</span>
+  <span class="stamp g">Your item “3.” arrived empty — tell me what it was and I’ll add it to this round</span>
+</header>
+
+<div class="rej-box"><b>What was wrong with D1:</b> five hard-coded stops (0.90 / 1.00 / 1.15 / 1.30 / 1.45), text-only scaling, a modal sheet you had to Apply, and rows that stayed the same height so big text looked cramped. None of that is flexible. <b>This round:</b> any size from 70 % to 200 % in 1 % steps, applied live as you drag, layout metrics scaling with it, six per-role fine-tuners, pinch-to-zoom on the Home list, and an honest read-out of what your phone’s own font setting is doing on top.</div>
+
+<h2 class="sec">A · Screens</h2>
+<div class="frames">
+
+<!-- ============ S1 ============ -->
+<figure>
+  <h3>S1 · Text size — main control<small>correction · continuous, live</small></h3>
+  <div class="phone" style="height:812px">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="appbar pad"><div class="ib"><svg class="ic"><use href="#i-back"/></svg></div><div class="t">Text size<small>changes apply as you drag</small></div><div class="ib"><svg class="ic"><use href="#i-more"/></svg></div></div>
+    <div class="body">
+
+      <div class="prevpane">
+        <span class="plab">LIVE PREVIEW</span>
+        <div class="fcard" style="margin-bottom:6px"><div class="tt">Car Insurance — HDFC Ergo</div>
+          <div class="kv">Policy Expiry <b>11-Oct-2026</b> · <em>in 54 d</em></div>
+          <div class="rw"><span class="tag cat">Insurance</span><span class="tag"><svg class="ic"><use href="#i-alarm"/></svg>Rings 11-Sep</span><span class="tag tg">#renewal</span></div>
+        </div>
+        <div class="srow" style="border:0;padding:4px 2px;min-height:0"><div class="l"><b>Settings row</b><small>secondary line at this size</small></div><span class="val">Value</span></div>
+        <b class="n" style="position:absolute;left:6px;bottom:4px">1</b>
+      </div>
+
+      <div class="bigval">
+        <span class="stepper">−</span>
+        <span class="pct">115<small>%</small></span>
+        <span class="stepper">+</span>
+        <b class="n" style="position:relative;top:-16px">2</b>
+      </div>
+
+      <div class="slide">
+        <div class="track">
+          <span class="fill" style="width:34%"></span>
+          <span class="tick" style="left:23%"></span><span class="tlab" style="left:23%">100 %</span>
+          <span class="tick" style="left:61.5%"></span><span class="tlab" style="left:61.5%">150 %</span>
+          <span class="knob" style="left:34%"></span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:10.5px;color:var(--hint);margin:16px 10px 0"><span>70 %</span><span>200 %</span></div>
+        <b class="n" style="position:relative;left:2px;top:-2px">3</b>
+      </div>
+
+      <div class="presets">
+        <span class="pchip">85</span><span class="pchip">100</span><span class="pchip on">115</span>
+        <span class="pchip">130</span><span class="pchip">150</span><span class="pchip">200</span>
+        <b class="n">4</b>
+      </div>
+
+      <div class="lab">Together with your phone</div>
+      <div class="scard">
+        <div class="srow"><div class="l"><b>Follow system text size</b><small>System 120 % × app 115 % = <b>effective 138 %</b></small></div><span class="sw on"><i></i></span><b class="n" style="position:absolute;right:6px;top:6px">5</b></div>
+        <div class="srow"><div class="l"><b>Row spacing</b><small>How much air around each row</small></div><span class="val">Comfortable</span><svg class="ic ch"><use href="#i-chev"/></svg><b class="n" style="position:absolute;right:6px;top:56px">6</b></div>
+        <div class="srow"><div class="l"><b>Text weight</b><small>Thicker strokes without a bigger size</small></div><span class="val">Normal</span><svg class="ic ch"><use href="#i-chev"/></svg></div>
+        <div class="srow"><div class="l"><b>Fine-tune by element…</b><small>Titles, secondary lines, chips, headers, sheets</small></div><svg class="ic ch"><use href="#i-chev"/></svg><b class="n" style="position:absolute;right:6px;top:152px">7</b></div>
+      </div>
+      <div class="hint" style="margin-top:8px">Reset everything to 100 % from the ⋮ menu.</div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="k">Live preview</td><td>A real card, a real chip row and a real settings row, redrawn on every 1 % change — so you judge the size on the thing you actually read, not on a sample sentence</td></tr>
+    <tr><td class="sr">2</td><td class="k">± steppers</td><td>Exactly 1 % per tap, long-press repeats at 5 %. Tap the number itself to type a value</td></tr>
+    <tr><td class="sr">3</td><td class="k">Slider</td><td><b>70 %–200 %, continuous.</b> Detents at 100 % and 150 % only — you can sit anywhere between them <i class="q">Q1</i></td></tr>
+    <tr><td class="sr">4</td><td class="k">Presets</td><td>Shortcuts, not the model. They jump the slider; the slider still owns the value</td></tr>
+    <tr><td class="sr">5</td><td class="k">Follow system</td><td>ON = your phone’s font setting multiplies InfoDeck’s. The effective figure is spelled out so nothing is a mystery. OFF = InfoDeck holds its own size whatever the phone says</td></tr>
+    <tr><td class="sr">6</td><td class="k">Row spacing</td><td>Compact / Comfortable / Spacious — height and padding, separate from letter size, because “bigger text” and “more air” are different needs</td></tr>
+    <tr><td class="sr">7</td><td class="k">Fine-tune</td><td>Opens S2. Collapsed by default so the main screen stays a single decision <i class="q">Q5</i></td></tr>
+    <tr><td class="sr">8</td><td>Applying</td><td>No Apply button — every change is live and saved. ⋮ → Reset to 100 % is the way back <i class="q">Q3</i></td></tr>
+  </table>
+</figure>
+
+<!-- ============ S2 ============ -->
+<figure>
+  <h3>S2 · Fine-tune by element<small>six independent offsets</small></h3>
+  <div class="phone" style="height:812px">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="appbar pad"><div class="ib"><svg class="ic"><use href="#i-back"/></svg></div><div class="t">Fine-tune text<small>on top of 115 %</small></div></div>
+    <div class="body">
+      <div class="prevpane" style="margin-bottom:10px">
+        <span class="plab">LIVE PREVIEW</span>
+        <div class="fcard" style="margin-bottom:0"><div class="tt" style="font-size:17.5px">Car Insurance — HDFC Ergo</div>
+          <div class="kv" style="font-size:12px">Policy Expiry <b>11-Oct-2026</b> · <em>in 54 d</em></div>
+          <div class="rw"><span class="tag cat" style="font-size:13px">Insurance</span><span class="tag tg" style="font-size:13px">#renewal</span></div>
+        </div>
+        <b class="n" style="position:absolute;left:6px;bottom:4px">1</b>
+      </div>
+
+      <div class="scard" style="padding:6px 10px 10px">
+        <div class="rolerow"><span class="rn">Card titles</span><span class="minitrack"><i class="fill" style="width:74%"></i><span class="knob" style="left:74%"></span></span><span class="rv">+18 %</span></div>
+        <div class="rolerow"><span class="rn">Secondary lines</span><span class="minitrack"><i class="fill" style="width:50%"></i><span class="knob" style="left:50%"></span></span><span class="rv">0 %</span></div>
+        <div class="rolerow"><span class="rn">Chips &amp; tags</span><span class="minitrack"><i class="fill" style="width:62%"></i><span class="knob" style="left:62%"></span></span><span class="rv">+8 %</span></div>
+        <div class="rolerow"><span class="rn">Section headers</span><span class="minitrack"><i class="fill" style="width:38%"></i><span class="knob" style="left:38%"></span></span><span class="rv">−8 %</span></div>
+        <div class="rolerow"><span class="rn">Sheets &amp; dialogs</span><span class="minitrack"><i class="fill" style="width:50%"></i><span class="knob" style="left:50%"></span></span><span class="rv">0 %</span></div>
+        <div class="rolerow"><span class="rn">Settings text</span><span class="minitrack"><i class="fill" style="width:50%"></i><span class="knob" style="left:50%"></span></span><span class="rv">0 %</span></div>
+        <b class="n" style="position:absolute;right:8px;top:8px">2</b>
+      </div>
+
+      <div class="lab">Resulting sizes</div>
+      <div class="scard">
+        <div class="srow"><div class="l"><b>Card title</b></div><span class="val">13.5 sp → <b>18.3 sp</b></span></div>
+        <div class="srow"><div class="l"><b>Secondary line</b></div><span class="val">11.5 sp → <b>13.2 sp</b></span></div>
+        <div class="srow"><div class="l"><b>Chips &amp; tags</b></div><span class="val">10.5 sp → <b>13.0 sp</b></span></div>
+        <div class="srow"><div class="l"><b>Section header</b></div><span class="val">11.5 sp → <b>12.2 sp</b></span></div>
+        <b class="n" style="position:absolute;right:8px;top:8px">3</b>
+      </div>
+
+      <div class="btnrow"><span class="btn out">Reset offsets</span><span class="btn fill">Done</span></div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="k">Preview follows</td><td>Same live card, now showing titles at +18 % while everything else stays where the global slider put it</td></tr>
+    <tr><td class="sr">2</td><td class="k">Six offsets</td><td>Each −30 % … +30 % relative to the global size, centre = 0 %. This is what makes it flexible rather than one blunt knob</td></tr>
+    <tr><td class="sr">3</td><td class="k">Resulting sizes</td><td>The actual sp values, so you can see there is no guessing and no hidden clamp until the extremes</td></tr>
+    <tr><td class="sr">4</td><td>Safety</td><td>Final size is clamped to 8–46 sp per role, so no combination can produce unreadable or unrenderable text</td></tr>
+  </table>
+</figure>
+
+<!-- ============ S3 ============ -->
+<figure>
+  <h3>S3 · Pinch to resize on Home<small>the dynamic part</small></h3>
+  <div class="phone" style="height:812px">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="appbar pad"><div class="t">InfoDeck</div><div class="ib"><svg class="ic"><use href="#i-search"/></svg></div><div class="ib"><svg class="ic"><use href="#i-bell"/></svg></div><div class="ib"><svg class="ic"><use href="#i-more"/></svg></div></div>
+    <div class="body">
+      <div class="deck-line"><b>18 cards</b> · Expiry ↑</div>
+      <div class="fcard"><div class="tt">Bike Insurance — ICICI Lombard</div>
+        <div class="kv">Policy Expiry <b>12-Oct-2025</b> · <em class="od">310 d ago</em></div>
+        <div class="rw"><span class="tag cat">Insurance</span><span class="tag tg">#renewal</span></div></div>
+      <div class="fcard"><div class="tt">Laptop Warranty — Dell XPS</div>
+        <div class="kv">Warranty End <b>07-Sep-2026</b> · <em>in 20 d</em></div>
+        <div class="rw"><span class="tag cat">Warranties</span><span class="tag file">1 file</span></div></div>
+      <div class="fcard"><div class="tt">Car Insurance — HDFC Ergo</div>
+        <div class="kv">Policy Expiry <b>11-Oct-2026</b> · <em>in 54 d</em></div>
+        <div class="rw"><span class="tag cat">Insurance</span><span class="tag tg">#vehicle</span></div></div>
+
+      <span class="finger" style="left:78px;top:300px"></span>
+      <span class="finger" style="left:248px;top:452px"></span>
+      <div class="pinch"><div class="p1">128 %</div><div class="p2">release to keep</div><b class="n" style="position:absolute;right:-6px;top:-6px">1</b></div>
+
+      <div class="toast">Text size 128 % <b>UNDO</b><b class="n" style="position:absolute;left:-6px;top:-8px">2</b></div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="k">Two-finger pinch</td><td>Anywhere on the Home list. The whole list resizes under your fingers in real time; the badge shows the live figure. This is the same single value the slider owns <i class="q">Q4</i></td></tr>
+    <tr><td class="sr">2</td><td class="k">Undo</td><td>Released value is saved immediately; the snackbar gives 5 s to put it back. No dialogs, no Apply</td></tr>
+    <tr><td class="sr">3</td><td>Scroll safety</td><td>Pinch needs two fingers, so one-finger scrolling and long-press selection are untouched</td></tr>
+    <tr><td class="sr">4</td><td>Where it works</td><td>Home and Upcoming lists. Not inside sheets and dialogs, where a stray pinch would fight the drag handle</td></tr>
+  </table>
+</figure>
+
+<!-- ============ S4 ============ -->
+<figure class="full">
+  <h3>S4 · The two extremes<small>layout scales with the text, not just the letters</small></h3>
+  <div class="duo">
+    <div class="phone zoom z70" style="height:600px;width:378px">
+      <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+      <div class="appbar pad"><div class="t">InfoDeck</div><div class="ib"><svg class="ic"><use href="#i-search"/></svg></div><div class="ib"><svg class="ic"><use href="#i-more"/></svg></div></div>
+      <div class="body">
+        <div class="ctl"><span class="cchip on"><svg class="ic"><use href="#i-group"/></svg>None<svg class="ic"><use href="#i-down"/></svg></span><span class="cchip"><svg class="ic"><use href="#i-sort"/></svg>Expiry ↑</span><span class="fbtn"><svg class="ic"><use href="#i-filter"/></svg></span></div>
+        <div class="deck-line"><b>18 cards</b> · Expiry ↑ · 70 %</div>
+        <div class="fcard"><div class="tt">Bike Insurance — ICICI Lombard</div><div class="kv">Policy Expiry <b>12-Oct-2025</b> · <em class="od">310 d ago</em></div><div class="rw"><span class="tag cat">Insurance</span><span class="tag tg">#renewal</span></div></div>
+        <div class="fcard"><div class="tt">Laptop Warranty — Dell XPS</div><div class="kv">Warranty End <b>07-Sep-2026</b> · <em>in 20 d</em></div><div class="rw"><span class="tag cat">Warranties</span><span class="tag file">1 file</span></div></div>
+        <div class="fcard"><div class="tt">Car Insurance — HDFC Ergo</div><div class="kv">Policy Expiry <b>11-Oct-2026</b> · <em>in 54 d</em></div><div class="rw"><span class="tag cat">Insurance</span></div></div>
+        <div class="fcard"><div class="tt">Pollution Certificate — WB 24 AB 1234</div><div class="kv">Valid Till <b>20-Oct-2026</b> · <em>in 63 d</em></div><div class="rw"><span class="tag cat">Vehicle</span></div></div>
+        <div class="fcard"><div class="tt">Passport — K. D. Bhunia</div><div class="kv">Expiry <b>25-Aug-2027</b> · <em>in 372 d</em></div><div class="rw"><span class="tag cat">Identity Docs</span><span class="tag file">2 files</span></div></div>
+      </div>
+    </div>
+
+    <div class="phone zoom z180" style="height:600px;width:378px">
+      <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+      <div class="appbar pad"><div class="t">InfoDeck</div><div class="ib"><svg class="ic"><use href="#i-more"/></svg></div></div>
+      <div class="body">
+        <div class="deck-line"><b>18 cards</b> · 180 %</div>
+        <div class="fcard"><div class="tt" style="white-space:normal">Bike Insurance — ICICI Lombard</div><div class="kv" style="white-space:normal">Policy Expiry <b>12-Oct-2025</b> · <em class="od">310 d ago</em></div><div class="rw"><span class="tag cat">Insurance</span></div></div>
+        <div class="fcard"><div class="tt" style="white-space:normal">Laptop Warranty — Dell XPS</div><div class="kv" style="white-space:normal">Warranty End <b>07-Sep-2026</b> · <em>in 20 d</em></div><div class="rw"><span class="tag cat">Warranties</span></div></div>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>70 %</th><th>180 %</th></tr>
+    <tr><td class="sr">1</td><td class="k">Card title</td><td>9.5 sp</td><td>24.3 sp</td></tr>
+    <tr><td class="sr">2</td><td class="k">Row height, padding, corner radius</td><td>shrink with the text</td><td>grow with the text — no cramped rows, which was D1’s flaw</td></tr>
+    <tr><td class="sr">3</td><td class="k">Icons and app bar</td><td>scale, floor 18 dp</td><td>scale, ceiling 40 dp so the bar never eats the screen</td></tr>
+    <tr><td class="sr">4</td><td class="k">Titles</td><td>one line, ellipsis</td><td>wrap to as many lines as needed — a big size that still hides the name would be pointless</td></tr>
+    <tr><td class="sr">5</td><td class="k">Sheet clearance</td><td colspan="2">still <code>max(25 % screen height, nav bar + 24 dp)</code> — it is a percentage, so it survives every zoom level untouched</td></tr>
+    <tr><td class="sr">6</td><td class="k">Buttons</td><td colspan="2">50 dp × layout scale, floor 44 dp — always tappable, never clipped</td></tr>
+  </table>
+</figure>
+
+<!-- ============ S5 ============ -->
+<figure>
+  <h3>S5 · Card editor — Files and Tags<small>new features 1 and 2</small></h3>
+  <div class="phone" style="height:830px">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="appbar pad"><div class="ib"><svg class="ic"><use href="#i-close"/></svg></div><div class="t">Edit card</div><div class="ib"><svg class="ic"><use href="#i-more"/></svg></div></div>
+    <div class="body">
+      <div style="height:6px"></div>
+      <div class="tf" style="margin-top:8px"><span class="fl">Label name</span><span class="v">Car Insurance — HDFC Ergo</span></div>
+
+      <div class="eh"><span class="sec-h"><svg class="ic" style="width:14px;height:14px"><use href="#i-label"/></svg>Tags</span></div>
+      <div class="tagline">
+        <span class="tchip on">#renewal <span class="x">✕</span></span>
+        <span class="tchip on">#vehicle <span class="x">✕</span></span>
+        <span class="tchip addt"><svg class="ic" style="width:15px;height:15px"><use href="#i-plus"/></svg>Tag</span>
+        <b class="n">1</b>
+      </div>
+      <div class="hint">A card sits in one category but can carry any number of tags.</div>
+
+      <div class="eh"><span class="sec-h">Data</span><span class="add"><svg class="ic"><use href="#i-plus"/></svg>Add</span></div>
+      <div class="er"><span class="tf name"><span class="fl">Name</span><span class="v">Policy No</span></span><span class="tf val"><span class="fl">Value</span><span class="v">HD-2291-KX</span></span><svg class="ic x"><use href="#i-close"/></svg></div>
+
+      <div class="eh"><span class="sec-h">Dates</span><span class="add"><svg class="ic"><use href="#i-plus"/></svg>Add</span></div>
+      <div class="er"><span class="tf name"><span class="fl">Name</span><span class="v">Policy Expiry</span></span><span class="tf val"><span class="fl">Date</span><span class="v">11-Oct-2026</span></span><svg class="ic star"><use href="#i-star"/></svg><svg class="ic x"><use href="#i-close"/></svg></div>
+
+      <div class="eh"><span class="sec-h"><svg class="ic" style="width:14px;height:14px"><use href="#i-attach"/></svg>Files</span><span class="add"><svg class="ic"><use href="#i-plus"/></svg>Add file</span><b class="n">2</b></div>
+      <div class="frow"><span class="fi pdf">PDF</span><div class="l"><b>Policy document.pdf</b><small>1.8 MB · added 18-Aug-2026</small></div><span class="op">Open</span><svg class="ic mo"><use href="#i-more"/></svg></div>
+      <div class="frow busy"><span class="fi doc">DOC</span><div class="l"><b>Claim form.docx</b><small>Copying into InfoDeck…</small><div class="pbar"><i style="width:62%"></i></div></div><b class="n">3</b></div>
+      <div class="hint">PDF and Word files, up to 25 MB each, 10 per card. Copied into InfoDeck, so moving or deleting the original never breaks the card.</div>
+
+      <div class="bar" style="position:absolute;left:0;right:0;bottom:0;padding:10px 12px;background:var(--bg);display:flex;gap:10px">
+        <span class="btn out">Cancel</span><span class="btn fill">Save</span>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="new">Tags row</td><td>Sits directly under the label, above Data — tags describe the whole card. ✕ removes one, <b>＋ Tag</b> opens the picker (S7). Dashed outline keeps them visually distinct from the solid blue category chip</td></tr>
+    <tr><td class="sr">2</td><td class="new">Files section</td><td>New variable type. <b>Add file</b> opens the system picker filtered to PDF and DOCX <i class="q">Q6</i></td></tr>
+    <tr><td class="sr">3</td><td class="k">Copy in progress</td><td>The file is copied into InfoDeck’s own storage with a progress bar; a failed copy leaves no half-row and writes to Error Logs <i class="q">Q7</i></td></tr>
+    <tr><td class="sr">4</td><td>Bar</td><td>Still Cancel + Save only — the two-layer delete rule from D1 stands</td></tr>
+  </table>
+</figure>
+
+<!-- ============ S6 ============ -->
+<figure>
+  <h3>S6 · Card view — Files section<small>open, share, replace, remove</small></h3>
+  <div class="phone" style="height:830px">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="appbar pad"><div class="ib"><svg class="ic"><use href="#i-back"/></svg></div><div class="t">Car Insurance — HDFC Ergo</div><div class="ib"><svg class="ic"><use href="#i-edit"/></svg></div><div class="ib"><svg class="ic"><use href="#i-more"/></svg></div></div>
+    <div class="body">
+      <div class="tagline" style="margin-top:4px">
+        <span class="tag cat" style="height:24px;padding:0 10px">Insurance</span>
+        <span class="tchip" style="height:26px;font-size:12px">#renewal</span>
+        <span class="tchip" style="height:26px;font-size:12px">#vehicle</span>
+        <b class="n">1</b>
+      </div>
+
+      <div class="lab">Data</div>
+      <div class="scard">
+        <div class="srow"><div class="l"><small>Policy No</small><b>HD-2291-KX</b></div><svg class="ic ch"><use href="#i-copy"/></svg></div>
+      </div>
+
+      <div class="lab">Dates</div>
+      <div class="scard">
+        <div class="srow"><div class="l"><small>Policy Expiry ★ key date</small><b>11-Oct-2026 · in 54 d</b></div><svg class="ic ch"><use href="#i-copy"/></svg></div>
+      </div>
+
+      <div class="lab">Files · 2</div>
+      <div class="frow"><span class="fi pdf">PDF</span><div class="l"><b>Policy document.pdf</b><small>1.8 MB · 18-Aug-2026</small></div><span class="op">Open</span><svg class="ic mo"><use href="#i-more"/></svg><b class="n">2</b></div>
+      <div class="frow"><span class="fi doc">DOC</span><div class="l"><b>Claim form.docx</b><small>240 KB · 18-Aug-2026</small></div><span class="op">Open</span><svg class="ic mo"><use href="#i-more"/></svg></div>
+
+      <div class="menu" style="top:auto;bottom:150px;right:14px">
+        <div><svg class="ic"><use href="#i-open"/></svg>Open in another app</div>
+        <div><svg class="ic"><use href="#i-share"/></svg>Share file</div>
+        <div><svg class="ic"><use href="#i-edit"/></svg>Rename</div>
+        <div><svg class="ic"><use href="#i-copy"/></svg>Replace with another file</div>
+        <div class="dz"><svg class="ic"><use href="#i-warn"/></svg>Remove file…<b class="n d" style="margin-left:auto">3</b></div>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="new">Tags on the card</td><td>Category first (solid), then tags (dashed). Tapping a tag opens Home filtered to it</td></tr>
+    <tr><td class="sr">2</td><td class="k">Open</td><td>Hands the file to whatever app you have for PDF or Word, read-only, through a secure provider — no storage permission needed. If nothing can open it, a snackbar says so and the reason lands in Error Logs</td></tr>
+    <tr><td class="sr">3</td><td class="del">Remove file…</td><td>Under the same danger rule as everything destructive: menu entry → confirm naming the file → the copy inside InfoDeck is deleted. Your original file elsewhere is never touched <i class="q">Q13</i></td></tr>
+    <tr><td class="sr">4</td><td>Preview</td><td>No in-app PDF reader in this round — it would double the app size for something your phone already does well</td></tr>
+  </table>
+</figure>
+
+<!-- ============ S7 ============ -->
+<figure>
+  <h3>S7 · Tag picker<small>search, pick, create in one place</small></h3>
+  <div class="phone" style="height:830px">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="appbar pad"><div class="ib"><svg class="ic"><use href="#i-close"/></svg></div><div class="t">Edit card</div></div>
+    <div class="body"><div class="dim"></div>
+      <div class="sheet">
+        <div class="grab"></div>
+        <h4><svg class="ic" style="width:20px;height:20px;color:var(--pri)"><use href="#i-label"/></svg>Tags</h4>
+        <div class="tf" style="height:46px;margin-bottom:6px"><svg class="ic" style="width:20px;height:20px;color:var(--ink2)"><use href="#i-search"/></svg><span class="v">ren</span></div>
+
+        <div class="opt"><span class="chk on"><svg class="ic"><use href="#i-tick"/></svg></span><div class="l"><b>#renewal</b><small>on 12 cards</small></div><b class="n">1</b></div>
+        <div class="opt"><span class="chk"></span><div class="l"><b>#rent</b><small>on 2 cards</small></div></div>
+        <div class="opt"><span class="chk on"><svg class="ic"><use href="#i-tick"/></svg></span><div class="l"><b>#vehicle</b><small>on 6 cards · selected</small></div></div>
+        <div class="opt" style="border-top:1px dashed #D6DDE7"><svg class="ic" style="width:20px;height:20px;color:var(--pri)"><use href="#i-plus"/></svg><div class="l"><b style="color:var(--pri)">Create “ren”</b><small>New tag, added to this card</small></div><b class="n">2</b></div>
+
+        <div class="lab">Recently used</div>
+        <div class="tagline">
+          <span class="tchip">#insurance</span><span class="tchip">#warranty</span><span class="tchip">#kyc</span><span class="tchip">#annual</span>
+          <b class="n">3</b>
+        </div>
+
+        <div class="btnrow"><span class="btn out">Cancel</span><span class="btn fill">Done · 2 tags</span></div>
+        <div class="sbs">bottom clearance = max(25 % screen height, nav bar + 24 dp)</div>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="k">Multi-select</td><td>Checkboxes, not radios — a card can carry as many tags as you like. Counts tell you which tags are actually in use</td></tr>
+    <tr><td class="sr">2</td><td class="k">Create inline</td><td>Whatever you typed becomes a new tag without leaving the sheet. Names are unique ignoring case, trimmed, max 24 characters, stored without the “#”</td></tr>
+    <tr><td class="sr">3</td><td class="k">Recently used</td><td>Last 8 tags you applied, so the common ones are one tap away</td></tr>
+    <tr><td class="sr">4</td><td>Colour</td><td>Tags are deliberately colourless — categories own colour in this app, and two colour systems on one card would be noise <i class="q">Q10</i></td></tr>
+  </table>
+</figure>
+
+<!-- ============ S8 ============ -->
+<figure>
+  <h3>S8 · Home — grouped and filtered by tag<small>what tags buy you</small></h3>
+  <div class="phone" style="height:830px">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="appbar pad"><div class="t">InfoDeck</div><div class="ib"><svg class="ic"><use href="#i-search"/></svg></div><div class="ib"><svg class="ic"><use href="#i-bell"/></svg></div><div class="ib"><svg class="ic"><use href="#i-more"/></svg></div></div>
+    <div class="body">
+      <div class="ctl">
+        <span class="cchip on"><svg class="ic"><use href="#i-group"/></svg>Tag<svg class="ic"><use href="#i-down"/></svg></span><b class="n">1</b>
+        <span class="cchip"><svg class="ic"><use href="#i-sort"/></svg>Expiry ↑</span>
+        <span class="fbtn on"><svg class="ic"><use href="#i-filter"/></svg><span class="bdg">1</span></span>
+      </div>
+      <div class="qrow"><span class="qchip">All</span><span class="qchip tg on">#renewal 12</span><span class="qchip tg">#vehicle 6</span><span class="qchip tg">#kyc 4</span><b class="n">2</b></div>
+
+      <div class="acc open">
+        <div class="ahd"><i class="cbar c-grey"></i><div class="l"><b>#renewal</b><small>12 cards · nearest 07-Sep-2026</small></div><span class="cbadge">12</span><svg class="ic chev"><use href="#i-down"/></svg><b class="n" style="position:absolute;right:6px;top:6px">3</b></div>
+        <div class="inner">
+          <div class="fcard" style="box-shadow:none"><div class="tt">Laptop Warranty — Dell XPS</div><div class="kv">Warranty End <b>07-Sep-2026</b> · <em>in 20 d</em></div><div class="rw"><span class="tag cat">Warranties</span><span class="tag tg">#renewal</span><span class="tag file">1 file</span></div></div>
+          <div class="fcard" style="box-shadow:none"><div class="tt">Car Insurance — HDFC Ergo</div><div class="kv">Policy Expiry <b>11-Oct-2026</b> · <em>in 54 d</em></div><div class="rw"><span class="tag cat">Insurance</span><span class="tag tg">#renewal</span><span class="tag tg">#vehicle</span><b class="n" style="position:absolute;right:6px;top:6px">4</b></div></div>
+        </div>
+      </div>
+
+      <div class="acc"><div class="ahd"><i class="cbar c-grey"></i><div class="l"><b>#vehicle</b><small>6 cards · nearest 11-Oct-2026</small></div><span class="cbadge">6</span><svg class="ic chev"><use href="#i-down"/></svg></div></div>
+      <div class="acc"><div class="ahd"><i class="cbar c-grey"></i><div class="l"><b>#kyc</b><small>4 cards · nearest 25-Aug-2027</small></div><span class="cbadge">4</span><svg class="ic chev"><use href="#i-down"/></svg></div></div>
+      <div class="acc"><div class="ahd"><i class="cbar c-grey"></i><div class="l"><b>Untagged</b><small>3 cards</small></div><span class="cbadge">3</span><svg class="ic chev"><use href="#i-down"/></svg><b class="n" style="position:absolute;right:6px;top:6px">5</b></div></div>
+
+      <div class="spacer"></div>
+      <div class="fab"><svg class="ic"><use href="#i-plus"/></svg>New card</div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="new">Group by → Tag</td><td>Sixth grouping option, alongside Category, Expiry month, Expiry window, Next reminder, None</td></tr>
+    <tr><td class="sr">2</td><td class="new">Tag quick chips</td><td>Your four most-used tags with counts, dashed to match the tag language. One tap filters</td></tr>
+    <tr><td class="sr">3</td><td class="k">Section colour</td><td>Grey bar, not a category colour — tags have no colour of their own</td></tr>
+    <tr><td class="sr">4</td><td class="k">Multi-tag cards</td><td>Car Insurance carries #renewal and #vehicle, so it appears under <b>both</b> sections. Counts therefore add up to more than 18 <i class="q">Q11</i></td></tr>
+    <tr><td class="sr">5</td><td class="k">Untagged</td><td>Always last, exactly like Uncategorised in category mode</td></tr>
+    <tr><td class="sr">6</td><td>Filters</td><td>The Filter sheet gains a Tags block with <b>Any / All</b> — “#renewal AND #vehicle” or “either”</td></tr>
+  </table>
+</figure>
+
+<!-- ============ S9 ============ -->
+<figure>
+  <h3>S9 · Manage tags<small>rename, merge, delete, storage</small></h3>
+  <div class="phone" style="height:830px">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="appbar pad"><div class="ib"><svg class="ic"><use href="#i-back"/></svg></div><div class="t">Tags<small>9 tags · 18 cards</small></div><div class="ib"><svg class="ic"><use href="#i-search"/></svg></div></div>
+    <div class="body">
+      <div class="mrow"><div class="l"><b>#renewal</b><small>12 cards · last used today</small></div><span class="cbadge">12</span><svg class="ic mo"><use href="#i-more"/></svg><b class="n">1</b></div>
+      <div class="mrow"><div class="l"><b>#vehicle</b><small>6 cards</small></div><span class="cbadge">6</span><svg class="ic mo"><use href="#i-more"/></svg></div>
+      <div class="mrow"><div class="l"><b>#kyc</b><small>4 cards</small></div><span class="cbadge">4</span><svg class="ic mo"><use href="#i-more"/></svg></div>
+      <div class="mrow" style="opacity:.75"><div class="l"><b>#old-policy</b><small>0 cards · unused</small></div><span class="cbadge">0</span><svg class="ic mo"><use href="#i-more"/></svg><b class="n">2</b></div>
+
+      <div class="menu" style="top:150px">
+        <div><svg class="ic"><use href="#i-edit"/></svg>Rename</div>
+        <div><svg class="ic"><use href="#i-merge"/></svg>Merge into another tag…</div>
+        <div class="dz"><svg class="ic"><use href="#i-warn"/></svg>Danger zone…<b class="n d" style="margin-left:auto">3</b></div>
+      </div>
+
+      <div class="lab" style="margin-top:250px">Storage — Settings ▸ Data</div>
+      <div class="scard">
+        <div class="srow"><div class="l"><b>Attached files</b><small>14 files across 9 cards</small></div><span class="val">38.4 MB</span><svg class="ic ch"><use href="#i-chev"/></svg><b class="n">4</b></div>
+        <div class="srow"><div class="l"><b>Backup with files</b><small>Writes a .zip — JSON plus every attachment</small></div><svg class="ic ch"><use href="#i-chev"/></svg><b class="n" style="position:absolute;right:6px;top:56px">5</b></div>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="k">Usage counts</td><td>Live counts, tap a row to see those cards. Sorted by usage, then name</td></tr>
+    <tr><td class="sr">2</td><td class="k">Unused tags</td><td>Dimmed with a 0 badge — easy to spot and clear out</td></tr>
+    <tr><td class="sr">3</td><td class="del">Merge / delete</td><td>Merge moves every card onto the target tag and removes the old one. Delete only removes the label — <b>no card is ever deleted with a tag</b> — and still sits behind the danger layer <i class="q">Q12</i></td></tr>
+    <tr><td class="sr">4</td><td class="new">Attached files</td><td>Total footprint, opens a list sorted by size so you can find the 20 MB scan you forgot</td></tr>
+    <tr><td class="sr">5</td><td class="new">Backup with files</td><td>Second backup option next to the existing JSON one. JSON stays small and fast; the zip is the complete one <i class="q">Q9</i></td></tr>
+  </table>
+</figure>
+
+</div><!-- /frames -->
+
+<h2 class="sec">B · Specification</h2>
+
+<h3 class="sub">C1 · Text size — replaces D1 §C1 entirely</h3>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Aspect</th><th>D1 (rejected)</th><th>D2 (this round)</th></tr>
+  <tr><td class="sr">1</td><td class="k">Granularity</td><td class="del">5 fixed stops</td><td class="rec">Continuous 70 %–200 %, 1 % steps — 131 distinct sizes</td></tr>
+  <tr><td class="sr">2</td><td class="k">Input</td><td class="del">Radio list in a sheet</td><td class="rec">Slider + 1 % steppers + type-a-number + presets + pinch on the list</td></tr>
+  <tr><td class="sr">3</td><td class="k">Applying</td><td class="del">Pick, then Apply</td><td class="rec">Live on every change, saved immediately, Undo on the pinch</td></tr>
+  <tr><td class="sr">4</td><td class="k">What scales</td><td class="del">Text only — rows stayed cramped</td><td class="rec">Text <b>and</b> row heights, padding, corner radius, icons, app bar, buttons</td></tr>
+  <tr><td class="sr">5</td><td class="k">Per element</td><td class="del">Nothing</td><td class="rec">Six offsets, −30 %…+30 % each</td></tr>
+  <tr><td class="sr">6</td><td class="k">System font</td><td class="del">Silently multiplied</td><td class="rec">A toggle, with the effective figure spelled out</td></tr>
+  <tr><td class="sr">7</td><td class="k">Density</td><td class="del">Not addressed</td><td class="rec">Compact / Comfortable / Spacious, independent of letter size</td></tr>
+</table>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Rule</th><th>Detail</th></tr>
+  <tr><td class="sr">1</td><td class="k">One source of truth</td><td><code>textScale</code> (0.70–2.00) lives in settings; slider, steppers, presets and pinch all write the same number</td></tr>
+  <tr><td class="sr">2</td><td class="k">Layout follows, damped</td><td><code>layoutScale = 1 + (textScale − 1) × 0.6</code>, clamped 0.80–1.60 — the UI grows with the text without wasting the screen</td></tr>
+  <tr><td class="sr">3</td><td class="k">Per-role result</td><td><code>final sp = base sp × textScale × (1 + roleOffset)</code>, clamped 8–46 sp</td></tr>
+  <tr><td class="sr">4</td><td class="k">Floors and ceilings</td><td>Icons 18–40 dp · buttons ≥ 44 dp · tap targets never below 44 dp — accessibility floor holds at 70 %</td></tr>
+  <tr><td class="sr">5</td><td class="k">Untouched</td><td>Sheet clearance stays <code>max(25 % height, nav bar + 24 dp)</code>; notification text belongs to Android, not to us</td></tr>
+  <tr><td class="sr">6</td><td class="k">Performance</td><td>Pinch updates a single state value; the list recomposes, nothing is re-measured off-screen. Persisted on release, not on every frame</td></tr>
+</table>
+
+<h3 class="sub">C2 · File variables (new feature 1)</h3>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Point</th><th>Decision</th></tr>
+  <tr><td class="sr">1</td><td class="k">Types</td><td>PDF and Word (.pdf, .docx, .doc) via the system picker <i class="q">Q6</i></td></tr>
+  <tr><td class="sr">2</td><td class="k">Storage</td><td><b>Copied</b> into InfoDeck’s private folder <code>files/cards/&lt;cardId&gt;/</code>. Moving, renaming or deleting your original never breaks the card. No storage permission is requested <i class="q">Q7</i></td></tr>
+  <tr><td class="sr">3</td><td class="k">Limits</td><td>25 MB per file, 10 files per card, both enforced before the copy starts <i class="q">Q8</i></td></tr>
+  <tr><td class="sr">4</td><td class="k">Opening</td><td>Handed to your PDF/Word app through a secure content provider, read-only</td></tr>
+  <tr><td class="sr">5</td><td class="k">Card list</td><td>A card with files shows a small “2 files” chip, and file names are searchable</td></tr>
+  <tr><td class="sr">6</td><td class="k">Removal</td><td>Behind the danger layer; deletes InfoDeck’s copy only</td></tr>
+  <tr><td class="sr">7</td><td class="k">Backup</td><td>JSON backup carries a file manifest (name, size, type) but not the bytes; <b>Backup with files</b> writes a .zip containing everything. Restoring a JSON-only backup lists the files as missing rather than pretending they are there <i class="q">Q9</i></td></tr>
+  <tr><td class="sr">8</td><td class="k">Deleting a card</td><td>Its file copies go with it; the Undo snackbar restores them too</td></tr>
+</table>
+
+<h3 class="sub">C3 · Tags (new feature 2)</h3>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Point</th><th>Decision</th></tr>
+  <tr><td class="sr">1</td><td class="k">Model</td><td>Many-to-many. One category per card stays the rule; tags cut across categories</td></tr>
+  <tr><td class="sr">2</td><td class="k">Names</td><td>Trimmed, unique ignoring case, ≤ 24 characters, stored without “#”, displayed with it</td></tr>
+  <tr><td class="sr">3</td><td class="k">Where they show</td><td>Editor row, card view, card chips on Home, Group by → Tag, Filter → Tags (Any / All), tag quick chips, search</td></tr>
+  <tr><td class="sr">4</td><td class="k">Grouping</td><td>A multi-tag card appears under each of its tags; “Untagged” is always the last section <i class="q">Q11</i></td></tr>
+  <tr><td class="sr">5</td><td class="k">Management</td><td>Own screen: counts, rename, merge, delete. Deleting a tag never deletes a card</td></tr>
+  <tr><td class="sr">6</td><td class="k">Colour</td><td>None — category owns colour <i class="q">Q10</i></td></tr>
+</table>
+
+<h3 class="sub">C4 · Database — schema 1 → 2, additive</h3>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Change</th><th>Detail</th></tr>
+  <tr><td class="sr">1</td><td class="k">New table <code>tags</code></td><td>id, name (unique, case-insensitive), createdAt, lastUsedAt</td></tr>
+  <tr><td class="sr">2</td><td class="k">New table <code>card_tags</code></td><td>cardId + tagId, both indexed, cascade on card delete</td></tr>
+  <tr><td class="sr">3</td><td class="k">New table <code>files</code></td><td>id, cardId, displayName, storedName, mime, sizeBytes, addedAt, order — cascade on card delete</td></tr>
+  <tr><td class="sr">4</td><td class="k">Migration</td><td><b>A real 1→2 migration, not a wipe.</b> Three CREATE TABLEs and their indexes; no existing table is touched, so every card, date and scheduler survives untouched. Tested by opening a v1 database, migrating, and asserting the row counts match</td></tr>
+  <tr><td class="sr">5</td><td class="k">Backup format</td><td>Version 2. A v1 backup still restores; a v2 backup restored on an older build ignores what it doesn’t know</td></tr>
+</table>
+
+<h3 class="sub">C5 · Three companions</h3>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Item</th><th>Exception handling</th><th>Logger.e</th><th>Tests</th></tr>
+  <tr><td class="sr">1</td><td class="k">Dynamic text size</td><td>Stored scale clamped 0.70–2.00; a corrupt value falls back to 1.00; per-role offsets clamped; final sp clamped 8–46</td><td>logs a corrupt scale or offset with the value it saw</td><td>JUnit on scale → sp for all six roles at 70 / 100 / 137 / 200 %, clamp behaviour, layoutScale damping; device check of every screen at 70 % and 200 %</td></tr>
+  <tr><td class="sr">2</td><td class="k">Files</td><td>Size and count checked before copying; copy to a temp name then rename, so a failed copy leaves nothing behind; missing file on open shows “File missing” instead of crashing</td><td>logs rejected type, oversize, failed copy, missing file, no viewer app</td><td>JUnit on the type/size/count gate and the name sanitiser; round-trip test that a zip backup restores byte-identical files; device check of open and share</td></tr>
+  <tr><td class="sr">3</td><td class="k">Tags</td><td>Duplicate name rejected before insert (case-insensitive); merge and delete run in one transaction; orphan links impossible via cascade</td><td>logs duplicate rejection, failed merge, failed delete</td><td>JUnit on name normalisation, merge maths, Any/All filtering, multi-tag grouping counts; <b>migration test v1 → v2 asserting zero data loss</b></td></tr>
+</table>
+
+<h2 class="sec">C · Open questions</h2>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Q</th><th>Question</th><th>Options</th><th>My recommendation</th></tr>
+  <tr><td class="sr">1</td><td class="q">Q1</td><td>Text-size range</td><td>(a) 70–200 % &nbsp; (b) 50–300 % &nbsp; (c) 80–160 %</td><td class="rec">(a) — below 70 % is unreadable, above 200 % two words fill the screen</td></tr>
+  <tr><td class="sr">2</td><td class="q">Q2</td><td>Does layout scale with the text?</td><td>(a) yes, damped 0.6 &nbsp; (b) yes, 1:1 &nbsp; (c) text only</td><td class="rec">(a) — 1:1 wastes the screen, text-only is what you just rejected</td></tr>
+  <tr><td class="sr">3</td><td class="q">Q3</td><td>Live apply with no Apply button?</td><td>(a) live &nbsp; (b) Apply / Cancel</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">4</td><td class="q">Q4</td><td>Pinch-to-zoom on Home</td><td>(a) yes &nbsp; (b) settings screen only</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">5</td><td class="q">Q5</td><td>Per-element fine-tuning</td><td>(a) six offsets &nbsp; (b) global only &nbsp; (c) titles and body only</td><td class="rec">(a), collapsed behind one row</td></tr>
+  <tr><td class="sr">6</td><td class="q">Q6</td><td>File types</td><td>(a) PDF + DOCX + DOC &nbsp; (b) also images &nbsp; (c) any file</td><td class="rec">(a) now, (b) as a later item</td></tr>
+  <tr><td class="sr">7</td><td class="q">Q7</td><td>Copy the file in, or point at the original?</td><td>(a) copy in &nbsp; (b) reference the original</td><td class="rec">(a) — references die when you tidy your Downloads folder</td></tr>
+  <tr><td class="sr">8</td><td class="q">Q8</td><td>Limits</td><td>(a) 25 MB / 10 per card &nbsp; (b) 50 MB / 20 &nbsp; (c) no limit</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">9</td><td class="q">Q9</td><td>Backup with files</td><td>(a) separate .zip option &nbsp; (b) always zip &nbsp; (c) never include files</td><td class="rec">(a) — keeps the everyday backup small</td></tr>
+  <tr><td class="sr">10</td><td class="q">Q10</td><td>Tag colours</td><td>(a) colourless &nbsp; (b) 8 colours like categories</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">11</td><td class="q">Q11</td><td>Group by Tag with multi-tag cards</td><td>(a) card appears under each tag &nbsp; (b) first tag only</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">12</td><td class="q">Q12</td><td>Tag delete behind the danger layer?</td><td>(a) yes &nbsp; (b) plain confirm, since no card is lost</td><td class="rec">(a) — consistency beats a saved tap</td></tr>
+  <tr><td class="sr">13</td><td class="q">Q13</td><td>Removing a file</td><td>(a) danger layer + confirm &nbsp; (b) inline ✕ with confirm</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">14</td><td class="q">Q14</td><td><b>Your item “3.” was empty</b> — what was it?</td><td>—</td><td class="rec">Tell me and it joins this round rather than the next one</td></tr>
+</table>
+
+<h2 class="sec">D · If accepted</h2>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Field</th><th>Value</th></tr>
+  <tr><td class="sr">1</td><td class="k">Queue</td><td>N30 <b>replaced</b> by this dynamic-sizing spec · N31 auto-capitalise · N32 flat deck · N33 two-layer delete · <b>N34 file variables</b> · <b>N35 tags</b> · B1 snooze fix</td></tr>
+  <tr><td class="sr">2</td><td class="k">Release</td><td>Mixed release → <b>1.2</b>, versionCode <b>1002000</b>, <code>InfoDeck-1.2.apk</code></td></tr>
+  <tr><td class="sr">3</td><td class="k">Database</td><td>Schema 1 → 2, additive migration, no data loss</td></tr>
+  <tr><td class="sr">4</td><td class="k">Trigger</td><td>Nothing is built until you say <b>build</b> / <b>release</b></td></tr>
+</table>
+
+</div>
+</body>
+</html>

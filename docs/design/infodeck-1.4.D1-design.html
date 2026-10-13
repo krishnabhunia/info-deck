@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InfoDeck — v1.4 D1 design · alert modes, app icons, document auto-fill, drawer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100..900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#131A26; --ink2:#5A6675; --hint:#96A0AF;
+    --pri:#2F4FCD; --pri-2:#5A6BF0; --pri-3:#7A5AF8; --pri-d:#1E357F;
+    --pri-c:#E7EBFF; --on-pri-c:#22337F;
+    --ok:#1E8E5A; --ok-c:#E3F5EC;
+    --warn:#A9700D; --warn-c:#FDF2DC;
+    --err:#C0392F; --err-c:#FCEAE8;
+    --bg:#F5F7FB; --card:#FFFFFF; --line:#E6EAF2; --outline:#C3CBDA;
+    --page:#E3E7F0; --tag:#22337F; --q:#7A5A00; --q-bg:#FFF3C4; --q-bd:#E2C35C;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--page);font-family:Roboto,"Segoe UI",system-ui,-apple-system,sans-serif;color:var(--ink);padding:26px 18px 70px}
+  .wrap{max-width:1180px;margin:0 auto}
+  header.page h1{font-size:24px;font-weight:800;color:var(--pri-d)}
+  header.page p{font-size:13.5px;color:var(--ink2);margin-top:5px;line-height:1.55}
+  .stamp{display:inline-block;margin:10px 8px 0 0;font-size:12px;font-weight:700;color:#7A2E00;background:#FFE1CC;border:1px solid #E8B08C;border-radius:20px;padding:3px 12px}
+  .stamp.g{color:var(--on-pri-c);background:var(--pri-c);border-color:#B9C3F5}
+  .stamp.r{color:#8A1F19;background:var(--err-c);border-color:#E7ADA8}
+  h2.sec{font-size:18px;font-weight:800;color:var(--pri-d);margin:38px 0 12px;padding-bottom:6px;border-bottom:2px solid #C9D1DD}
+  h3.sub{font-size:15px;color:var(--pri-d);margin-top:20px}
+  .warn-box{background:#FFF6E5;border:1px solid #E8C98C;border-radius:10px;padding:12px 14px;font-size:13.5px;line-height:1.55;margin:10px 0 4px}
+  .warn-box b{color:#7A4A00}
+  .idea-box{background:#EEF2FF;border:1px solid #B9C3F5;border-radius:10px;padding:12px 14px;font-size:13.5px;line-height:1.55;margin:10px 0 4px}
+  .idea-box b{color:var(--pri-d)}
+  .rej-box{background:var(--err-c);border:1px solid #E7ADA8;border-radius:10px;padding:12px 14px;font-size:13.5px;line-height:1.55;margin:10px 0 4px}
+  .rej-box b{color:#8A1F19}
+
+  table.tb{width:100%;border-collapse:collapse;font-size:12.5px;background:#fff;margin:6px 0 4px}
+  table.tb th{background:#E9EDF8;color:var(--pri-d);text-align:left;padding:6px 8px;border:1px solid #BFC9D8;font-size:12px}
+  table.tb td{padding:6px 8px;border:1px solid #D2D9E3;vertical-align:top;line-height:1.45}
+  table.tb .sr{width:1%;white-space:nowrap;text-align:center}
+  table.tb td.k{white-space:nowrap;font-weight:700;color:var(--tag)}
+  table.tb td.q{white-space:nowrap;font-weight:700;color:var(--q)}
+  table.tb td.rec{color:var(--ok);font-weight:600}
+  table.tb td.new{white-space:nowrap;font-weight:700;color:var(--ok)}
+  table.tb td.del{white-space:nowrap;font-weight:700;color:var(--err)}
+  table.tb tr:nth-child(even) td{background:#FAFBFD}
+  code{font-family:Consolas,Menlo,monospace;font-size:12px;background:#EEF1F5;padding:1px 4px;border-radius:3px}
+
+  .frames{display:grid;grid-template-columns:repeat(auto-fit,minmax(520px,1fr));gap:34px 28px;margin-top:14px}
+  figure{display:flex;flex-direction:column;align-items:center;gap:8px}
+  figure h3{font-size:15px;font-weight:800;color:var(--pri-d);align-self:flex-start}
+  figure h3 small{font-weight:500;color:var(--ink2);font-size:12.5px;margin-left:6px}
+  figure table.tb{font-size:12px}
+  figure.full{grid-column:1 / -1}
+  figure.full h3{align-self:center}
+  figure.full table.tb{max-width:880px}
+  .duo{display:flex;gap:26px;justify-content:center;flex-wrap:wrap}
+
+  b.n{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:8px;background:var(--tag);color:#fff;font-size:10px;font-weight:800;line-height:1;flex-shrink:0;font-style:normal}
+  b.n.d{background:var(--err)}
+  b.n.g{background:var(--ok)}
+  i.q{display:inline-flex;align-items:center;font-style:normal;font-size:10px;font-weight:800;color:var(--q);background:var(--q-bg);border:1px solid var(--q-bd);border-radius:9px;padding:1px 6px;line-height:1.3}
+
+  .phone{width:378px;height:780px;background:var(--bg);border:9px solid #12151C;border-radius:38px;overflow:hidden;position:relative;box-shadow:0 16px 38px rgba(20,30,50,.22);display:flex;flex-direction:column;flex-shrink:0}
+  .sb{height:22px;color:#fff;font-size:10.5px;font-weight:600;display:flex;align-items:center;justify-content:space-between;padding:0 16px;flex-shrink:0;position:absolute;left:0;right:0;top:0;z-index:6}
+  .sb.dark{color:var(--ink)}
+  .tbar{background:linear-gradient(135deg,var(--pri) 0%,var(--pri-2) 60%,var(--pri-3) 100%);color:#fff;padding:26px 6px 8px 8px;display:flex;align-items:center;gap:2px;flex-shrink:0;border-radius:0 0 18px 18px;position:relative}
+  .tbar .t{flex:1;min-width:0}
+  .tbar .t b{display:block;font-size:17px;font-weight:800;line-height:1.15}
+  .tbar .t small{display:block;font-size:10.5px;opacity:.92}
+  .tbar .ib{width:36px;height:36px;border-radius:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative}
+  .tbar .ib .bdg{position:absolute;top:3px;right:3px;min-width:15px;height:15px;border-radius:8px;background:var(--err);color:#fff;font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 3px;border:1.5px solid #4C5FE0}
+  .ic{width:21px;height:21px;fill:currentColor;flex-shrink:0}
+  .ic.s{width:17px;height:17px}
+  .body{flex:1;overflow:hidden;position:relative;padding:10px 12px 0}
+
+  .dim{position:absolute;inset:0;background:rgba(12,18,30,.5);z-index:2}
+  .sheet{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:24px 24px 0 0;padding:10px 16px 0;max-height:94%;z-index:3}
+  .grab{width:36px;height:4px;border-radius:2px;background:#D3D9E4;margin:0 auto 12px}
+  .sheet h4{font-size:17px;font-weight:800;margin-bottom:8px;display:flex;align-items:center;gap:9px}
+  .sheet p.sd{font-size:12px;color:var(--ink2);line-height:1.45;margin-bottom:6px}
+  .fld{background:#fff;border:1.5px solid var(--outline);border-radius:12px;padding:8px 12px;margin-bottom:10px;position:relative}
+  .fld .fl{font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--pri);margin-bottom:2px}
+  .fld .v{font-size:14px;font-weight:600;display:flex;align-items:center;gap:6px}
+  .fld .v .ic{margin-left:auto;color:var(--ink2)}
+  .seg{display:flex;background:#EFF2F8;border-radius:14px;padding:4px;gap:4px}
+  .seg span{flex:1;text-align:center;font-size:12.5px;font-weight:700;color:var(--ink2);padding:8px 0;border-radius:11px;display:flex;align-items:center;justify-content:center;gap:5px}
+  .seg span .ic{width:15px;height:15px}
+  .seg span.on{background:#fff;color:var(--pri);box-shadow:0 2px 6px rgba(25,40,80,.14)}
+  .seg span.on.alarm{color:var(--err)}
+  .seg span.on.ring{color:var(--warn)}
+  .lab{font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--pri);margin:14px 0 7px 2px;display:flex;align-items:center;gap:6px}
+  .lab.dz{color:var(--err)}
+  .srow{display:flex;align-items:center;gap:11px;padding:9px 2px;min-height:46px;border-bottom:1px solid var(--line)}
+  .srow:last-child{border-bottom:0}
+  .srow .si{width:32px;height:32px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:var(--pri-c);color:var(--pri)}
+  .srow .si.a{background:var(--warn-c);color:var(--warn)}
+  .srow .si.r{background:var(--err-c);color:var(--err)}
+  .srow .si.g{background:var(--ok-c);color:var(--ok)}
+  .srow .l{flex:1;min-width:0}
+  .srow .l b{display:block;font-size:13.5px;font-weight:600}
+  .srow .l small{display:block;font-size:11px;color:var(--ink2);margin-top:1px}
+  .srow .val{font-size:12.5px;font-weight:700;color:var(--pri);white-space:nowrap}
+  .srow .ic.ch{width:18px;height:18px;color:var(--hint)}
+  .scard{background:#fff;border-radius:14px;padding:2px 12px;box-shadow:0 2px 7px rgba(25,40,80,.07);position:relative}
+  .sw{width:44px;height:24px;border-radius:12px;background:#CDD4E0;position:relative;flex-shrink:0}
+  .sw i{position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:9px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+  .sw.on{background:var(--pri)}
+  .sw.on i{left:23px}
+  .abtn{flex:1;height:50px;border-radius:14px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:13.5px;font-weight:800}
+  .abtn.disc{border:1.5px solid #E2B4B0;color:var(--err);background:#fff}
+  .abtn.cancel{border:1.5px solid var(--outline);color:var(--ink2);background:#fff}
+  .abtn.save{background:linear-gradient(135deg,var(--pri),var(--pri-3));color:#fff}
+  .btnrow{display:flex;gap:9px;margin-top:12px}
+  .sbs{height:30px;margin:12px -16px 0;border-top:1px dashed #C9D1DD;display:flex;align-items:center;justify-content:center;font-size:10.5px;color:var(--hint)}
+
+  /* notifications */
+  .notif{background:#fff;border-radius:16px;padding:11px 12px;box-shadow:0 4px 14px rgba(25,40,80,.14);margin-bottom:10px;position:relative}
+  .notif .hd{display:flex;align-items:center;gap:7px;font-size:10.5px;font-weight:800;color:var(--ink2);margin-bottom:5px}
+  .notif .hd .ic{width:13px;height:13px;color:var(--pri)}
+  .notif b.t{display:block;font-size:14px;font-weight:700}
+  .notif small{display:block;font-size:11.5px;color:var(--ink2);margin-top:1px}
+  .notif .acts{display:flex;gap:16px;margin-top:9px;font-size:12.5px;font-weight:800;color:var(--pri)}
+  .notif.ring{border-left:4px solid var(--warn)}
+  .notif.alarmn{border-left:4px solid var(--err)}
+  .fullalarm{position:absolute;inset:0;background:linear-gradient(160deg,#1B2A6B,#4B2E86 60%,#7A2F63);display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;padding:28px;z-index:5}
+  .fullalarm .time{font-size:44px;font-weight:800;letter-spacing:-1px}
+  .fullalarm .date{font-size:13px;opacity:.9;margin-top:2px}
+  .fullalarm .card{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);border-radius:18px;padding:14px;margin-top:22px;width:100%;text-align:center}
+  .fullalarm .card b{display:block;font-size:17px;font-weight:800}
+  .fullalarm .card small{display:block;font-size:12px;opacity:.9;margin-top:3px}
+  .fullalarm .btns{display:flex;gap:12px;margin-top:26px;width:100%}
+  .fullalarm .btns span{flex:1;height:52px;border-radius:26px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px}
+  .fullalarm .btns .sn{background:rgba(255,255,255,.2);color:#fff}
+  .fullalarm .btns .st{background:#fff;color:#2A1A5E}
+
+  /* icons gallery */
+  .icons{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
+  .iconcard{width:150px;background:#fff;border-radius:16px;padding:12px;box-shadow:0 2px 8px rgba(25,40,80,.08);text-align:center;position:relative}
+  .iconcard b{display:block;font-size:12.5px;font-weight:800;margin-top:8px}
+  .iconcard small{display:block;font-size:10.5px;color:var(--ink2);line-height:1.35;margin-top:2px}
+  .sq{width:92px;height:92px;border-radius:26px;margin:0 auto;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .rnd{border-radius:46px}
+  .mono{width:46px;height:46px;border-radius:14px;background:#D8DEEA;display:flex;align-items:center;justify-content:center;margin:8px auto 0}
+
+  /* auto-fill */
+  .found{background:#fff;border-radius:13px;padding:10px 11px;margin-bottom:8px;box-shadow:0 2px 6px rgba(25,40,80,.07);display:flex;gap:10px;align-items:flex-start;position:relative}
+  .found .chk{width:20px;height:20px;border-radius:6px;border:2px solid var(--outline);flex-shrink:0;margin-top:2px}
+  .found .chk.on{background:var(--pri);border-color:var(--pri);display:flex;align-items:center;justify-content:center}
+  .found .chk.on .ic{width:13px;height:13px;color:#fff}
+  .found .l{flex:1;min-width:0}
+  .found .l .k{font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--pri)}
+  .found .l .v{font-size:14px;font-weight:700;margin-top:1px}
+  .found .l .src{font-size:10.5px;color:var(--hint);margin-top:3px;font-style:italic}
+  .conf{font-size:9.5px;font-weight:800;padding:2px 7px;border-radius:9px;white-space:nowrap}
+  .conf.hi{background:var(--ok-c);color:var(--ok)}
+  .conf.mid{background:var(--warn-c);color:var(--warn)}
+  .conf.lo{background:#EFF1F6;color:var(--ink2)}
+  .prog{height:6px;border-radius:3px;background:#DDE3EE;overflow:hidden;margin-top:8px}
+  .prog i{display:block;height:100%;background:linear-gradient(90deg,var(--pri),var(--pri-3))}
+  .fbox{background:#fff;border-radius:14px;padding:12px;box-shadow:0 2px 7px rgba(25,40,80,.07);display:flex;gap:11px;align-items:center}
+  .fbox .fi{width:38px;height:44px;border-radius:8px;background:linear-gradient(160deg,#E0574B,#B8271B);color:#fff;font-size:9px;font-weight:800;display:flex;align-items:flex-end;justify-content:center;padding-bottom:5px}
+  .fbox .l{flex:1;min-width:0}
+  .fbox .l b{display:block;font-size:13.5px;font-weight:700}
+  .fbox .l small{display:block;font-size:11px;color:var(--ink2)}
+
+  /* drawer */
+  .drawer{position:absolute;left:0;top:0;bottom:0;width:280px;background:#fff;z-index:4;box-shadow:6px 0 26px rgba(0,0,0,.3);display:flex;flex-direction:column}
+  .drawer .head{background:linear-gradient(135deg,var(--pri),var(--pri-3));color:#fff;padding:34px 16px 16px}
+  .drawer .head b{display:block;font-size:19px;font-weight:800}
+  .drawer .head small{display:block;font-size:11.5px;opacity:.92;margin-top:2px}
+  .drawer .items{padding:8px 10px;flex:1}
+  .ditem{display:flex;align-items:center;gap:12px;height:46px;padding:0 12px;border-radius:23px;font-size:14px;font-weight:600;color:var(--ink)}
+  .ditem .ic{color:var(--ink2)}
+  .ditem.on{background:var(--pri-c);color:var(--pri-d);font-weight:800}
+  .ditem.on .ic{color:var(--pri)}
+  .ditem .cnt{margin-left:auto;font-size:11px;font-weight:800;color:var(--ink2);background:#EEF1F6;border-radius:10px;padding:2px 8px}
+  .ditem .cnt.err{background:var(--err-c);color:var(--err)}
+  .dsep{height:1px;background:var(--line);margin:8px 12px}
+  .idc{display:flex;gap:10px;align-items:center;background:#fff;border-radius:14px;padding:9px 11px;margin-bottom:8px;box-shadow:0 2px 7px rgba(25,40,80,.07);position:relative;overflow:hidden}
+  .idc:before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--pri)}
+  .idc.od:before{background:var(--err)}
+  .idc .l{flex:1;min-width:0}
+  .idc .tt{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .idc .kv{font-size:11px;color:var(--ink2);margin-top:1px}
+  .idc .rw{display:flex;gap:5px;margin-top:5px}
+  .chip{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px}
+  .chip.cat{background:var(--pri-c);color:var(--on-pri-c)}
+  .chip.alarm{background:var(--warn-c);color:var(--warn)}
+  .chip.al{background:var(--err-c);color:var(--err)}
+  .chip.tg{background:#EFF1F6;color:var(--ink2)}
+  .ring{width:42px;height:42px;border-radius:21px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+  .ring .inner2{width:34px;height:34px;border-radius:17px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .ring .inner2 b{font-size:12px;font-weight:800;line-height:1}
+  .ring .inner2 small{font-size:7.5px;font-weight:700;color:var(--ink2)}
+  .fabmini{position:absolute;right:14px;bottom:16px;width:52px;height:52px;border-radius:26px;background:linear-gradient(135deg,var(--pri),var(--pri-3));color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 18px rgba(47,79,205,.36)}
+  .gain{position:absolute;left:12px;right:12px;bottom:14px;background:rgba(30,142,90,.12);border:1px dashed var(--ok);border-radius:10px;padding:7px;font-size:10.5px;font-weight:800;color:#14603C;text-align:center}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></symbol>
+  <symbol id="i-alarm" viewBox="0 0 24 24"><path d="M22 5.72l-4.6-3.86-1.29 1.53 4.6 3.86L22 5.72zM7.88 3.39 6.6 1.86 2 5.71l1.29 1.53 4.59-3.85zM12.5 8H11v6l4.75 2.85.75-1.23-4-2.37V8zM12 4c-4.97 0-9 4.03-9 9s4.02 9 9 9c4.97 0 9-4.03 9-9s-4.03-9-9-9zm0 16c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></symbol>
+  <symbol id="i-vol" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 7.97v8.05A4.47 4.47 0 0 0 16.5 12zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="M10 6 8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></symbol>
+  <symbol id="i-tick" viewBox="0 0 24 24"><path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></symbol>
+  <symbol id="i-magic" viewBox="0 0 24 24"><path d="M7.5 5.6 5 7l1.4-2.5L5 2l2.5 1.4L10 2 8.6 4.5 10 7 7.5 5.6zm12 9.8 2.5-1.4-1.4 2.5 1.4 2.5-2.5-1.4L17 19l1.4-2.5L17 14l2.5 1.4zM22 2l-2.5 1.4L17 2l1.4 2.5L17 7l2.5-1.4L22 7l-1.4-2.5L22 2zm-7.63 5.29a1 1 0 0 0-1.41 0L1.29 18.96a1 1 0 0 0 0 1.41l2.34 2.34a1 1 0 0 0 1.41 0L16.7 11.05a1 1 0 0 0 0-1.41l-2.33-2.35zm-1.03 5.49-1.41-1.41 2.41-2.41 1.41 1.41-2.41 2.41z"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2V6a2 2 0 0 0-2-2zm0 16H5V9h14v11z"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M10 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-8l-2-2z"/></symbol>
+  <symbol id="i-label" viewBox="0 0 24 24"><path d="M17.63 5.84A2 2 0 0 0 16 5H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h11a2 2 0 0 0 1.63-.84L22 12l-4.37-6.16z"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.48.48 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1 1 12 8.4a3.6 3.6 0 0 1 0 7.2z"/></symbol>
+  <symbol id="i-bug" viewBox="0 0 24 24"><path d="M20 8h-2.81a5.98 5.98 0 0 0-1.82-1.96L17 4.41 15.59 3l-2.17 2.17a6.02 6.02 0 0 0-2.83 0L8.41 3 7 4.41l1.62 1.63A5.98 5.98 0 0 0 6.81 8H4v2h2.09c-.05.33-.09.66-.09 1v1H4v2h2v1c0 .34.04.67.09 1H4v2h2.81a6 6 0 0 0 10.38 0H20v-2h-2.09c.05-.33.09-.66.09-1v-1h2v-2h-2v-1c0-.34-.04-.67-.09-1H20V8z"/></symbol>
+  <symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 3a9 9 0 0 0 0 18c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1-.23-.27-.38-.62-.38-1 0-.83.67-1.5 1.5-1.5H16a5 5 0 0 0 5-5c0-4.42-4.03-8-9-8zm-5.5 9a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm3-4a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm3 4a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/></symbol>
+</svg>
+
+<div class="wrap">
+<header class="page">
+  <h1>InfoDeck — v1.4 · D1 design</h1>
+  <p>Four new features: <b>1)</b> every scheduler picks <b>Notify · Ring · Alarm</b>; <b>2)</b> four alternate app icons to choose from; <b>3)</b> attach a PDF or Word file to a new card and InfoDeck <b>reads it and proposes</b> the data, dates and reminders; <b>4)</b> the bottom bar becomes a <b>hamburger drawer</b>. Mock date <b>Tue 18-Aug-2026</b>.</p>
+  <span class="stamp">DESIGN ONLY · nothing built · no version bump</span>
+  <span class="stamp g">Reply by tag: “S4 → icon B”, “Q7 → b”, or “defaults” = all recommended</span>
+  <span class="stamp r">Feature 3 has real Android limits — read §C4 before approving</span>
+</header>
+
+<div class="rej-box"><b>Still open from you:</b> your bug list last round stopped at 1 (was there a bug 2?), and item “3.” from five rounds ago has never been filled in. Parked as Q13 and Q14.</div>
+
+<h2 class="sec">A · Screens</h2>
+<div class="frames">
+
+<!-- S1 -->
+<figure>
+  <h3>S1 · Scheduler — Notify · Ring · Alarm<small>feature 1</small></h3>
+  <div class="phone" style="height:820px">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="tbar"><div class="ib"><svg class="ic"><use href="#i-close"/></svg></div>
+      <div class="t"><b>Edit card</b><small>1 unsaved change</small></div></div>
+    <div class="body"><div class="dim"></div>
+      <div class="sheet">
+        <div class="grab"></div>
+        <h4><svg class="ic" style="color:var(--pri)"><use href="#i-alarm"/></svg>Add scheduler</h4>
+
+        <div class="fld"><div class="fl">Based on</div><div class="v">Policy Expiry · 11-Oct-2026<svg class="ic s"><use href="#i-chev"/></svg></div></div>
+        <div style="display:flex;gap:10px">
+          <div class="fld" style="flex:1"><div class="fl">When</div><div class="v">30 days before<svg class="ic s"><use href="#i-chev"/></svg></div></div>
+          <div class="fld" style="flex:0 0 118px"><div class="fl">Ring at</div><div class="v">09:00</div></div>
+        </div>
+
+        <div class="lab">How should it reach you</div>
+        <div class="seg">
+          <span><svg class="ic"><use href="#i-bell"/></svg>Notify</span>
+          <span class="on ring"><svg class="ic"><use href="#i-vol"/></svg>Ring</span>
+          <span><svg class="ic"><use href="#i-alarm"/></svg>Alarm</span>
+        </div>
+        <b class="n" style="position:relative;top:-30px;left:2px">1</b>
+
+        <div class="scard" style="margin-top:6px">
+          <div class="srow"><span class="si a"><svg class="ic s"><use href="#i-vol"/></svg></span>
+            <div class="l"><b>Sound</b><small>Plays until you open or dismiss it</small></div><span class="val">Chime</span><svg class="ic ch"><use href="#i-chev"/></svg>
+            <b class="n" style="position:absolute;right:6px;top:6px">2</b></div>
+          <div class="srow"><span class="si a"><svg class="ic s"><use href="#i-alarm"/></svg></span>
+            <div class="l"><b>Stop after</b><small>Goes quiet on its own</small></div><span class="val">2 min</span><svg class="ic ch"><use href="#i-chev"/></svg></div>
+          <div class="srow"><span class="si a"><svg class="ic s"><use href="#i-bell"/></svg></span>
+            <div class="l"><b>Vibrate</b></div><span class="sw on"><i></i></span></div>
+        </div>
+
+        <div style="background:var(--warn-c);border-radius:12px;padding:10px 12px;margin-top:12px;display:flex;gap:9px;align-items:flex-start">
+          <svg class="ic s" style="color:var(--warn);margin-top:1px"><use href="#i-warn"/></svg>
+          <div style="font-size:11.5px;color:#7A4A00;line-height:1.45">
+            <b>Ring is louder than Notify but quieter than Alarm.</b> If your phone is in Do Not Disturb, Ring is silenced unless you allow InfoDeck through — Alarm is not.
+          </div>
+          <b class="n" style="position:absolute;right:20px">3</b>
+        </div>
+
+        <div style="background:var(--pri-c);border-radius:12px;padding:9px 12px;margin-top:10px;font-size:11.5px;color:var(--on-pri-c);font-weight:600">
+          Rings Fri 11-Sep-2026 · 09:00 — in 24 days
+        </div>
+
+        <div class="btnrow">
+          <span class="abtn cancel"><svg class="ic"><use href="#i-close"/></svg>Cancel</span>
+          <span class="abtn save"><svg class="ic"><use href="#i-tick"/></svg>Save</span>
+        </div>
+        <div class="sbs">bottom clearance = max(25 % screen height, nav bar + 24 dp)</div>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="new">Three modes, per scheduler</td><td>Not per card and not per app — the same card can Notify 30 days out and Alarm on the day itself <i class="q">Q1</i></td></tr>
+    <tr><td class="sr">2</td><td class="new">Mode-specific options</td><td>Notify shows none. Ring adds sound, stop-after and vibrate. Alarm adds sound, snooze length and “ignore silent mode”</td></tr>
+    <tr><td class="sr">3</td><td class="k">Honest warning</td><td>Written into the sheet, not hidden in a help page — Do Not Disturb behaves differently for each mode (§C2)</td></tr>
+    <tr><td class="sr">4</td><td class="k">Card list</td><td>The card chip shows the mode: 🔔 for Notify, 🔊 for Ring, ⏰ red for Alarm</td></tr>
+  </table>
+</figure>
+
+<!-- S2 -->
+<figure>
+  <h3>S2 · What each mode looks like<small>feature 1</small></h3>
+  <div class="phone">
+    <div class="sb dark"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="body" style="padding-top:32px">
+      <div class="lab" style="margin-top:0">NOTIFY — silent, waits in the shade</div>
+      <div class="notif">
+        <div class="hd"><svg class="ic"><use href="#i-bell"/></svg>INFODECK · now</div>
+        <b class="t">Car Insurance — HDFC Ergo</b>
+        <small>30 days before Policy Expiry · 11-Oct-2026</small>
+        <div class="acts"><span>DONE</span><span>SNOOZE</span></div>
+        <b class="n" style="position:absolute;right:8px;top:8px">1</b>
+      </div>
+
+      <div class="lab">RING — heads-up, plays a sound until you act</div>
+      <div class="notif ring">
+        <div class="hd"><svg class="ic" style="color:var(--warn)"><use href="#i-vol"/></svg>INFODECK · ringing</div>
+        <b class="t">Pollution Certificate — WB 24 AB 1234</b>
+        <small>7 days before Valid Till · sound stops in 1:42</small>
+        <div class="acts"><span style="color:var(--warn)">STOP</span><span>DONE</span><span>SNOOZE</span></div>
+        <b class="n" style="position:absolute;right:8px;top:8px">2</b>
+      </div>
+
+      <div class="lab dz">ALARM — takes the whole screen, like a clock alarm</div>
+      <div style="position:relative;height:330px;border-radius:18px;overflow:hidden">
+        <div class="fullalarm" style="position:absolute">
+          <div class="time">09:00</div>
+          <div class="date">Fri 11-Sep-2026</div>
+          <div class="card">
+            <b>Car Insurance — HDFC Ergo</b>
+            <small>30 days before Policy Expiry · Insurance</small>
+          </div>
+          <div class="btns"><span class="sn">Snooze 10 min</span><span class="st">Stop</span></div>
+        </div>
+        <b class="n d" style="position:absolute;right:8px;top:8px;z-index:6">3</b>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Mode</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="k">Notify</td><td>Exactly what 1.4 does today — a normal notification, no sound of its own beyond your channel setting. The safe default</td></tr>
+    <tr><td class="sr">2</td><td class="new">Ring</td><td>Heads-up notification plus a looping sound through the <b>notification</b> stream, stopping on its own after the chosen minutes or when you tap Stop</td></tr>
+    <tr><td class="sr">3</td><td class="new">Alarm</td><td>Full screen over the lock screen, screen wakes, sound on the <b>alarm</b> stream, Snooze and Stop only. Uses <code>setAlarmClock</code>, so Android treats it like a clock alarm and Doze does not delay it <i class="q">Q2</i></td></tr>
+    <tr><td class="sr">4</td><td>Missed</td><td>All three still write to the ring log; a missed Alarm becomes a Ring next time the phone wakes, rather than a full-screen surprise hours later</td></tr>
+  </table>
+</figure>
+
+<!-- S3 -->
+<figure>
+  <h3>S3 · Settings ▸ Reminders<small>feature 1 · defaults and permissions</small></h3>
+  <div class="phone" style="height:880px">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="tbar"><div class="ib"><svg class="ic"><use href="#i-menu"/></svg></div>
+      <div class="t"><b>Settings</b><small>InfoDeck 1.5</small></div><div class="ib"><svg class="ic"><use href="#i-search"/></svg></div></div>
+    <div class="body">
+      <div class="lab" style="margin-top:2px">Reminders — expanded</div>
+      <div class="scard">
+        <div class="srow"><span class="si a"><svg class="ic s"><use href="#i-bell"/></svg></span>
+          <div class="l"><b>Default alert for new schedulers</b><small>Each scheduler can still be changed</small></div><span class="val">Notify</span><svg class="ic ch"><use href="#i-chev"/></svg>
+          <b class="n" style="position:absolute;right:6px;top:6px">1</b></div>
+        <div class="srow"><span class="si a"><svg class="ic s"><use href="#i-vol"/></svg></span>
+          <div class="l"><b>Ring sound</b><small>Used by Ring mode</small></div><span class="val">Chime</span><svg class="ic ch"><use href="#i-chev"/></svg></div>
+        <div class="srow"><span class="si r"><svg class="ic s"><use href="#i-alarm"/></svg></span>
+          <div class="l"><b>Alarm sound</b><small>Used by Alarm mode · plays on the alarm stream</small></div><span class="val">Morning</span><svg class="ic ch"><use href="#i-chev"/></svg></div>
+        <div class="srow"><span class="si a"><svg class="ic s"><use href="#i-alarm"/></svg></span>
+          <div class="l"><b>Default stop-after</b><small>Ring and Alarm go quiet by themselves</small></div><span class="val">2 min</span><svg class="ic ch"><use href="#i-chev"/></svg></div>
+      </div>
+
+      <div class="lab">Permissions this needs</div>
+      <div class="scard">
+        <div class="srow"><span class="si g"><svg class="ic s"><use href="#i-tick"/></svg></span>
+          <div class="l"><b>Notifications</b><small>Granted</small></div><span class="val" style="color:var(--ok)">OK</span></div>
+        <div class="srow"><span class="si g"><svg class="ic s"><use href="#i-tick"/></svg></span>
+          <div class="l"><b>Exact alarms</b><small>Allowed — rings land on the minute</small></div><span class="val" style="color:var(--ok)">OK</span></div>
+        <div class="srow"><span class="si r"><svg class="ic s"><use href="#i-warn"/></svg></span>
+          <div class="l"><b>Full-screen alarms</b><small>Android 14 asks separately. Without it, Alarm mode falls back to Ring</small></div>
+          <span class="val" style="color:var(--err)">Allow</span><svg class="ic ch"><use href="#i-chev"/></svg>
+          <b class="n d" style="position:absolute;right:6px;top:6px">2</b></div>
+        <div class="srow"><span class="si a"><svg class="ic s"><use href="#i-warn"/></svg></span>
+          <div class="l"><b>Do Not Disturb access</b><small>Optional. Lets Ring be heard while DND is on</small></div>
+          <span class="val">Off</span><svg class="ic ch"><use href="#i-chev"/></svg>
+          <b class="n" style="position:absolute;right:6px;top:56px">3</b></div>
+        <div class="srow"><span class="si a"><svg class="ic s"><use href="#i-warn"/></svg></span>
+          <div class="l"><b>Battery — unrestricted</b><small>Some phones kill background alarms otherwise</small></div>
+          <span class="val">Check</span><svg class="ic ch"><use href="#i-chev"/></svg></div>
+      </div>
+
+      <div class="lab">Try it</div>
+      <div class="scard">
+        <div class="srow"><span class="si"><svg class="ic s"><use href="#i-bell"/></svg></span><div class="l"><b>Test Notify</b></div><span class="val">Fire</span></div>
+        <div class="srow"><span class="si a"><svg class="ic s"><use href="#i-vol"/></svg></span><div class="l"><b>Test Ring</b></div><span class="val">Fire</span></div>
+        <div class="srow"><span class="si r"><svg class="ic s"><use href="#i-alarm"/></svg></span><div class="l"><b>Test Alarm</b></div><span class="val">Fire</span>
+          <b class="n g" style="position:absolute;right:6px;top:6px">4</b></div>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="new">Default mode</td><td>New schedulers start here. <b>Notify</b> recommended, so nothing suddenly shouts at you <i class="q">Q3</i></td></tr>
+    <tr><td class="sr">2</td><td class="del">Full-screen permission</td><td>On Android 14+ this is a separate grant. If you refuse it, Alarm mode still works but arrives as a Ring — stated on the row rather than failing silently</td></tr>
+    <tr><td class="sr">3</td><td class="k">DND access</td><td>Optional and off by default. Alarm mode is heard under DND without it; Ring is not</td></tr>
+    <tr><td class="sr">4</td><td class="new">Three test buttons</td><td>One per mode — the only way to know how loud your phone actually is</td></tr>
+  </table>
+</figure>
+
+<!-- S4 -->
+<figure class="full">
+  <h3>S4 · Four app icons to choose from<small>feature 2</small></h3>
+  <div class="icons">
+    <div class="iconcard">
+      <div class="sq" style="background:linear-gradient(135deg,#2F4FCD,#7A5AF8)">
+        <svg width="62" height="62" viewBox="0 0 62 62">
+          <rect x="10" y="16" width="42" height="30" rx="6" fill="#FFFFFF" opacity=".35"/>
+          <rect x="6" y="22" width="42" height="30" rx="6" fill="#FFFFFF" opacity=".62"/>
+          <rect x="12" y="12" width="42" height="30" rx="6" fill="#FFFFFF"/>
+          <rect x="18" y="20" width="22" height="3.4" rx="1.7" fill="#2F4FCD"/>
+          <rect x="18" y="27" width="30" height="3.4" rx="1.7" fill="#5A6BF0"/>
+          <rect x="18" y="34" width="16" height="3.4" rx="1.7" fill="#9AA8E8"/>
+        </svg>
+      </div>
+      <b>A · Card stack</b>
+      <small>Closest to today. Says “a deck of information”. Safe, a little generic</small>
+      <div class="mono"><svg width="26" height="26" viewBox="0 0 62 62"><rect x="12" y="12" width="42" height="30" rx="6" fill="#3A4250"/><rect x="6" y="22" width="42" height="30" rx="6" fill="#6B7484"/></svg></div>
+    </div>
+
+    <div class="iconcard">
+      <div class="sq" style="background:linear-gradient(135deg,#1E357F,#4B63E8)">
+        <svg width="66" height="66" viewBox="0 0 66 66">
+          <circle cx="33" cy="33" r="23" fill="none" stroke="#FFFFFF" stroke-opacity=".28" stroke-width="6"/>
+          <path d="M33 10 a23 23 0 0 1 20 34" fill="none" stroke="#7FE0AC" stroke-width="6" stroke-linecap="round"/>
+          <rect x="21" y="24" width="24" height="18" rx="4" fill="#FFFFFF"/>
+          <rect x="25" y="29" width="12" height="2.6" rx="1.3" fill="#1E357F"/>
+          <rect x="25" y="34" width="16" height="2.6" rx="1.3" fill="#5A6BF0"/>
+        </svg>
+      </div>
+      <b>B · Card in a countdown ring</b>
+      <small>Matches the ring on every card in the app. Says “documents with a deadline”</small>
+      <div class="mono"><svg width="26" height="26" viewBox="0 0 66 66"><circle cx="33" cy="33" r="23" fill="none" stroke="#3A4250" stroke-width="7"/><rect x="21" y="24" width="24" height="18" rx="4" fill="#6B7484"/></svg></div>
+    </div>
+
+    <div class="iconcard">
+      <div class="sq" style="background:linear-gradient(135deg,#F2F5FF,#DCE3FB)">
+        <svg width="62" height="62" viewBox="0 0 62 62">
+          <path d="M16 8h20l12 12v34a4 4 0 0 1-4 4H16a4 4 0 0 1-4-4V12a4 4 0 0 1 4-4z" fill="#2F4FCD"/>
+          <path d="M36 8l12 12H40a4 4 0 0 1-4-4z" fill="#7A5AF8"/>
+          <circle cx="22" cy="34" r="2.6" fill="#FFFFFF"/><circle cx="31" cy="34" r="2.6" fill="#FFFFFF"/><circle cx="40" cy="34" r="2.6" fill="#FFFFFF" opacity=".55"/>
+          <circle cx="22" cy="43" r="2.6" fill="#FFFFFF" opacity=".55"/><circle cx="31" cy="43" r="2.6" fill="#FFFFFF" opacity=".8"/><circle cx="40" cy="43" r="2.6" fill="#FFFFFF"/>
+        </svg>
+      </div>
+      <b>C · Folded document</b>
+      <small>Light background, stands out on a dark wallpaper. Says “papers, kept”</small>
+      <div class="mono"><svg width="26" height="26" viewBox="0 0 62 62"><path d="M16 8h20l12 12v34a4 4 0 0 1-4 4H16a4 4 0 0 1-4-4V12a4 4 0 0 1 4-4z" fill="#3A4250"/></svg></div>
+    </div>
+
+    <div class="iconcard">
+      <div class="sq" style="background:linear-gradient(135deg,#111A33,#2F4FCD)">
+        <svg width="62" height="62" viewBox="0 0 62 62">
+          <rect x="9" y="18" width="7" height="26" rx="3.5" fill="#FFFFFF"/>
+          <path d="M22 18h13a13 13 0 0 1 0 26H22z" fill="none" stroke="#FFFFFF" stroke-width="7" stroke-linejoin="round"/>
+          <circle cx="12.5" cy="10" r="4" fill="#7FE0AC"/>
+        </svg>
+      </div>
+      <b>D · “iD” monogram</b>
+      <small>Boldest at small sizes and unmistakable in a crowded drawer. Least literal</small>
+      <div class="mono"><svg width="26" height="26" viewBox="0 0 62 62"><rect x="9" y="18" width="7" height="26" rx="3.5" fill="#3A4250"/><path d="M22 18h13a13 13 0 0 1 0 26H22z" fill="none" stroke="#3A4250" stroke-width="7"/></svg></div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Point</th><th>Detail</th></tr>
+    <tr><td class="sr">1</td><td class="k">All four are adaptive</td><td>Separate background and foreground layers, so every launcher shape works — circle, squircle, rounded square</td></tr>
+    <tr><td class="sr">2</td><td class="k">All four have a monochrome layer</td><td>The small grey version under each card is the Android 13+ themed icon, which takes your wallpaper colours</td></tr>
+    <tr><td class="sr">3</td><td class="new">You can switch in-app</td><td>Settings ▸ Look and feel ▸ App icon (S5). Switching is instant but the launcher may briefly show a blank tile while it refreshes <i class="q">Q4</i></td></tr>
+    <tr><td class="sr">4</td><td class="k">My pick</td><td><b>B</b> — it ties the icon to the countdown ring you see on every card, and it reads at 48 dp. <b>D</b> is the strongest if you want to be found fast in a full app drawer <i class="q">Q5</i></td></tr>
+  </table>
+</figure>
+
+<!-- S5 -->
+<figure>
+  <h3>S5 · Choosing the icon<small>feature 2</small></h3>
+  <div class="phone">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="tbar"><div class="ib"><svg class="ic"><use href="#i-back"/></svg></div>
+      <div class="t"><b>App icon</b><small>Look and feel</small></div></div>
+    <div class="body">
+      <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:6px">
+        <div style="width:150px;background:#fff;border-radius:16px;padding:12px;text-align:center;box-shadow:0 2px 8px rgba(25,40,80,.08);border:2px solid var(--line)">
+          <div class="sq" style="background:linear-gradient(135deg,#2F4FCD,#7A5AF8);width:74px;height:74px;border-radius:22px">
+            <svg width="50" height="50" viewBox="0 0 62 62"><rect x="12" y="12" width="42" height="30" rx="6" fill="#FFF"/><rect x="6" y="22" width="42" height="30" rx="6" fill="#FFF" opacity=".6"/></svg>
+          </div>
+          <b style="display:block;font-size:12.5px;margin-top:8px">Card stack</b>
+        </div>
+        <div style="width:150px;background:#fff;border-radius:16px;padding:12px;text-align:center;box-shadow:0 4px 14px rgba(47,79,205,.22);border:2px solid var(--pri);position:relative">
+          <div class="sq" style="background:linear-gradient(135deg,#1E357F,#4B63E8);width:74px;height:74px;border-radius:22px">
+            <svg width="52" height="52" viewBox="0 0 66 66"><circle cx="33" cy="33" r="23" fill="none" stroke="#FFF" stroke-opacity=".3" stroke-width="6"/><path d="M33 10 a23 23 0 0 1 20 34" fill="none" stroke="#7FE0AC" stroke-width="6" stroke-linecap="round"/><rect x="21" y="24" width="24" height="18" rx="4" fill="#FFF"/></svg>
+          </div>
+          <b style="display:block;font-size:12.5px;margin-top:8px;color:var(--pri)">Countdown ring</b>
+          <span style="position:absolute;top:8px;right:8px;width:20px;height:20px;border-radius:10px;background:var(--pri);display:flex;align-items:center;justify-content:center">
+            <svg class="ic" style="width:13px;height:13px;color:#fff"><use href="#i-tick"/></svg></span>
+          <b class="n" style="position:absolute;left:-6px;top:-6px">1</b>
+        </div>
+        <div style="width:150px;background:#fff;border-radius:16px;padding:12px;text-align:center;box-shadow:0 2px 8px rgba(25,40,80,.08);border:2px solid var(--line)">
+          <div class="sq" style="background:linear-gradient(135deg,#F2F5FF,#DCE3FB);width:74px;height:74px;border-radius:22px">
+            <svg width="48" height="48" viewBox="0 0 62 62"><path d="M16 8h20l12 12v34a4 4 0 0 1-4 4H16a4 4 0 0 1-4-4V12a4 4 0 0 1 4-4z" fill="#2F4FCD"/></svg>
+          </div>
+          <b style="display:block;font-size:12.5px;margin-top:8px">Document</b>
+        </div>
+        <div style="width:150px;background:#fff;border-radius:16px;padding:12px;text-align:center;box-shadow:0 2px 8px rgba(25,40,80,.08);border:2px solid var(--line)">
+          <div class="sq" style="background:linear-gradient(135deg,#111A33,#2F4FCD);width:74px;height:74px;border-radius:22px">
+            <svg width="48" height="48" viewBox="0 0 62 62"><rect x="9" y="18" width="7" height="26" rx="3.5" fill="#FFF"/><path d="M22 18h13a13 13 0 0 1 0 26H22z" fill="none" stroke="#FFF" stroke-width="7"/></svg>
+          </div>
+          <b style="display:block;font-size:12.5px;margin-top:8px">iD monogram</b>
+        </div>
+      </div>
+
+      <div style="background:var(--warn-c);border-radius:12px;padding:10px 12px;margin-top:14px;display:flex;gap:9px;align-items:flex-start">
+        <svg class="ic s" style="color:var(--warn);margin-top:1px"><use href="#i-warn"/></svg>
+        <div style="font-size:11.5px;color:#7A4A00;line-height:1.45">
+          Changing the icon restarts the launcher entry. Any home-screen shortcut you made may need to be added again — that is Android, not InfoDeck.
+        </div>
+        <b class="n d" style="position:absolute;right:20px">2</b>
+      </div>
+
+      <div class="btnrow" style="position:absolute;left:12px;right:12px;bottom:14px">
+        <span class="abtn disc"><svg class="ic"><use href="#i-close"/></svg>Discard</span>
+        <span class="abtn save"><svg class="ic"><use href="#i-tick"/></svg>Save</span>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="new">Pick, then Save</td><td>Preview tiles at real launcher size; nothing changes until Save, as with every other screen</td></tr>
+    <tr><td class="sr">2</td><td class="del">The honest caveat</td><td>Icon switching works by enabling one launcher alias and disabling the others. Some launchers blink; a pinned shortcut can be lost</td></tr>
+    <tr><td class="sr">3</td><td class="k">If you would rather not</td><td>Say so and I ship one icon only, with no switcher — three lines of manifest instead of a screen <i class="q">Q4</i></td></tr>
+  </table>
+</figure>
+
+<!-- S6 -->
+<figure>
+  <h3>S6 · Attach a document, get a card<small>feature 3 · the review sheet</small></h3>
+  <div class="phone" style="height:1110px">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="tbar"><div class="ib"><svg class="ic"><use href="#i-close"/></svg></div>
+      <div class="t"><b>New card</b><small>from Policy document.pdf</small></div></div>
+    <div class="body"><div class="dim"></div>
+      <div class="sheet">
+        <div class="grab"></div>
+        <h4><svg class="ic" style="color:var(--pri)"><use href="#i-magic"/></svg>Found 7 details</h4>
+        <p class="sd">Read on this phone — nothing was uploaded. Untick anything you do not want, then Save.</p>
+
+        <div class="fbox" style="margin-bottom:10px">
+          <span class="fi">PDF</span>
+          <div class="l"><b>Policy document.pdf</b><small>1.8 MB · 4 pages · looks like a motor insurance policy</small></div>
+          <span class="conf hi">92 %</span>
+        </div>
+
+        <div class="lab" style="margin-top:4px">Suggested label</div>
+        <div class="found"><span class="chk on"><svg class="ic"><use href="#i-tick"/></svg></span>
+          <div class="l"><div class="k">Label</div><div class="v">Car Insurance — HDFC Ergo</div>
+            <div class="src">from “HDFC ERGO General Insurance — Private Car Policy”</div></div>
+          <span class="conf hi">high</span><b class="n" style="position:absolute;right:6px;bottom:6px">1</b></div>
+
+        <div class="lab">Data</div>
+        <div class="found"><span class="chk on"><svg class="ic"><use href="#i-tick"/></svg></span>
+          <div class="l"><div class="k">Policy No</div><div class="v">HD-2291-KX-2026</div><div class="src">page 1 · “Policy No.”</div></div>
+          <span class="conf hi">high</span></div>
+        <div class="found"><span class="chk on"><svg class="ic"><use href="#i-tick"/></svg></span>
+          <div class="l"><div class="k">Registration</div><div class="v">WB 24 AB 1234</div><div class="src">page 1 · “Regn. No.”</div></div>
+          <span class="conf hi">high</span></div>
+        <div class="found"><span class="chk"></span>
+          <div class="l"><div class="k">Premium</div><div class="v">₹ 14,208</div><div class="src">page 2 · “Total Premium”</div></div>
+          <span class="conf mid">medium</span><b class="n" style="position:absolute;right:6px;bottom:6px">2</b></div>
+
+        <div class="lab">Dates</div>
+        <div class="found"><span class="chk on"><svg class="ic"><use href="#i-tick"/></svg></span>
+          <div class="l"><div class="k">Policy Expiry ★ key date</div><div class="v">11-Oct-2026</div><div class="src">page 1 · “Valid upto 11/10/2026”</div></div>
+          <span class="conf hi">high</span><b class="n g" style="position:absolute;right:6px;bottom:6px">3</b></div>
+        <div class="found"><span class="chk on"><svg class="ic"><use href="#i-tick"/></svg></span>
+          <div class="l"><div class="k">Start date</div><div class="v">12-Oct-2025</div><div class="src">page 1 · “Valid from 12/10/2025”</div></div>
+          <span class="conf hi">high</span></div>
+
+        <div class="lab">Reminders it suggests</div>
+        <div class="found"><span class="chk on"><svg class="ic"><use href="#i-tick"/></svg></span>
+          <div class="l"><div class="k">Notify</div><div class="v">30 days before Policy Expiry</div><div class="src">09:00 · Fri 11-Sep-2026</div></div>
+          <b class="n" style="position:absolute;right:6px;bottom:6px">4</b></div>
+        <div class="found"><span class="chk on"><svg class="ic"><use href="#i-tick"/></svg></span>
+          <div class="l"><div class="k">Alarm</div><div class="v">Same day as Policy Expiry</div><div class="src">09:00 · Sun 11-Oct-2026</div></div></div>
+
+        <div class="btnrow">
+          <span class="abtn disc"><svg class="ic"><use href="#i-close"/></svg>Discard</span>
+          <span class="abtn save"><svg class="ic"><use href="#i-tick"/></svg>Save 6</span>
+        </div>
+        <div class="sbs">bottom clearance = max(25 % screen height, nav bar + 24 dp)</div>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="new">Every guess is shown, never applied silently</td><td>Each row carries the value, <b>where it came from</b> and a confidence. Tapping a row opens it for editing before it is accepted</td></tr>
+    <tr><td class="sr">2</td><td class="k">Medium confidence starts unticked</td><td>High is ticked, medium and low are offered but off — you opt in rather than opt out <i class="q">Q6</i></td></tr>
+    <tr><td class="sr">3</td><td class="new">Key date chosen for you</td><td>Whichever date reads as an expiry wins the ★. If two compete, the sheet asks instead of guessing</td></tr>
+    <tr><td class="sr">4</td><td class="new">Reminders proposed with modes</td><td>Feature 1 and 3 meet here: a 30-day warning as <b>Notify</b>, the day itself as <b>Alarm</b> <i class="q">Q7</i></td></tr>
+    <tr><td class="sr">5</td><td class="k">Save count</td><td>“Save 6” — the number of ticked items, so you know exactly what lands on the card</td></tr>
+  </table>
+</figure>
+
+<!-- S7 -->
+<figure>
+  <h3>S7 · While it reads, and when it can't<small>feature 3 · progress and failure</small></h3>
+  <div class="phone">
+    <div class="sb dark"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="body" style="padding-top:32px">
+      <div class="lab" style="margin-top:0">Reading — a few seconds, on this phone</div>
+      <div class="fbox">
+        <span class="fi">PDF</span>
+        <div class="l"><b>Policy document.pdf</b>
+          <small>Reading page 2 of 4 — nothing leaves your phone</small>
+          <div class="prog"><i style="width:52%"></i></div></div>
+      </div>
+      <div style="font-size:11px;color:var(--hint);margin:6px 0 0 4px">Cancel anytime — the file stays attached either way</div>
+      <b class="n" style="position:relative;left:300px;top:-40px">1</b>
+
+      <div class="lab">When the file is a scan, not text</div>
+      <div class="fbox" style="align-items:flex-start">
+        <span class="fi">PDF</span>
+        <div class="l"><b>Insurance scan.pdf</b>
+          <small style="color:var(--warn)">This looks like a photo of a document, so there is no text to read</small>
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <span style="font-size:11.5px;font-weight:800;color:var(--pri)">TRY TEXT RECOGNITION</span>
+            <span style="font-size:11.5px;font-weight:800;color:var(--ink2)">FILL IT MYSELF</span>
+          </div>
+        </div>
+      </div>
+      <b class="n d" style="position:relative;left:300px;top:-56px">2</b>
+
+      <div class="lab">When nothing useful is found</div>
+      <div class="fbox">
+        <span class="fi">DOC</span>
+        <div class="l"><b>Notes.docx</b>
+          <small>Read fine, but no dates or labelled fields — the card is yours to fill</small></div>
+        <span class="conf lo">0 found</span>
+      </div>
+      <b class="n" style="position:relative;left:300px;top:-38px">3</b>
+
+      <div class="lab">What it will never do</div>
+      <div class="scard">
+        <div class="srow"><span class="si r"><svg class="ic s"><use href="#i-close"/></svg></span>
+          <div class="l"><b>Upload your document anywhere</b><small>InfoDeck has no internet permission at all</small></div></div>
+        <div class="srow"><span class="si r"><svg class="ic s"><use href="#i-close"/></svg></span>
+          <div class="l"><b>Write anything without your tick</b><small>Every value is proposed, none applied</small></div></div>
+        <div class="srow"><span class="si r"><svg class="ic s"><use href="#i-close"/></svg></span>
+          <div class="l"><b>Change an existing card</b><small>Auto-fill runs on new cards only <i class="q">Q8</i></small></div>
+          <b class="n g" style="position:absolute;right:6px;top:6px">4</b></div>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="new">Progress, cancellable</td><td>Reading happens in the background; the file is already attached, so cancelling costs nothing</td></tr>
+    <tr><td class="sr">2</td><td class="del">Scanned PDFs</td><td>A scan has no text layer. Text recognition is a <b>separate opt-in</b> because it needs an extra component — see §C4 for the honest size and dependency cost <i class="q">Q9</i></td></tr>
+    <tr><td class="sr">3</td><td class="k">Empty result</td><td>Says so plainly and gets out of the way instead of proposing rubbish</td></tr>
+    <tr><td class="sr">4</td><td class="k">Three hard limits</td><td>No upload, no silent writes, new cards only</td></tr>
+  </table>
+</figure>
+
+<!-- S8 -->
+<figure>
+  <h3>S8 · Bottom bar becomes a drawer<small>feature 4</small></h3>
+  <div class="phone">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="tbar">
+      <div class="ib"><svg class="ic"><use href="#i-menu"/></svg><span class="bdg">1</span></div>
+      <div class="t"><b>InfoDeck</b><small>18 cards · 1 needs attention</small></div>
+      <div class="ib"><svg class="ic"><use href="#i-search"/></svg></div>
+      <div class="ib"><svg class="ic"><use href="#i-more"/></svg></div>
+      <b class="n" style="position:absolute;left:8px;bottom:-6px">1</b>
+    </div>
+    <div class="body">
+      <div class="dim" style="z-index:2"></div>
+      <div class="drawer">
+        <div class="head"><b>InfoDeck</b><small>18 cards · 5 categories · 9 tags</small></div>
+        <div class="items">
+          <div class="ditem on"><svg class="ic s"><use href="#i-home"/></svg>Home<span class="cnt err">1</span></div>
+          <div class="ditem"><svg class="ic s"><use href="#i-cal"/></svg>Upcoming<span class="cnt">9</span></div>
+          <div class="dsep"></div>
+          <div class="ditem"><svg class="ic s"><use href="#i-folder"/></svg>Categories<span class="cnt">5</span></div>
+          <div class="ditem"><svg class="ic s"><use href="#i-label"/></svg>Tags<span class="cnt">9</span></div>
+          <div class="dsep"></div>
+          <div class="ditem"><svg class="ic s"><use href="#i-gear"/></svg>Settings</div>
+          <div class="ditem"><svg class="ic s"><use href="#i-palette"/></svg>App icon</div>
+          <div class="ditem"><svg class="ic s"><use href="#i-bug"/></svg>Error logs<span class="cnt">0</span></div>
+          <b class="n" style="position:absolute;left:250px;top:230px">2</b>
+        </div>
+        <div style="padding:10px 16px 16px;font-size:10.5px;color:var(--hint)">InfoDeck 1.5 · 18-Aug-2026</div>
+      </div>
+
+      <div class="idc od"><div class="l"><div class="tt">Bike Insurance — ICICI Lombard</div>
+        <div class="kv">Policy Expiry <b>12-Oct-2025</b></div>
+        <div class="rw"><span class="chip cat">Insurance</span><span class="chip al">Alarm</span></div></div>
+        <div class="ring" style="background:conic-gradient(var(--err) 0 100%,#EEF1F6 0)"><div class="inner2"><b style="color:var(--err)">310</b><small>AGO</small></div></div></div>
+      <div class="idc"><div class="l"><div class="tt">Laptop Warranty — Dell XPS</div>
+        <div class="kv">Warranty End <b>07-Sep-2026</b></div>
+        <div class="rw"><span class="chip cat">Warranties</span><span class="chip alarm">Ring 25-Aug</span></div></div>
+        <div class="ring" style="background:conic-gradient(var(--warn) 0 78%,#EEF1F6 0)"><div class="inner2"><b style="color:var(--warn)">20</b><small>DAYS</small></div></div></div>
+      <div class="idc"><div class="l"><div class="tt">Car Insurance — HDFC Ergo</div>
+        <div class="kv">Policy Expiry <b>11-Oct-2026</b></div>
+        <div class="rw"><span class="chip cat">Insurance</span><span class="chip tg">Notify 11-Sep</span></div></div>
+        <div class="ring" style="background:conic-gradient(var(--ok) 0 42%,#EEF1F6 0)"><div class="inner2"><b style="color:var(--ok)">54</b><small>DAYS</small></div></div></div>
+
+      <div class="gain">50 dp of bottom bar returned to the list — one more card, on every screen</div>
+      <div class="fabmini" style="bottom:74px"><svg class="ic"><use href="#i-plus"/></svg></div>
+      <b class="n g" style="position:absolute;right:12px;bottom:44px;z-index:3">3</b>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="new">Hamburger, always in the bar</td><td>Replaces the 50 dp bottom bar. It carries the overdue badge, so the count you lose from the tab bar is still on screen. Swipe from the left edge opens it too</td></tr>
+    <tr><td class="sr">2</td><td class="new">More destinations than a bar allows</td><td>Home, Upcoming, Categories, Tags, Settings, App icon, Error logs — with counts. A three-tab bar could never hold these <i class="q">Q10</i></td></tr>
+    <tr><td class="sr">3</td><td class="new">50 dp back</td><td>Every screen gains a row. The trade: reaching Upcoming is now two taps instead of one <i class="q">Q11</i></td></tr>
+    <tr><td class="sr">4</td><td class="k">Editors</td><td>Unchanged — they show Cancel/Discard + Save and no drawer handle, since a swipe there would fight the form</td></tr>
+  </table>
+</figure>
+
+</div><!-- /frames -->
+
+<h2 class="sec">B · Specification</h2>
+
+<h3 class="sub">C1 · The three alert modes</h3>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Aspect</th><th>Notify</th><th>Ring</th><th>Alarm</th></tr>
+  <tr><td class="sr">1</td><td class="k">Feels like</td><td>a message</td><td>a phone ringing</td><td>a clock alarm</td></tr>
+  <tr><td class="sr">2</td><td class="k">Channel</td><td>Reminders (default importance)</td><td>Ring (high, custom sound)</td><td>Alarms (high, alarm usage)</td></tr>
+  <tr><td class="sr">3</td><td class="k">Sound</td><td>your channel setting</td><td>loops on the notification stream until Stop or the stop-after</td><td>loops on the <b>alarm</b> stream, ignores silent mode</td></tr>
+  <tr><td class="sr">4</td><td class="k">Screen</td><td>shade only</td><td>heads-up banner</td><td>full screen, wakes the device</td></tr>
+  <tr><td class="sr">5</td><td class="k">Scheduling</td><td><code>setExactAndAllowWhileIdle</code></td><td><code>setExactAndAllowWhileIdle</code></td><td><code>setAlarmClock</code> — Doze never delays it</td></tr>
+  <tr><td class="sr">6</td><td class="k">Do Not Disturb</td><td>silenced</td><td>silenced unless you grant DND access</td><td>heard — alarms are exempt</td></tr>
+  <tr><td class="sr">7</td><td class="k">Actions</td><td>Done · Snooze</td><td>Stop · Done · Snooze</td><td>Stop · Snooze only</td></tr>
+  <tr><td class="sr">8</td><td class="k">Storage</td><td colspan="3">One new column on the scheduler — <code>alertMode</code>. Existing schedulers become <b>Notify</b>, which is exactly how they behave today</td></tr>
+</table>
+
+<h3 class="sub">C2 · Android limits, stated plainly</h3>
+<div class="warn-box"><b>These are platform rules, not choices.</b> Every one of them is surfaced in the app rather than discovered when a reminder fails.</div>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Limit</th><th>What InfoDeck does</th></tr>
+  <tr><td class="sr">1</td><td class="k">Full-screen intent (Android 14+)</td><td>Needs a separate grant for apps that are not phone or clock apps. Without it, <b>Alarm degrades to Ring</b> — the Settings row says so, and the scheduler shows the fallback</td></tr>
+  <tr><td class="sr">2</td><td class="k">Exact alarms</td><td>Already handled since 1.1; Alarm mode additionally uses <code>setAlarmClock</code>, which is the strongest guarantee Android offers</td></tr>
+  <tr><td class="sr">3</td><td class="k">Looping sound</td><td>Ring and Alarm need a short-lived foreground service to keep the sound alive, with its own quiet "InfoDeck is ringing" notification. That is the price of a sound that does not get cut off</td></tr>
+  <tr><td class="sr">4</td><td class="k">Aggressive battery managers</td><td>Some phones kill background alarms. A row in Settings links straight to the manufacturer's battery screen</td></tr>
+  <tr><td class="sr">5</td><td class="k">New permissions</td><td><code>USE_FULL_SCREEN_INTENT</code>, <code>FOREGROUND_SERVICE</code>, <code>FOREGROUND_SERVICE_MEDIA_PLAYBACK</code>. Still <b>no INTERNET</b></td></tr>
+</table>
+
+<h3 class="sub">C3 · App icons</h3>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Point</th><th>Detail</th></tr>
+  <tr><td class="sr">1</td><td class="k">Four concepts</td><td>A Card stack · B Card in a countdown ring · C Folded document · D “iD” monogram</td></tr>
+  <tr><td class="sr">2</td><td class="k">Each ships three layers</td><td>Background, foreground, monochrome — so adaptive shapes and Android 13 themed icons both work</td></tr>
+  <tr><td class="sr">3</td><td class="k">Switching</td><td>One <code>activity-alias</code> per icon; picking one enables it and disables the rest</td></tr>
+  <tr><td class="sr">4</td><td class="k">Cost of switching</td><td>The launcher entry is recreated: a blink on some launchers, and a pinned shortcut can be lost. If that is not worth it, ship one icon and no switcher <i class="q">Q4</i></td></tr>
+</table>
+
+<h3 class="sub">C4 · Auto-fill — how it actually works, and what it costs</h3>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Format</th><th>How it is read</th><th>Cost</th><th>Reliability</th></tr>
+  <tr><td class="sr">1</td><td class="k">DOCX</td><td>A .docx is a zip; the text sits in <code>word/document.xml</code>. Parsed with the standard library</td><td class="rec">none — no new dependency</td><td class="rec">Very high</td></tr>
+  <tr><td class="sr">2</td><td class="k">PDF with real text</td><td>A PDF text-extraction library on device</td><td>≈ <b>6–10 MB</b> added to the APK <i class="q">Q12</i></td><td class="rec">High for digital policies, invoices, statements</td></tr>
+  <tr><td class="sr">3</td><td class="k">Scanned PDF or photo</td><td>Text recognition (OCR)</td><td class="del">Needs Google Play services text recognition; the first use may fetch a model, which is outside our own no-internet promise</td><td>Moderate — depends on the scan</td></tr>
+  <tr><td class="sr">4</td><td class="k">DOC (old Word)</td><td>Not supported for reading; it still attaches fine</td><td>—</td><td>—</td></tr>
+</table>
+<div class="idea-box"><b>My recommendation:</b> ship phase 1 — <b>DOCX + text PDFs</b>, entirely offline, no Play services, no new promise broken. Offer OCR later as an explicit opt-in with its own warning, or not at all <i class="q">Q9</i>.</div>
+
+<h3 class="sub">C5 · What the extractor looks for</h3>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Kind</th><th>Rules</th></tr>
+  <tr><td class="sr">1</td><td class="k">Dates</td><td>dd/mm/yyyy · dd-mm-yyyy · dd-MMM-yyyy · yyyy-mm-dd · “11 October 2026”. Day-first assumed (Indian documents), and any date that would be ambiguous is marked medium confidence</td></tr>
+  <tr><td class="sr">2</td><td class="k">Key date</td><td>Words near the date decide: expiry, valid upto, valid till, due, renewal, end date. A start/from date never wins the ★</td></tr>
+  <tr><td class="sr">3</td><td class="k">Labelled fields</td><td>“&lt;Label&gt; : &lt;value&gt;” and “&lt;Label&gt; No. &lt;value&gt;” patterns — Policy No, Regn No, Chassis, Engine, IMEI, Serial, Invoice, Account, Customer ID, Premium, Amount</td></tr>
+  <tr><td class="sr">4</td><td class="k">Label for the card</td><td>The strongest heading in the first page, trimmed to 60 characters</td></tr>
+  <tr><td class="sr">5</td><td class="k">Document type</td><td>insurance · warranty · invoice · identity · other — used only to choose which reminders to propose</td></tr>
+  <tr><td class="sr">6</td><td class="k">Proposed reminders</td><td>insurance/warranty → Notify 30 days before + Alarm on the day · invoice → Notify 3 days before due · identity → Notify 6 months before <i class="q">Q7</i></td></tr>
+  <tr><td class="sr">7</td><td class="k">Confidence</td><td>high = labelled and unambiguous · medium = pattern matched but the label was fuzzy · low = a bare value near a keyword. Only high is pre-ticked</td></tr>
+  <tr><td class="sr">8</td><td class="k">Ceiling</td><td>At most 8 data, 4 dates and 3 reminders proposed, so the sheet stays readable</td></tr>
+</table>
+
+<h3 class="sub">C6 · Drawer</h3>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Point</th><th>Detail</th></tr>
+  <tr><td class="sr">1</td><td class="k">Contents</td><td>Home · Upcoming — separator — Categories · Tags — separator — Settings · App icon · Error logs, each with its count</td></tr>
+  <tr><td class="sr">2</td><td class="k">Opens by</td><td>the hamburger, or a swipe from the left edge</td></tr>
+  <tr><td class="sr">3</td><td class="k">Badge</td><td>The overdue count moves onto the hamburger, so it is never hidden</td></tr>
+  <tr><td class="sr">4</td><td class="k">Gain</td><td>50 dp on every screen — the bottom bar is removed entirely</td></tr>
+  <tr><td class="sr">5</td><td class="k">Cost</td><td>Upcoming becomes two taps. If that annoys you within a week, the bar is a one-line switch back <i class="q">Q11</i></td></tr>
+  <tr><td class="sr">6</td><td class="k">Editors</td><td>No drawer handle while an editor or sheet is open</td></tr>
+</table>
+
+<h3 class="sub">C7 · Three companions</h3>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Item</th><th>Exception handling</th><th>Logger.e</th><th>Tests</th></tr>
+  <tr><td class="sr">1</td><td class="k">Alert modes</td><td>Unknown stored mode falls back to Notify; missing full-screen permission degrades Alarm to Ring; the sound service always stops itself on a timeout</td><td>logs the degrade, a failed sound start and any unknown mode</td><td>JUnit on mode → channel/stream/flags mapping, the degrade rule and the stop-after clamp; device checklist for all three under DND, silent and locked</td></tr>
+  <tr><td class="sr">2</td><td class="k">App icons</td><td>Alias switching is one transaction; a failure leaves the current icon enabled rather than none</td><td>logs a failed alias switch</td><td>JUnit that exactly one alias is enabled for any selection; device pass on three launchers</td></tr>
+  <tr><td class="sr">3</td><td class="k">Auto-fill</td><td>Extraction runs off the main thread with a hard timeout; a corrupt or encrypted file yields “could not read”, never a crash; proposals are capped; nothing is written without a tick</td><td>logs unreadable file, timeout, zero-result and every rejected proposal reason</td><td>JUnit on date parsing across all five formats, key-date selection, field patterns, confidence banding, the caps, and a fixture set of five sample documents</td></tr>
+  <tr><td class="sr">4</td><td class="k">Drawer</td><td>Unknown destination falls back to Home</td><td>logs the unknown destination</td><td>JUnit on the destination list and badge counts</td></tr>
+</table>
+
+<h2 class="sec">C · Open questions</h2>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Q</th><th>Question</th><th>Options</th><th>My recommendation</th></tr>
+  <tr><td class="sr">1</td><td class="q">Q1</td><td>Where the mode is set</td><td>(a) per scheduler &nbsp; (b) per card &nbsp; (c) one app-wide setting</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">2</td><td class="q">Q2</td><td>Alarm mode full screen</td><td>(a) full screen like a clock alarm &nbsp; (b) loud heads-up only</td><td class="rec">(a), degrading to (b) when the permission is refused</td></tr>
+  <tr><td class="sr">3</td><td class="q">Q3</td><td>Default mode for new schedulers</td><td>(a) Notify &nbsp; (b) Ring &nbsp; (c) ask each time</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">4</td><td class="q">Q4</td><td>In-app icon switcher</td><td>(a) yes, four icons &nbsp; (b) one icon only, no switcher</td><td class="rec">(a) — but (b) if a lost shortcut would annoy you</td></tr>
+  <tr><td class="sr">5</td><td class="q">Q5</td><td>Which icon is the default</td><td>(a) A card stack &nbsp; (b) B countdown ring &nbsp; (c) C document &nbsp; (d) D monogram</td><td class="rec">(b)</td></tr>
+  <tr><td class="sr">6</td><td class="q">Q6</td><td>Which proposals start ticked</td><td>(a) high only &nbsp; (b) high and medium &nbsp; (c) all</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">7</td><td class="q">Q7</td><td>Proposed reminders</td><td>(a) Notify 30 d + Alarm on the day &nbsp; (b) one Notify only &nbsp; (c) none, dates only</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">8</td><td class="q">Q8</td><td>Auto-fill on existing cards</td><td>(a) new cards only &nbsp; (b) also offer it when a file is added later</td><td class="rec">(a) for the first release, (b) next</td></tr>
+  <tr><td class="sr">9</td><td class="q">Q9</td><td>OCR for scanned PDFs</td><td>(a) not now &nbsp; (b) opt-in with a warning &nbsp; (c) yes, bundled (+ ~20 MB)</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">10</td><td class="q">Q10</td><td>Drawer contents</td><td>(a) as drawn &nbsp; (b) drop App icon and Error logs into Settings</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">11</td><td class="q">Q11</td><td>Drawer instead of the bar</td><td>(a) drawer only &nbsp; (b) keep both &nbsp; (c) a setting to choose</td><td class="rec">(a) — “both” is 50 dp for nothing</td></tr>
+  <tr><td class="sr">12</td><td class="q">Q12</td><td>APK growing by 6–10 MB for PDF reading</td><td>(a) accept &nbsp; (b) DOCX only, no PDF reading</td><td class="rec">(a) — PDFs are most of what you attach</td></tr>
+  <tr><td class="sr">13</td><td class="q">Q13</td><td><b>Your bug list stopped at 1</b></td><td>—</td><td class="rec">Send bug 2 if there is one</td></tr>
+  <tr><td class="sr">14</td><td class="q">Q14</td><td><b>Item “3.”</b> from five rounds ago</td><td>—</td><td class="rec">Still blank</td></tr>
+</table>
+
+<h2 class="sec">D · If accepted</h2>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Field</th><th>Value</th></tr>
+  <tr><td class="sr">1</td><td class="k">Queue</td><td>N46 alert modes · N47 app icons + switcher · N48 document auto-fill (DOCX + text PDF) · N49 drawer replaces the bottom bar</td></tr>
+  <tr><td class="sr">2</td><td class="k">Release</td><td><b>1.5</b>, versionCode <b>1005000</b>, <code>InfoDeck-1.5.apk</code></td></tr>
+  <tr><td class="sr">3</td><td class="k">Database</td><td><b>Schema 2 → 3</b>: one new column, <code>alertMode</code>, defaulting to NOTIFY. Additive migration, no data loss</td></tr>
+  <tr><td class="sr">4</td><td class="k">APK size</td><td>Grows by roughly 6–10 MB if PDF reading is included</td></tr>
+  <tr><td class="sr">5</td><td class="k">Still queued</td><td>Undo snackbars, Discard change-list, collapsing top bar, search buckets, density, dead-code sweep</td></tr>
+  <tr><td class="sr">6</td><td class="k">Trigger</td><td>Nothing is built until you say <b>build</b> / <b>release</b></td></tr>
+</table>
+
+</div>
+</body>
+</html>

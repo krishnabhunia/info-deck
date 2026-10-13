@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InfoDeck — v1.7 D1 design · four corrections</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100..900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#131A26; --ink2:#5A6675; --hint:#96A0AF;
+    --indigo:#3B5BDB; --indigo-c:#E8ECFD;
+    --teal:#0E9384; --teal-c:#DDF3F0;
+    --violet:#7A5AF8; --violet-c:#EEE9FE;
+    --green:#12A150; --green-c:#DFF5E8;
+    --amber:#B76E00; --amber-c:#FDF0DA;
+    --rose:#E5484D; --rose-c:#FDE7E8;
+    --purple:#9333EA; --purple-c:#F3E8FE;
+    --slate:#64748B; --slate-c:#EEF1F5;
+    --bg:#F6F8FC; --line:#E9EDF4; --outline:#C6CEDC;
+    --page:#E3E7F0; --tag:#22337F; --q:#7A5A00; --q-bg:#FFF3C4; --q-bd:#E2C35C;
+    --pri-d:#1E357F; --wa:#075E54; --wa-bg:#ECE5DD; --wa-out:#DCF8C6;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--page);font-family:Roboto,"Segoe UI",system-ui,sans-serif;color:var(--ink);padding:26px 18px 70px}
+  .wrap{max-width:1180px;margin:0 auto}
+  header.page h1{font-size:24px;font-weight:800;color:var(--pri-d)}
+  header.page p{font-size:13.5px;color:var(--ink2);margin-top:5px;line-height:1.55}
+  .stamp{display:inline-block;margin:10px 8px 0 0;font-size:12px;font-weight:700;color:#7A2E00;background:#FFE1CC;border:1px solid #E8B08C;border-radius:20px;padding:3px 12px}
+  .stamp.g{color:#22337F;background:var(--indigo-c);border-color:#B9C3F5}
+  .stamp.r{color:#8A1F19;background:var(--rose-c);border-color:#E7ADA8}
+  h2.sec{font-size:18px;font-weight:800;color:var(--pri-d);margin:38px 0 12px;padding-bottom:6px;border-bottom:2px solid #C9D1DD}
+  h3.sub{font-size:15px;color:var(--pri-d);margin-top:20px}
+  .rej-box{background:var(--rose-c);border:1px solid #E7ADA8;border-radius:10px;padding:12px 14px;font-size:13.5px;line-height:1.55;margin:10px 0 4px}
+  .rej-box b{color:#8A1F19}
+  .idea-box{background:var(--indigo-c);border:1px solid #B9C3F5;border-radius:10px;padding:12px 14px;font-size:13.5px;line-height:1.55;margin:10px 0 4px}
+  .idea-box b{color:var(--pri-d)}
+
+  table.tb{width:100%;border-collapse:collapse;font-size:12.5px;background:#fff;margin:6px 0 4px}
+  table.tb th{background:#E9EDF8;color:var(--pri-d);text-align:left;padding:6px 8px;border:1px solid #BFC9D8;font-size:12px}
+  table.tb td{padding:6px 8px;border:1px solid #D2D9E3;vertical-align:top;line-height:1.45}
+  table.tb .sr{width:1%;white-space:nowrap;text-align:center}
+  table.tb td.k{white-space:nowrap;font-weight:700;color:var(--tag)}
+  table.tb td.q{white-space:nowrap;font-weight:700;color:var(--q)}
+  table.tb td.rec{color:var(--green);font-weight:600}
+  table.tb td.new{white-space:nowrap;font-weight:700;color:var(--green)}
+  table.tb td.del{white-space:nowrap;font-weight:700;color:var(--rose)}
+  table.tb td.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+  table.tb tr:nth-child(even) td{background:#FAFBFD}
+  code{font-family:Consolas,Menlo,monospace;font-size:12px;background:#EEF1F5;padding:1px 4px;border-radius:3px}
+
+  .frames{display:grid;grid-template-columns:repeat(auto-fit,minmax(520px,1fr));gap:34px 28px;margin-top:14px}
+  figure{display:flex;flex-direction:column;align-items:center;gap:8px}
+  figure h3{font-size:15px;font-weight:800;color:var(--pri-d);align-self:flex-start}
+  figure h3 small{font-weight:500;color:var(--ink2);font-size:12.5px;margin-left:6px}
+  figure table.tb{font-size:12px}
+  figure.full{grid-column:1 / -1}
+  figure.full h3{align-self:center}
+  figure.full table.tb{max-width:900px}
+  .duo{display:flex;gap:26px;justify-content:center;flex-wrap:wrap}
+
+  b.n{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:8px;background:var(--tag);color:#fff;font-size:10px;font-weight:800;flex-shrink:0;font-style:normal}
+  b.n.d{background:var(--rose)}
+  b.n.g{background:var(--green)}
+  i.q{display:inline-flex;font-style:normal;font-size:10px;font-weight:800;color:var(--q);background:var(--q-bg);border:1px solid var(--q-bd);border-radius:9px;padding:1px 6px}
+
+  .phone{width:378px;height:790px;background:var(--bg);border:9px solid #12151C;border-radius:38px;overflow:hidden;position:relative;box-shadow:0 16px 38px rgba(20,30,50,.22);display:flex;flex-direction:column;flex-shrink:0}
+  .phone.sm{width:352px;height:640px}
+  .sb{height:22px;color:var(--ink2);font-size:10.5px;font-weight:700;display:flex;align-items:center;justify-content:space-between;padding:0 16px;flex-shrink:0;background:#fff}
+  .nbar{height:48px;background:#fff;display:flex;align-items:center;gap:2px;padding:0 6px 0 12px;flex-shrink:0}
+  .nbar b.t{font-size:16.5px;font-weight:800;letter-spacing:-.3px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .nbar .ib{width:38px;height:38px;border-radius:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .hair{height:3px;background:linear-gradient(90deg,var(--indigo),var(--violet) 45%,var(--teal));flex-shrink:0}
+  .ic{width:21px;height:21px;fill:currentColor;flex-shrink:0}
+  .ic.s{width:17px;height:17px}
+  .ic.xs{width:13px;height:13px}
+  .body{flex:1;overflow:hidden;position:relative;padding:8px 12px 0}
+
+  .idc{display:flex;gap:9px;align-items:center;background:#fff;border-radius:14px;padding:8px 11px;box-shadow:0 2px 7px rgba(25,40,80,.07);position:relative;border:1px solid var(--line)}
+  .idc .tile{width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff}
+  .idc .l{flex:1;min-width:0}
+  .idc .tt{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .idc .kv{font-size:11.5px;color:var(--ink2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .idc .kv b{color:var(--ink);font-weight:700}
+  .g-ind{background:linear-gradient(150deg,#5670E8,#3B5BDB)}
+  .g-tea{background:linear-gradient(150deg,#22B3A2,#0E9384)}
+  .g-amb{background:linear-gradient(150deg,#E9A13B,#B76E00)}
+  .g-ros{background:linear-gradient(150deg,#F0736F,#E5484D)}
+  .g-sky{background:linear-gradient(150deg,#38AEE8,#0284C7)}
+  .ring{width:38px;height:38px;border-radius:19px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+  .ring .in{width:30px;height:30px;border-radius:15px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .ring .in b{font-size:11px;font-weight:800;line-height:1}
+  .ring .in small{font-size:7px;font-weight:700;color:var(--ink2)}
+  .gap{display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:var(--rose);background:rgba(229,72,77,.10);border:1px dashed var(--rose);border-radius:3px;margin:0 60px}
+  .gap.ok{color:#0B6B36;background:rgba(18,161,80,.10);border-color:var(--green)}
+  .chev{width:18px;height:18px;color:var(--hint);flex-shrink:0}
+  .idc.open{flex-direction:column;align-items:stretch;gap:0;border:1.5px solid var(--indigo);box-shadow:0 6px 18px rgba(59,91,219,.16)}
+  .idc.open .top{display:flex;gap:9px;align-items:center}
+  .idc.open .det{margin-top:8px;padding-top:8px;border-top:1px solid var(--line)}
+  .kvline{display:flex;justify-content:space-between;font-size:12px;padding:3px 0}
+  .kvline span{color:var(--ink2)}
+  .kvline b{font-weight:700}
+  .chip{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:11px}
+  .c-ind{background:var(--indigo-c);color:var(--indigo)}
+  .c-amb{background:var(--amber-c);color:var(--amber)}
+  .c-pur{background:var(--purple-c);color:var(--purple)}
+  .qa{display:flex;gap:7px;margin-top:8px}
+  .qa span{flex:1;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;gap:5px;font-size:11px;font-weight:800;background:var(--slate-c);color:var(--ink2)}
+  .qa span.share{background:linear-gradient(140deg,#3CC272,#12A150);color:#fff}
+  .qa span .ic{width:14px;height:14px}
+  .bnav{position:absolute;left:0;right:0;bottom:0;height:58px;background:#fff;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-around}
+  .bnav .it{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;font-weight:800;color:var(--hint)}
+  .bnav .it .pill{width:56px;height:28px;border-radius:14px;display:flex;align-items:center;justify-content:center}
+  .bnav .it.on .pill{background:var(--indigo-c)}
+  .bnav .it.on{color:var(--indigo)}
+  .cnt{position:absolute;left:12px;right:12px;bottom:66px;background:var(--green-c);border:1px dashed var(--green);border-radius:9px;padding:5px;font-size:10.5px;font-weight:800;color:#0B6B36;text-align:center}
+  .strike{position:absolute;right:8px;top:8px;background:var(--rose);color:#fff;font-size:9px;font-weight:800;border-radius:8px;padding:2px 7px}
+
+  .dim{position:absolute;inset:0;background:rgba(12,18,30,.5);z-index:2}
+  .sheet{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:24px 24px 0 0;padding:10px 16px 0;max-height:95%;z-index:3}
+  .grab{width:36px;height:4px;border-radius:2px;background:#D3D9E4;margin:0 auto 12px}
+  .sheet h4{font-size:17px;font-weight:800;margin-bottom:6px;display:flex;align-items:center;gap:9px}
+  .lab{font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--indigo);margin:13px 0 7px 2px;display:flex;align-items:center;gap:6px}
+  .lab .r{margin-left:auto;text-transform:none;letter-spacing:0;font-size:11px;color:var(--ink2)}
+  .frow{display:flex;align-items:center;gap:11px;padding:8px 2px;border-bottom:1px solid var(--line);min-height:44px}
+  .frow:last-of-type{border-bottom:0}
+  .frow .l{flex:1;min-width:0}
+  .frow .l .k{font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--indigo)}
+  .frow .l .v{font-size:13.5px;font-weight:700;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .chk{width:20px;height:20px;border-radius:6px;border:2px solid var(--outline);flex-shrink:0}
+  .chk.on{background:var(--indigo);border-color:var(--indigo);display:flex;align-items:center;justify-content:center}
+  .chk.on .ic{width:13px;height:13px;color:#fff}
+  .sw{width:44px;height:24px;border-radius:12px;background:#CDD4E0;position:relative;flex-shrink:0}
+  .sw i{position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:9px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+  .prev{background:#0F1522;color:#D8E2F2;border-radius:12px;padding:10px 12px;font-family:Consolas,Menlo,monospace;font-size:10.5px;line-height:1.55;white-space:pre-wrap;position:relative}
+  .prev .plab{position:absolute;right:10px;top:7px;font-size:8.5px;font-weight:800;color:#7C89A3;letter-spacing:.06em;font-family:Roboto,sans-serif}
+  .btnrow{display:flex;gap:9px;margin-top:12px}
+  .abtn{flex:1;height:50px;border-radius:14px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:13.5px;font-weight:800}
+  .abtn.cancel{border:1.5px solid var(--outline);color:var(--ink2);background:#fff}
+  .abtn.go{background:linear-gradient(140deg,#3CC272,#12A150);color:#fff;flex:1.4}
+  .sbs{height:30px;margin:12px -16px 0;border-top:1px dashed #C9D1DD;display:flex;align-items:center;justify-content:center;font-size:10.5px;color:var(--hint)}
+
+  .wa .sb{background:var(--wa);color:#fff}
+  .wa .wabar{height:50px;background:var(--wa);color:#fff;display:flex;align-items:center;gap:10px;padding:0 12px;font-weight:700;font-size:14px}
+  .wa .wabar .av{width:32px;height:32px;border-radius:16px;background:#fff3;display:flex;align-items:center;justify-content:center;font-size:12px}
+  .wa .body{background:var(--wa-bg);padding:12px}
+  .bub{max-width:84%;background:var(--wa-out);border-radius:10px;padding:6px;font-size:12.5px;margin-bottom:8px;margin-left:auto;box-shadow:0 1px 1px rgba(0,0,0,.08);position:relative;white-space:normal}
+  .doc{display:flex;align-items:center;gap:8px;background:#fff;border-radius:8px;padding:8px;margin-bottom:4px}
+  .doc .fi{width:26px;height:32px;border-radius:5px;background:linear-gradient(160deg,#F0736F,#C0392F);color:#fff;font-size:7.5px;font-weight:800;display:flex;align-items:flex-end;justify-content:center;padding-bottom:3px;flex-shrink:0}
+  .doc .fi.d2{background:linear-gradient(160deg,#5A8AE0,#20509E)}
+  .doc b{display:block;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px}
+  .doc small{display:block;font-size:10px;color:#7A8A7C}
+  .bub .tm{display:block;text-align:right;font-size:9.5px;color:#7A8A7C;margin-top:2px;padding-right:4px}
+  .scard{background:#fff;border-radius:14px;box-shadow:0 2px 8px rgba(25,40,80,.07);overflow:hidden}
+  .srow{display:flex;align-items:center;gap:11px;padding:10px 12px;min-height:52px;border-bottom:1px solid var(--line)}
+  .srow:last-child{border-bottom:0}
+  .srow .tile{width:36px;height:36px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .srow .l{flex:1;min-width:0}
+  .srow .l b{display:block;font-size:13.5px;font-weight:700}
+  .srow .l small{display:block;font-size:11px;color:var(--ink2);margin-top:1px}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-search" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2V6a2 2 0 0 0-2-2zm0 16H5V9h14v11z"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.48.48 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1 1 12 8.4a3.6 3.6 0 0 1 0 7.2z"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 1 3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></symbol>
+  <symbol id="i-car" viewBox="0 0 24 24"><path d="M18.92 6.01A1.5 1.5 0 0 0 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm11 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zM5 11l1.5-4.5h11L19 11H5z"/></symbol>
+  <symbol id="i-laptop" viewBox="0 0 24 24"><path d="M20 18a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2H0v2h24v-2h-4zM4 6h16v10H4V6z"/></symbol>
+  <symbol id="i-id" viewBox="0 0 24 24"><path d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zM9 8a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zm4.5 9h-9v-.75c0-1.5 3-2.25 4.5-2.25s4.5.75 4.5 2.25V17zM19 15h-4v-2h4v2zm0-4h-4V9h4v2z"/></symbol>
+  <symbol id="i-wifi" viewBox="0 0 24 24"><path d="M1 9l2 2a12.73 12.73 0 0 1 18 0l2-2A15.57 15.57 0 0 0 1 9zm8 8 3 3 3-3a4.24 4.24 0 0 0-6 0zm-4-4 2 2a7.07 7.07 0 0 1 10 0l2-2a9.9 9.9 0 0 0-14 0z"/></symbol>
+  <symbol id="i-alarm" viewBox="0 0 24 24"><path d="M12.5 8H11v6l4.75 2.85.75-1.23-4-2.37V8zM12 4c-4.97 0-9 4.03-9 9s4.02 9 9 9 9-4.03 9-9-4.03-9-9-9zm0 16c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></symbol>
+  <symbol id="i-up" viewBox="0 0 24 24"><path d="M7.41 15.41 12 10.83l4.59 4.58L18 14l-6-6-6 6z"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M16.59 8.59 12 13.17 7.41 8.59 6 10l6 6 6-6z"/></symbol>
+  <symbol id="i-share" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 1 0-3-3c0 .24.04.47.09.7L8.04 9.81A2.99 2.99 0 0 0 3 12a3 3 0 0 0 5.04 2.19l7.12 4.16c-.05.21-.08.43-.08.65a2.92 2.92 0 1 0 2.92-2.92z"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></symbol>
+  <symbol id="i-open" viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></symbol>
+  <symbol id="i-tick" viewBox="0 0 24 24"><path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></symbol>
+</svg>
+
+<div class="wrap">
+<header class="page">
+  <h1>InfoDeck — v1.7 · D1 design</h1>
+  <p>Four corrections from 1.7 on your phone. <b>1)</b> the gap between cards shrinks; <b>2)</b> <b>Share</b> joins Open and Edit in the expanded row; <b>3)</b> the “Shared from InfoDeck” footer and its switch are <b>removed entirely</b>; <b>4)</b> shared files carry their <b>exact names</b>, never the random one the app stores them under. Mock date <b>Thu 10-Sep-2026</b>.</p>
+  <span class="stamp">DESIGN ONLY · nothing built · no version bump</span>
+  <span class="stamp g">Reply by tag: “S1 → 4 dp everywhere”, “Q2 → b”, or “defaults” = all recommended</span>
+</header>
+
+<div class="rej-box"><b>Root causes, checked in the 1.7 source.</b> Item 1: rows carry an 8 dp list gap <i>plus</i> a 7 dp spacer inside sections <i>plus</i> a 1 dp border each — about 16 dp of air between cards. Item 4: <code>FileStore</code> saves every attachment under a <code>UUID.randomUUID()</code> name, and the share URI points at that file, so WhatsApp shows <code>3f9c2a1e-….pdf</code> instead of <code>Policy document.pdf</code>. Item 3: the footer is wired through a preference; whatever misbehaved, you have asked for it gone, and gone is simpler.</div>
+
+<h2 class="sec">A · Screens</h2>
+<div class="frames">
+
+<!-- S1 -->
+<figure class="full">
+  <h3>S1 · The gap between cards<small>correction 1 · Comfortable density shown</small></h3>
+  <div class="duo">
+    <div class="phone sm">
+      <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+      <div class="nbar"><b class="t">1.7 today</b></div>
+      <div class="hair"></div>
+      <div class="body">
+        <div class="idc"><span class="tile g-ros"><svg class="ic s"><use href="#i-car"/></svg></span><div class="l"><div class="tt">Bike Insurance — ICICI Lombard</div><div class="kv">Policy Expiry <b>12-Oct-2025</b></div></div><div class="ring" style="background:conic-gradient(var(--rose) 0 100%,#EEF1F6 0)"><div class="in"><b style="color:var(--rose)">310</b><small>AGO</small></div></div></div>
+        <div class="gap" style="height:16px">16 dp of air</div>
+        <div class="idc"><span class="tile g-amb"><svg class="ic s"><use href="#i-laptop"/></svg></span><div class="l"><div class="tt">Laptop Warranty — Dell XPS</div><div class="kv">Warranty End <b>07-Sep-2026</b></div></div><div class="ring" style="background:conic-gradient(var(--amber) 0 78%,#EEF1F6 0)"><div class="in"><b style="color:var(--amber)">20</b><small>DAYS</small></div></div></div>
+        <div class="gap" style="height:16px">16 dp</div>
+        <div class="idc"><span class="tile g-ind"><svg class="ic s"><use href="#i-car"/></svg></span><div class="l"><div class="tt">Car Insurance — HDFC Ergo</div><div class="kv">Policy Expiry <b>11-Oct-2026</b></div></div><div class="ring" style="background:conic-gradient(var(--green) 0 42%,#EEF1F6 0)"><div class="in"><b style="color:var(--green)">54</b><small>DAYS</small></div></div></div>
+        <div class="gap" style="height:16px">16 dp</div>
+        <div class="idc"><span class="tile g-ind"><svg class="ic s"><use href="#i-shield"/></svg></span><div class="l"><div class="tt">Health Insurance — Star</div><div class="kv">Policy Expiry <b>28-Feb-2027</b></div></div><div class="ring" style="background:conic-gradient(var(--green) 0 18%,#EEF1F6 0)"><div class="in"><b style="color:var(--green)">194</b><small>DAYS</small></div></div></div>
+        <div class="gap" style="height:16px">16 dp</div>
+        <div class="idc"><span class="tile g-tea"><svg class="ic s"><use href="#i-id"/></svg></span><div class="l"><div class="tt">Passport — K. D. Bhunia</div><div class="kv">Expiry <b>25-Aug-2027</b></div></div><div class="ring" style="background:conic-gradient(var(--green) 0 12%,#EEF1F6 0)"><div class="in"><b style="color:var(--green)">372</b><small>DAYS</small></div></div></div>
+        <b class="n d" style="position:absolute;left:14px;top:88px">1</b>
+        <div class="cnt">5 cards before the fold</div>
+        <div class="bnav"><div class="it on"><span class="pill"><svg class="ic s"><use href="#i-home"/></svg></span>Home</div><div class="it"><span class="pill"><svg class="ic s" style="color:var(--amber)"><use href="#i-cal"/></svg></span>Upcoming</div><div class="it"><span class="pill"><svg class="ic s" style="color:var(--teal)"><use href="#i-gear"/></svg></span>Settings</div></div>
+      </div>
+    </div>
+
+    <div class="phone sm">
+      <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+      <div class="nbar"><b class="t">Proposed</b></div>
+      <div class="hair"></div>
+      <div class="body">
+        <div class="idc"><span class="tile g-ros"><svg class="ic s"><use href="#i-car"/></svg></span><div class="l"><div class="tt">Bike Insurance — ICICI Lombard</div><div class="kv">Policy Expiry <b>12-Oct-2025</b></div></div><div class="ring" style="background:conic-gradient(var(--rose) 0 100%,#EEF1F6 0)"><div class="in"><b style="color:var(--rose)">310</b><small>AGO</small></div></div></div>
+        <div class="gap ok" style="height:6px">6</div>
+        <div class="idc"><span class="tile g-amb"><svg class="ic s"><use href="#i-laptop"/></svg></span><div class="l"><div class="tt">Laptop Warranty — Dell XPS</div><div class="kv">Warranty End <b>07-Sep-2026</b></div></div><div class="ring" style="background:conic-gradient(var(--amber) 0 78%,#EEF1F6 0)"><div class="in"><b style="color:var(--amber)">20</b><small>DAYS</small></div></div></div>
+        <div class="gap ok" style="height:6px">6</div>
+        <div class="idc"><span class="tile g-ind"><svg class="ic s"><use href="#i-car"/></svg></span><div class="l"><div class="tt">Car Insurance — HDFC Ergo</div><div class="kv">Policy Expiry <b>11-Oct-2026</b></div></div><div class="ring" style="background:conic-gradient(var(--green) 0 42%,#EEF1F6 0)"><div class="in"><b style="color:var(--green)">54</b><small>DAYS</small></div></div></div>
+        <div class="gap ok" style="height:6px">6</div>
+        <div class="idc"><span class="tile g-ind"><svg class="ic s"><use href="#i-shield"/></svg></span><div class="l"><div class="tt">Health Insurance — Star</div><div class="kv">Policy Expiry <b>28-Feb-2027</b></div></div><div class="ring" style="background:conic-gradient(var(--green) 0 18%,#EEF1F6 0)"><div class="in"><b style="color:var(--green)">194</b><small>DAYS</small></div></div></div>
+        <div class="gap ok" style="height:6px">6</div>
+        <div class="idc"><span class="tile g-tea"><svg class="ic s"><use href="#i-id"/></svg></span><div class="l"><div class="tt">Passport — K. D. Bhunia</div><div class="kv">Expiry <b>25-Aug-2027</b></div></div><div class="ring" style="background:conic-gradient(var(--green) 0 12%,#EEF1F6 0)"><div class="in"><b style="color:var(--green)">372</b><small>DAYS</small></div></div></div>
+        <div class="gap ok" style="height:6px">6</div>
+        <div class="idc"><span class="tile g-tea"><svg class="ic s"><use href="#i-id"/></svg></span><div class="l"><div class="tt">Driving Licence</div><div class="kv">Valid Till <b>02-May-2028</b></div></div><div class="ring" style="background:conic-gradient(var(--green) 0 8%,#EEF1F6 0)"><div class="in"><b style="color:var(--green)">610</b><small>DAYS</small></div></div></div>
+        <div class="gap ok" style="height:6px">6</div>
+        <div class="idc"><span class="tile g-sky"><svg class="ic s"><use href="#i-wifi"/></svg></span><div class="l"><div class="tt">Wi-Fi Password — Home</div><div class="kv">Network <b>Bhunia_5G</b></div></div><div class="ring" style="background:#EEF1F6"><div class="in"><b style="color:var(--hint)">—</b></div></div></div>
+        <b class="n g" style="position:absolute;left:14px;top:88px">2</b>
+        <div class="cnt">7 cards before the fold</div>
+        <div class="bnav"><div class="it on"><span class="pill"><svg class="ic s"><use href="#i-home"/></svg></span>Home</div><div class="it"><span class="pill"><svg class="ic s" style="color:var(--amber)"><use href="#i-cal"/></svg></span>Upcoming</div><div class="it"><span class="pill"><svg class="ic s" style="color:var(--teal)"><use href="#i-gear"/></svg></span>Settings</div></div>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="del">Where 16 dp came from</td><td>8 dp list spacing + a 7 dp spacer inside every section + 1 dp of border on each card — three separate settings that all added up</td></tr>
+    <tr><td class="sr">2</td><td class="new">One number</td><td><b>6 dp</b> between cards at Comfortable and Detailed, <b>4 dp</b> at Compact — set in one place so it can never drift apart again <i class="q">Q1</i></td></tr>
+    <tr><td class="sr">3</td><td class="k">Two more cards</td><td>Same density, same text size, 7 cards where there were 5</td></tr>
+    <tr><td class="sr">4</td><td class="k">Sections</td><td>The gap between a section header and its first card, and between two sections, drops to 8 dp for the same reason</td></tr>
+  </table>
+</figure>
+
+<!-- S2 -->
+<figure>
+  <h3>S2 · Open · Edit · Share<small>correction 2 · the expanded row</small></h3>
+  <div class="phone" style="height:700px">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="nbar"><b class="t">InfoDeck</b><span class="ib" style="background:var(--indigo-c);color:var(--indigo)"><svg class="ic s"><use href="#i-search"/></svg></span></div>
+    <div class="hair"></div>
+    <div class="body">
+      <div class="idc"><span class="tile g-amb"><svg class="ic s"><use href="#i-laptop"/></svg></span><div class="l"><div class="tt">Laptop Warranty — Dell XPS</div><div class="kv">Warranty End <b>07-Sep-2026</b></div></div><div class="ring" style="background:conic-gradient(var(--amber) 0 78%,#EEF1F6 0)"><div class="in"><b style="color:var(--amber)">20</b><small>DAYS</small></div></div><svg class="chev"><use href="#i-down"/></svg></div>
+      <div style="height:6px"></div>
+      <div class="idc open">
+        <div class="top">
+          <span class="tile g-ind"><svg class="ic s"><use href="#i-car"/></svg></span>
+          <div class="l"><div class="tt">Car Insurance — HDFC Ergo</div><div class="kv">Policy Expiry <b>11-Oct-2026</b></div></div>
+          <div class="ring" style="background:conic-gradient(var(--green) 0 42%,#EEF1F6 0)"><div class="in"><b style="color:var(--green)">54</b><small>DAYS</small></div></div>
+          <svg class="chev" style="color:var(--indigo)"><use href="#i-up"/></svg>
+        </div>
+        <div class="det">
+          <div style="display:flex;gap:5px;margin-bottom:6px"><span class="chip c-ind"><svg class="ic xs"><use href="#i-shield"/></svg>Insurance</span><span class="chip c-amb"><svg class="ic xs"><use href="#i-alarm"/></svg>Notify 11-Sep</span><span class="chip c-pur"><svg class="ic xs"><use href="#i-file"/></svg>1 file</span></div>
+          <div class="kvline"><span>Policy No</span><b>HD-2291-KX-2026</b></div>
+          <div class="kvline"><span>Registration</span><b>WB 24 AB 1234</b></div>
+          <div class="kvline"><span>Garage</span><b>Barrackpore Motors</b></div>
+          <div class="qa">
+            <span><svg class="ic"><use href="#i-open"/></svg>Open</span>
+            <span><svg class="ic"><use href="#i-edit"/></svg>Edit</span>
+            <span class="share"><svg class="ic"><use href="#i-share"/></svg>Share</span>
+          </div>
+        </div>
+        <b class="n g" style="position:absolute;right:-4px;bottom:44px">1</b>
+        <b class="n" style="position:absolute;left:-4px;bottom:100px">2</b>
+      </div>
+      <div style="height:6px"></div>
+      <div class="idc"><span class="tile g-ind"><svg class="ic s"><use href="#i-shield"/></svg></span><div class="l"><div class="tt">Health Insurance — Star</div><div class="kv">Policy Expiry <b>28-Feb-2027</b></div></div><div class="ring" style="background:conic-gradient(var(--green) 0 18%,#EEF1F6 0)"><div class="in"><b style="color:var(--green)">194</b><small>DAYS</small></div></div><svg class="chev"><use href="#i-down"/></svg></div>
+
+      <div class="lab" style="margin-top:14px">What Share does from here</div>
+      <div class="scard">
+        <div class="srow"><span class="tile" style="background:var(--green-c);color:var(--green)"><svg class="ic s"><use href="#i-share"/></svg></span>
+          <div class="l"><b>Opens the same “What to share” sheet</b><small>right on Home — fields, files, preview, then Send with</small></div>
+          <b class="n" style="position:absolute;right:12px;top:6px">3</b></div>
+        <div class="srow"><span class="tile" style="background:var(--slate-c);color:var(--slate)"><svg class="ic s"><use href="#i-open"/></svg></span>
+          <div class="l"><b>You never leave the list</b><small>the row stays open behind the sheet</small></div></div>
+      </div>
+      <div class="bnav"><div class="it on"><span class="pill"><svg class="ic s"><use href="#i-home"/></svg></span>Home</div><div class="it"><span class="pill"><svg class="ic s" style="color:var(--amber)"><use href="#i-cal"/></svg></span>Upcoming</div><div class="it"><span class="pill"><svg class="ic s" style="color:var(--teal)"><use href="#i-gear"/></svg></span>Settings</div></div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="new">Share, green and filled</td><td>Third button, same size as Open and Edit; green because green is share everywhere in the app</td></tr>
+    <tr><td class="sr">2</td><td class="new">Three values, as designed</td><td>1.7 showed one — the Home row model only carried the first value. The repository now hands the row its first three data variables, so this also closes that gap <i class="q">Q2</i></td></tr>
+    <tr><td class="sr">3</td><td class="k">Same sheets, moved up</td><td>The picker and Send-with sheets already exist on the card view; they open on Home for the expanded card. The two-step file send works from here too</td></tr>
+  </table>
+</figure>
+
+<!-- S3 -->
+<figure>
+  <h3>S3 · Footer gone, everywhere<small>correction 3</small></h3>
+  <div class="phone" style="height:820px">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="nbar"><b class="t">Car Insurance — HDFC Ergo</b><span class="ib" style="background:var(--green-c);color:var(--green)"><svg class="ic s"><use href="#i-share"/></svg></span></div>
+    <div class="hair"></div>
+    <div class="body"><div class="dim"></div>
+      <div class="sheet">
+        <div class="grab"></div>
+        <h4><svg class="ic" style="color:var(--green)"><use href="#i-share"/></svg>What to share</h4>
+        <div class="lab">Data <span class="r">2 of 3</span></div>
+        <div class="frow"><span class="chk on"><svg class="ic"><use href="#i-tick"/></svg></span><div class="l"><div class="k">Policy No</div><div class="v">HD-2291-KX-2026</div></div></div>
+        <div class="frow"><span class="chk on"><svg class="ic"><use href="#i-tick"/></svg></span><div class="l"><div class="k">Registration</div><div class="v">WB 24 AB 1234</div></div></div>
+        <div class="lab">Dates</div>
+        <div class="frow"><span class="chk on"><svg class="ic"><use href="#i-tick"/></svg></span><div class="l"><div class="k">Policy Expiry ★</div><div class="v">11-Oct-2026</div></div></div>
+
+        <div class="lab" style="color:var(--rose)">Removed — was here in 1.7</div>
+        <div class="frow" style="opacity:.45;position:relative"><div class="l"><div class="v" style="font-size:13px">Add “Shared from InfoDeck”</div><div style="font-size:11px;color:var(--ink2)">One line at the end of the message</div></div><span class="sw"><i></i></span><span class="strike">removed</span>
+          <b class="n d" style="position:absolute;left:-4px;top:-4px">1</b></div>
+
+        <div class="lab">Preview</div>
+        <div class="prev"><span class="plab">MESSAGE</span>Car Insurance — HDFC Ergo
+
+Policy No: HD-2291-KX-2026
+Registration: WB 24 AB 1234
+Policy Expiry: 11-Oct-2026<b class="n g" style="position:absolute;right:6px;bottom:6px">2</b></div>
+
+        <div class="btnrow">
+          <span class="abtn cancel"><svg class="ic"><use href="#i-close"/></svg>Cancel</span>
+          <span class="abtn go"><svg class="ic"><use href="#i-share"/></svg>Next</span>
+        </div>
+        <div class="sbs">bottom clearance = max(25 % screen height, nav bar + 24 dp)</div>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="del">The switch goes</td><td>And with it the preference behind it, the “Options” heading it lived under, and the footer constant in the text builder. Not hidden — deleted</td></tr>
+    <tr><td class="sr">2</td><td class="new">The message ends on your last field</td><td>No trailing blank line, no signature, in text shares, in Copy, in the .txt export and in the QR block alike</td></tr>
+    <tr><td class="sr">3</td><td class="k">Also gone</td><td>The queued Settings ▸ Sharing row for it — nothing left to mirror</td></tr>
+  </table>
+</figure>
+
+<!-- S4 -->
+<figure class="full">
+  <h3>S4 · Exact file names when sharing<small>correction 4</small></h3>
+  <div class="duo">
+    <div class="phone wa" style="height:520px">
+      <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+      <div class="wabar"><span class="av">S</span>Sourav · 1.7 today</div>
+      <div class="body">
+        <div class="bub">
+          <div class="doc"><span class="fi">PDF</span><div><b>3f9c2a1e-7b44-4c0d-9e1a-2f6d8c5b1a90.pdf</b><small>1.8 MB · PDF</small></div></div>
+          <div class="doc"><span class="fi d2">DOC</span><div><b>a81d0c77-15e2-4b3f-8d6a-0c9e4f2b7e11.docx</b><small>2.3 MB · DOCX</small></div></div>
+          <span class="tm">09:41 ✓✓</span>
+          <b class="n d" style="position:absolute;left:-8px;top:-8px">1</b>
+        </div>
+      </div>
+    </div>
+    <div class="phone wa" style="height:520px">
+      <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+      <div class="wabar"><span class="av">S</span>Sourav · proposed</div>
+      <div class="body">
+        <div class="bub">
+          <div class="doc"><span class="fi">PDF</span><div><b>Policy document.pdf</b><small>1.8 MB · PDF</small></div></div>
+          <div class="doc"><span class="fi d2">DOC</span><div><b>Claim form.docx</b><small>2.3 MB · DOCX</small></div></div>
+          <span class="tm">09:41 ✓✓</span>
+          <b class="n g" style="position:absolute;left:-8px;top:-8px">2</b>
+        </div>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="del">Why a random name</td><td>InfoDeck stores every attachment under a UUID so two files with the same name can never collide on disk. The share URI pointed at that stored file, and receiving apps show whatever name the URI carries</td></tr>
+    <tr><td class="sr">2</td><td class="new">The name you gave it</td><td>Before sharing, the file is copied into a short-lived share folder <b>under its exact display name</b>, and that copy is what travels. Same bytes, right name, every app <i class="q">Q3</i></td></tr>
+    <tr><td class="sr">3</td><td class="k">Applies everywhere</td><td>Per-file Share pill, the two-step follow-up send, mail attachments, the chooser — one helper, so there is one place for it to be right</td></tr>
+    <tr><td class="sr">4</td><td class="k">Cleanup</td><td>The share folder is emptied when the share returns and swept on every app start, so copies never accumulate</td></tr>
+    <tr><td class="sr">5</td><td class="k">Rename in the app</td><td>Renaming a file on the card renames what the receiver sees — because the display name is what gets copied</td></tr>
+  </table>
+</figure>
+
+</div><!-- /frames -->
+
+<h2 class="sec">B · Specification</h2>
+
+<h3 class="sub">C1 · Gap</h3>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Between</th><th>1.7</th><th>Proposed</th></tr>
+  <tr><td class="sr">1</td><td class="k">Card and card, Comfortable / Detailed</td><td>8 + 7 + 1 ≈ 16 dp</td><td class="rec"><b>6 dp</b></td></tr>
+  <tr><td class="sr">2</td><td class="k">Card and card, Compact</td><td>8 + 5 + 1 ≈ 14 dp</td><td class="rec"><b>4 dp</b></td></tr>
+  <tr><td class="sr">3</td><td class="k">Section header and first card</td><td>~14 dp</td><td class="rec">8 dp</td></tr>
+  <tr><td class="sr">4</td><td class="k">Section and next section</td><td>~16 dp</td><td class="rec">8 dp</td></tr>
+  <tr><td class="sr">5</td><td class="k">Where it is set</td><td>three places</td><td class="rec">one value per density, next to the row height</td></tr>
+</table>
+
+<h3 class="sub">C2 · Share from the row</h3>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Rule</th><th>Detail</th></tr>
+  <tr><td class="sr">1</td><td class="k">Buttons</td><td>Open · Edit · <b>Share</b>, equal width, 34 dp; Share green-filled</td></tr>
+  <tr><td class="sr">2</td><td class="k">What opens</td><td>The existing “What to share” sheet, then “Send with”, hosted on Home for that card; the two-step file send and the follow-up snackbar work from Home too</td></tr>
+  <tr><td class="sr">3</td><td class="k">Three values</td><td>The row model gains <code>dataPreview</code> — the first three data variables — so the expansion finally matches its design</td></tr>
+</table>
+
+<h3 class="sub">C3 · Footer removal</h3>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Piece</th><th>Fate</th></tr>
+  <tr><td class="sr">1</td><td class="del">Switch in the picker + “Options” heading</td><td>deleted</td></tr>
+  <tr><td class="sr">2</td><td class="del">Preference <code>share_footer</code> and its setter</td><td>deleted; an old stored value is ignored</td></tr>
+  <tr><td class="sr">3</td><td class="del"><code>ShareText.FOOTER</code> and the <code>footer</code> parameter</td><td>deleted from the builder; message ends on the last field</td></tr>
+  <tr><td class="sr">4</td><td class="del">Queued Settings ▸ Sharing row</td><td>dropped from the queue</td></tr>
+  <tr><td class="sr">5</td><td class="k">Tests</td><td>The two footer tests are replaced by one: the output never contains the phrase</td></tr>
+</table>
+
+<h3 class="sub">C4 · Exact names</h3>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Rule</th><th>Detail</th></tr>
+  <tr><td class="sr">1</td><td class="k">Storage unchanged</td><td>Files stay under their UUID on disk — that is what keeps two “Policy document.pdf” apart</td></tr>
+  <tr><td class="sr">2</td><td class="k">Share copy</td><td><code>cache/share/&lt;displayName&gt;</code>, written just before the intent; a name clash within one share gets “ (1)” as the zip entries already do</td></tr>
+  <tr><td class="sr">3</td><td class="k">Name safety</td><td>Characters a filesystem refuses are replaced with “_”; the extension is preserved so the type is still right</td></tr>
+  <tr><td class="sr">4</td><td class="k">One helper</td><td><code>ShareFiles.prepare(files)</code> feeds the pill, the follow-up send, mail and the chooser</td></tr>
+  <tr><td class="sr">5</td><td class="k">Cleanup</td><td>Emptied when the share returns; swept at app start; a failed copy falls back to the stored file with a logged note rather than a failed share</td></tr>
+</table>
+
+<h3 class="sub">C5 · Three companions</h3>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Item</th><th>Exception handling</th><th>Logger.e</th><th>Tests</th></tr>
+  <tr><td class="sr">1</td><td class="k">Gap</td><td>Read from the density table; no separate constants left to disagree</td><td>—</td><td>JUnit that each density yields one gap value and Compact is the smallest</td></tr>
+  <tr><td class="sr">2</td><td class="k">Share from the row</td><td>Sheet opens only for a card that is still visible; the pending-files state is scoped to the Home screen and cleared on leaving</td><td>logs a share started for a vanished card</td><td>JUnit on the three-value preview and the pending-files lifecycle on Home</td></tr>
+  <tr><td class="sr">3</td><td class="k">Footer removal</td><td>—</td><td>—</td><td>JUnit that no share, copy, export or QR text ever contains “Shared from InfoDeck”</td></tr>
+  <tr><td class="sr">4</td><td class="k">Exact names</td><td>Copy failure → fall back to the stored file, logged; name sanitised; clashes suffixed; cleanup never throws</td><td>logs a failed copy, an unsanitisable name, a failed sweep</td><td>JUnit on name sanitising, extension preservation, clash suffixing; device check that WhatsApp shows the display name</td></tr>
+</table>
+
+<h2 class="sec">C · Open questions</h2>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Q</th><th>Question</th><th>Options</th><th>My recommendation</th></tr>
+  <tr><td class="sr">1</td><td class="q">Q1</td><td>Gap size</td><td>(a) 6 dp, 4 dp at Compact &nbsp; (b) 4 dp everywhere &nbsp; (c) 8 dp everywhere</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">2</td><td class="q">Q2</td><td>Values in the expanded row</td><td>(a) three &nbsp; (b) all of them &nbsp; (c) one, as 1.7</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">3</td><td class="q">Q3</td><td>Exact-name mechanism</td><td>(a) copy under the display name before sharing &nbsp; (b) rename the stored file to the display name permanently</td><td class="rec">(a) — (b) reintroduces the collision the UUID was there to prevent</td></tr>
+  <tr><td class="sr">4</td><td class="q">Q4</td><td>Share from Compact rows too</td><td>(a) only when expanded &nbsp; (b) also a long-press option</td><td class="rec">(a)</td></tr>
+</table>
+
+<h2 class="sec">D · If accepted</h2>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Field</th><th>Value</th></tr>
+  <tr><td class="sr">1</td><td class="k">Queue</td><td>B7 card gap · B8 Share in the expanded row + three values · B9 footer removed entirely · B10 exact file names when sharing</td></tr>
+  <tr><td class="sr">2</td><td class="k">Release</td><td><b>1.8</b>, versionCode <b>1008000</b>, <code>InfoDeck-1.8.apk</code></td></tr>
+  <tr><td class="sr">3</td><td class="k">Database</td><td>No schema change</td></tr>
+  <tr><td class="sr">4</td><td class="k">Trigger</td><td>Nothing is built until you say <b>build</b> / <b>release</b></td></tr>
+</table>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InfoDeck — v1.4 D2 design · sharing, field picker, QR codes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100..900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#131A26; --ink2:#5A6675; --hint:#96A0AF;
+    --pri:#2F4FCD; --pri-2:#5A6BF0; --pri-3:#7A5AF8; --pri-d:#1E357F;
+    --pri-c:#E7EBFF; --on-pri-c:#22337F;
+    --ok:#1E8E5A; --ok-c:#E3F5EC;
+    --warn:#A9700D; --warn-c:#FDF2DC;
+    --err:#C0392F; --err-c:#FCEAE8;
+    --bg:#F5F7FB; --card:#FFFFFF; --line:#E6EAF2; --outline:#C3CBDA;
+    --page:#E3E7F0; --tag:#22337F; --q:#7A5A00; --q-bg:#FFF3C4; --q-bd:#E2C35C;
+    --wa:#25D366; --gm:#EA4335; --sms:#1E88E5; --mail:#546E7A; --txt:#6A6F7A;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--page);font-family:Roboto,"Segoe UI",system-ui,-apple-system,sans-serif;color:var(--ink);padding:26px 18px 70px}
+  .wrap{max-width:1180px;margin:0 auto}
+  header.page h1{font-size:24px;font-weight:800;color:var(--pri-d)}
+  header.page p{font-size:13.5px;color:var(--ink2);margin-top:5px;line-height:1.55}
+  .stamp{display:inline-block;margin:10px 8px 0 0;font-size:12px;font-weight:700;color:#7A2E00;background:#FFE1CC;border:1px solid #E8B08C;border-radius:20px;padding:3px 12px}
+  .stamp.g{color:var(--on-pri-c);background:var(--pri-c);border-color:#B9C3F5}
+  .stamp.r{color:#8A1F19;background:var(--err-c);border-color:#E7ADA8}
+  h2.sec{font-size:18px;font-weight:800;color:var(--pri-d);margin:38px 0 12px;padding-bottom:6px;border-bottom:2px solid #C9D1DD}
+  h3.sub{font-size:15px;color:var(--pri-d);margin-top:20px}
+  .warn-box{background:#FFF6E5;border:1px solid #E8C98C;border-radius:10px;padding:12px 14px;font-size:13.5px;line-height:1.55;margin:10px 0 4px}
+  .warn-box b{color:#7A4A00}
+  .idea-box{background:#EEF2FF;border:1px solid #B9C3F5;border-radius:10px;padding:12px 14px;font-size:13.5px;line-height:1.55;margin:10px 0 4px}
+  .idea-box b{color:var(--pri-d)}
+  .rej-box{background:var(--err-c);border:1px solid #E7ADA8;border-radius:10px;padding:12px 14px;font-size:13.5px;line-height:1.55;margin:10px 0 4px}
+  .rej-box b{color:#8A1F19}
+
+  table.tb{width:100%;border-collapse:collapse;font-size:12.5px;background:#fff;margin:6px 0 4px}
+  table.tb th{background:#E9EDF8;color:var(--pri-d);text-align:left;padding:6px 8px;border:1px solid #BFC9D8;font-size:12px}
+  table.tb td{padding:6px 8px;border:1px solid #D2D9E3;vertical-align:top;line-height:1.45}
+  table.tb .sr{width:1%;white-space:nowrap;text-align:center}
+  table.tb td.k{white-space:nowrap;font-weight:700;color:var(--tag)}
+  table.tb td.q{white-space:nowrap;font-weight:700;color:var(--q)}
+  table.tb td.rec{color:var(--ok);font-weight:600}
+  table.tb td.new{white-space:nowrap;font-weight:700;color:var(--ok)}
+  table.tb td.del{white-space:nowrap;font-weight:700;color:var(--err)}
+  table.tb tr:nth-child(even) td{background:#FAFBFD}
+  code{font-family:Consolas,Menlo,monospace;font-size:12px;background:#EEF1F5;padding:1px 4px;border-radius:3px}
+  pre.txt{background:#0F1522;color:#D8E2F2;border-radius:10px;padding:12px 14px;font-family:Consolas,Menlo,monospace;font-size:11.5px;line-height:1.6;overflow:auto;margin:8px 0}
+
+  .frames{display:grid;grid-template-columns:repeat(auto-fit,minmax(520px,1fr));gap:34px 28px;margin-top:14px}
+  figure{display:flex;flex-direction:column;align-items:center;gap:8px}
+  figure h3{font-size:15px;font-weight:800;color:var(--pri-d);align-self:flex-start}
+  figure h3 small{font-weight:500;color:var(--ink2);font-size:12.5px;margin-left:6px}
+  figure table.tb{font-size:12px}
+  figure.full{grid-column:1 / -1}
+  figure.full h3{align-self:center}
+  figure.full table.tb{max-width:880px}
+  .duo{display:flex;gap:26px;justify-content:center;flex-wrap:wrap}
+
+  b.n{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:8px;background:var(--tag);color:#fff;font-size:10px;font-weight:800;line-height:1;flex-shrink:0;font-style:normal}
+  b.n.d{background:var(--err)}
+  b.n.g{background:var(--ok)}
+  i.q{display:inline-flex;align-items:center;font-style:normal;font-size:10px;font-weight:800;color:var(--q);background:var(--q-bg);border:1px solid var(--q-bd);border-radius:9px;padding:1px 6px;line-height:1.3}
+
+  .phone{width:378px;height:790px;background:var(--bg);border:9px solid #12151C;border-radius:38px;overflow:hidden;position:relative;box-shadow:0 16px 38px rgba(20,30,50,.22);display:flex;flex-direction:column;flex-shrink:0}
+  .sb{height:22px;color:#fff;font-size:10.5px;font-weight:600;display:flex;align-items:center;justify-content:space-between;padding:0 16px;flex-shrink:0;position:absolute;left:0;right:0;top:0;z-index:6}
+  .sb.dark{color:var(--ink)}
+  .tbar{background:linear-gradient(135deg,var(--pri) 0%,var(--pri-2) 60%,var(--pri-3) 100%);color:#fff;padding:26px 6px 8px 8px;display:flex;align-items:center;gap:2px;flex-shrink:0;border-radius:0 0 18px 18px;position:relative}
+  .tbar .t{flex:1;min-width:0}
+  .tbar .t b{display:block;font-size:16.5px;font-weight:800;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tbar .t small{display:block;font-size:10.5px;opacity:.92}
+  .tbar .ib{width:36px;height:36px;border-radius:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .ic{width:21px;height:21px;fill:currentColor;flex-shrink:0}
+  .ic.s{width:17px;height:17px}
+  .ic.xs{width:14px;height:14px}
+  .body{flex:1;overflow:hidden;position:relative;padding:10px 12px 0}
+
+  /* action row */
+  .actrow{display:flex;gap:8px;margin:2px 0 10px}
+  .actbtn{flex:1;height:46px;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:#fff;box-shadow:0 2px 7px rgba(25,40,80,.07);font-size:10.5px;font-weight:800;color:var(--ink2)}
+  .actbtn .ic{width:18px;height:18px;color:var(--pri)}
+  .actbtn.primary{background:linear-gradient(135deg,var(--pri),var(--pri-3));color:#fff;box-shadow:0 6px 14px rgba(47,79,205,.3);flex:1.6}
+  .actbtn.primary .ic{color:#fff}
+  .actbtn.qr .ic{color:var(--pri-3)}
+
+  .scard{background:#fff;border-radius:14px;box-shadow:0 2px 7px rgba(25,40,80,.07);position:relative;overflow:hidden}
+  .srow{display:flex;align-items:center;gap:11px;padding:9px 12px;min-height:46px;border-bottom:1px solid var(--line)}
+  .srow:last-child{border-bottom:0}
+  .srow .l{flex:1;min-width:0}
+  .srow .l b{display:block;font-size:13.5px;font-weight:600}
+  .srow .l small{display:block;font-size:11px;color:var(--ink2);margin-top:1px}
+  .srow .val{font-size:12.5px;font-weight:700;color:var(--pri);white-space:nowrap}
+  .srow .ic.ch{width:18px;height:18px;color:var(--hint)}
+  .srow .si{width:32px;height:32px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:var(--pri-c);color:var(--pri)}
+  .lab{font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--pri);margin:14px 0 7px 2px;display:flex;align-items:center;gap:6px}
+  .lab .r{margin-left:auto;font-size:11.5px;font-weight:800;text-transform:none;letter-spacing:0;color:var(--pri)}
+  .lab.dz{color:var(--err)}
+
+  .dim{position:absolute;inset:0;background:rgba(12,18,30,.5);z-index:2}
+  .sheet{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:24px 24px 0 0;padding:10px 16px 0;max-height:94%;z-index:3}
+  .grab{width:36px;height:4px;border-radius:2px;background:#D3D9E4;margin:0 auto 12px}
+  .sheet h4{font-size:17px;font-weight:800;margin-bottom:6px;display:flex;align-items:center;gap:9px}
+  .sheet p.sd{font-size:12px;color:var(--ink2);line-height:1.45;margin-bottom:6px}
+  .chk{width:20px;height:20px;border-radius:6px;border:2px solid var(--outline);flex-shrink:0}
+  .chk.on{background:var(--pri);border-color:var(--pri);display:flex;align-items:center;justify-content:center}
+  .chk.on .ic{width:13px;height:13px;color:#fff}
+  .chk.rnd{border-radius:10px}
+  .frow{display:flex;align-items:center;gap:11px;padding:8px 2px;border-bottom:1px solid var(--line);min-height:44px}
+  .frow:last-of-type{border-bottom:0}
+  .frow .l{flex:1;min-width:0}
+  .frow .l .k{font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--pri)}
+  .frow .l .v{font-size:13.5px;font-weight:700;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .frow .qrbtn{width:32px;height:32px;border-radius:11px;background:#F1EDFD;color:var(--pri-3);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .presets{display:flex;gap:6px;margin:2px 0 8px;flex-wrap:wrap}
+  .pchip{height:28px;padding:0 11px;border-radius:14px;background:#EFF2F8;font-size:11.5px;font-weight:700;color:var(--ink2);display:flex;align-items:center}
+  .pchip.on{background:var(--pri);color:#fff}
+  .prev{background:#0F1522;color:#D8E2F2;border-radius:12px;padding:10px 12px;font-family:Consolas,Menlo,monospace;font-size:10.5px;line-height:1.55;white-space:pre-wrap;position:relative}
+  .prev .plab{position:absolute;right:34px;top:7px;font-size:8.5px;font-weight:800;color:#7C89A3;letter-spacing:.06em;font-family:Roboto,sans-serif}
+
+  .apps{display:flex;gap:10px;margin:4px 0 6px}
+  .app{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px}
+  .app .ico{width:52px;height:52px;border-radius:16px;display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 3px 9px rgba(25,40,80,.16)}
+  .app span{font-size:10.5px;font-weight:700;color:var(--ink2)}
+  .app .ico.wa{background:var(--wa)}.app .ico.gm{background:var(--gm)}.app .ico.sms{background:var(--sms)}
+  .app .ico.mail{background:var(--mail)}.app .ico.txt{background:var(--txt)}.app .ico.more{background:#E7EBFF;color:var(--pri)}
+
+  .abtn{flex:1;height:50px;border-radius:14px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:13.5px;font-weight:800}
+  .abtn.cancel{border:1.5px solid var(--outline);color:var(--ink2);background:#fff}
+  .abtn.save{background:linear-gradient(135deg,var(--pri),var(--pri-3));color:#fff}
+  .btnrow{display:flex;gap:9px;margin-top:12px}
+  .sbs{height:30px;margin:12px -16px 0;border-top:1px dashed #C9D1DD;display:flex;align-items:center;justify-content:center;font-size:10.5px;color:var(--hint)}
+
+  /* QR */
+  .qrwrap{background:#fff;border-radius:20px;padding:16px;box-shadow:0 4px 16px rgba(25,40,80,.12);display:flex;flex-direction:column;align-items:center}
+  .qrimg{background:#fff;padding:10px;border-radius:12px}
+  .qrcap{font-size:11.5px;color:var(--ink2);margin-top:10px;text-align:center;line-height:1.5}
+  .pager{display:flex;gap:5px;justify-content:center;margin-top:10px}
+  .pager i{width:7px;height:7px;border-radius:4px;background:#D5DBE7}
+  .pager i.on{background:var(--pri);width:20px}
+  .bright{display:flex;align-items:center;gap:8px;background:var(--warn-c);border-radius:12px;padding:8px 11px;font-size:11px;color:#7A4A00;font-weight:600;margin-top:10px}
+
+  .idc{display:flex;gap:10px;align-items:center;background:#fff;border-radius:14px;padding:9px 11px;margin-bottom:8px;box-shadow:0 2px 7px rgba(25,40,80,.07);position:relative;overflow:hidden}
+  .idc:before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--pri)}
+  .idc .l{flex:1;min-width:0}
+  .idc .tt{font-size:14px;font-weight:700}
+  .idc .kv{font-size:11px;color:var(--ink2);margin-top:1px}
+  .cbx{width:20px;height:20px;border-radius:10px;border:2px solid var(--outline);flex-shrink:0}
+  .cbx.on{background:var(--pri);border-color:var(--pri);display:flex;align-items:center;justify-content:center}
+  .cbx.on .ic{width:13px;height:13px;color:#fff}
+  .selbar{position:absolute;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);display:flex;padding:8px 6px;box-shadow:0 -3px 12px rgba(25,40,80,.08)}
+  .selbar .sa{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10.5px;font-weight:800;color:var(--pri)}
+  .selbar .sa .ic{width:19px;height:19px}
+  .selbar .sa.primary{color:#fff;background:linear-gradient(135deg,var(--pri),var(--pri-3));border-radius:14px;padding:6px 4px;margin:0 4px}
+  .toast{position:absolute;left:12px;right:12px;bottom:16px;background:#18202E;color:#fff;border-radius:14px;padding:12px 14px;font-size:12.5px;display:flex;align-items:center;gap:10px;box-shadow:0 10px 22px rgba(0,0,0,.3)}
+  .toast b{margin-left:auto;color:#9DB4FF;font-weight:800}
+  .toast .ic{width:17px;height:17px;color:#7FE0AC}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></symbol>
+  <symbol id="i-share" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></symbol>
+  <symbol id="i-qr" viewBox="0 0 24 24"><path d="M3 11h8V3H3v8zm2-6h4v4H5V5zM3 21h8v-8H3v8zm2-6h4v4H5v-4zM13 3v8h8V3h-8zm6 6h-4V5h4v4zm0 10h2v2h-2zM13 13h2v2h-2zm2 2h2v2h-2zm-2 2h2v2h-2zm2 2h2v2h-2zm2-2h2v2h-2zm0-4h2v2h-2zm2 2h2v2h-2z"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a.996.996 0 0 0 0-1.41l-2.34-2.34a.996.996 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></symbol>
+  <symbol id="i-tick" viewBox="0 0 24 24"><path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="M10 6 8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></symbol>
+  <symbol id="i-wa" viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .1-1.7-.1-.4-.1-.9-.3-1.5-.6-2.7-1.2-4.4-3.9-4.5-4.1-.1-.2-1.1-1.4-1.1-2.7 0-1.3.7-1.9.9-2.2.2-.2.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 1.9c.1.2.1.4 0 .6l-.3.4-.4.4c-.1.1-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.1 1 2.1 1.3 2.4 1.4.3.1.5.1.6-.1l.9-1c.2-.2.4-.2.6-.1l2 .9c.2.1.4.2.4.3.1.2.1.7-.1 1.3z"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24"><path d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z"/></symbol>
+  <symbol id="i-sms" viewBox="0 0 24 24"><path d="M20 2H4a2 2 0 0 0-2 2v18l4-4h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zM7 9h2v2H7V9zm4 0h2v2h-2V9zm4 0h2v2h-2V9z"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></symbol>
+  <symbol id="i-apps" viewBox="0 0 24 24"><path d="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm0 6h4v-4h-4v4z"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><path d="M6.76 4.84 4.96 3.05 3.55 4.46l1.79 1.79 1.42-1.41zM4 10.5H1v2h3v-2zm9-9.95h-2V3.5h2V.55zm7.45 3.91-1.41-1.41-1.79 1.79 1.41 1.41 1.79-1.79zm-3.21 13.7 1.79 1.8 1.41-1.41-1.8-1.79-1.4 1.4zM20 10.5v2h3v-2h-3zm-8-5a6 6 0 1 0 0 12 6 6 0 0 0 0-12zm-1 16.95h2V19.5h-2v2.95zm-7.45-3.91 1.41 1.41 1.79-1.8-1.41-1.41-1.79 1.8z"/></symbol>
+  <symbol id="i-save" viewBox="0 0 24 24"><path d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm3-10H5V5h10v4z"/></symbol>
+  <symbol id="i-mask" viewBox="0 0 24 24"><path d="M12 6.5c3.79 0 7.17 2.13 8.82 5.5-.32.64-.71 1.24-1.15 1.79l1.42 1.42A12.03 12.03 0 0 0 23 12c-1.73-4.39-6-7.5-11-7.5-1.2 0-2.36.18-3.45.51l1.63 1.63c.6-.09 1.2-.14 1.82-.14zM2.71 3.16 1.29 4.57l2.47 2.47A11.8 11.8 0 0 0 1 12c1.73 4.39 6 7.5 11 7.5 1.79 0 3.49-.4 5.01-1.12l3.42 3.42 1.41-1.41L2.71 3.16z"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></symbol>
+  <symbol id="i-alarm" viewBox="0 0 24 24"><path d="M12.5 8H11v6l4.75 2.85.75-1.23-4-2.37V8zM12 4c-4.97 0-9 4.03-9 9s4.02 9 9 9c4.97 0 9-4.03 9-9s-4.03-9-9-9zm0 16c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></symbol>
+</svg>
+
+<div class="wrap">
+<header class="page">
+  <h1>InfoDeck — v1.4 · D2 design</h1>
+  <p>Three things: <b>1)</b> Share stops hiding in the ⋮ and becomes the biggest button on a card, with your own favourite apps and a text-file export; <b>2)</b> nothing is shared until you tick <b>which</b> values go; <b>3)</b> any value — or several at once — becomes a <b>QR code</b>. Mock date <b>Tue 18-Aug-2026</b>.</p>
+  <span class="stamp">DESIGN ONLY · nothing built · no version bump</span>
+  <span class="stamp g">Reply by tag: “S2.3 → no”, “Q6 → b”, or “defaults” = all recommended</span>
+  <span class="stamp r">Sharing means data leaves the app — read the privacy rules in §C6</span>
+</header>
+
+<div class="rej-box"><b>Still open from you:</b> the bug list two rounds ago stopped at 1, and item “3.” from six rounds ago has never been filled in. Q12 and Q13.</div>
+
+<h2 class="sec">A · Screens</h2>
+<div class="frames">
+
+<!-- S1 -->
+<figure>
+  <h3>S1 · Share becomes the main action<small>feature 1</small></h3>
+  <div class="phone">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="tbar"><div class="ib"><svg class="ic"><use href="#i-back"/></svg></div>
+      <div class="t"><b>Car Insurance — HDFC Ergo</b><small>Insurance · #renewal #vehicle</small></div>
+      <div class="ib"><svg class="ic"><use href="#i-share"/></svg></div>
+      <div class="ib"><svg class="ic"><use href="#i-more"/></svg></div>
+      <b class="n" style="position:absolute;right:44px;bottom:-6px">1</b>
+    </div>
+    <div class="body">
+      <div class="actrow">
+        <span class="actbtn primary"><svg class="ic"><use href="#i-share"/></svg>Share</span>
+        <span class="actbtn qr"><svg class="ic"><use href="#i-qr"/></svg>QR</span>
+        <span class="actbtn"><svg class="ic"><use href="#i-copy"/></svg>Copy</span>
+        <span class="actbtn"><svg class="ic"><use href="#i-edit"/></svg>Edit</span>
+        <b class="n" style="position:absolute;left:14px;top:2px">2</b>
+        <b class="n" style="position:absolute;left:150px;top:2px">3</b>
+      </div>
+
+      <div class="lab">Data <span class="r">Share selected</span></div>
+      <div class="scard">
+        <div class="srow"><div class="l"><small>Policy No</small><b>HD-2291-KX-2026</b></div>
+          <span class="frow" style="border:0;padding:0"><span class="qrbtn"><svg class="ic s"><use href="#i-qr"/></svg></span></span>
+          <svg class="ic ch"><use href="#i-copy"/></svg>
+          <b class="n g" style="position:absolute;right:6px;top:6px">4</b></div>
+        <div class="srow"><div class="l"><small>Registration</small><b>WB 24 AB 1234</b></div>
+          <span class="qrbtn"><svg class="ic s"><use href="#i-qr"/></svg></span><svg class="ic ch"><use href="#i-copy"/></svg></div>
+        <div class="srow"><div class="l"><small>Garage</small><b>Barrackpore Motors</b></div>
+          <span class="qrbtn"><svg class="ic s"><use href="#i-qr"/></svg></span><svg class="ic ch"><use href="#i-copy"/></svg></div>
+      </div>
+
+      <div class="lab">Dates</div>
+      <div class="scard">
+        <div class="srow"><div class="l"><small>Policy Expiry ★ key date</small><b>11-Oct-2026 · in 54 days</b></div><svg class="ic ch"><use href="#i-copy"/></svg></div>
+      </div>
+
+      <div class="lab">Files · 1</div>
+      <div class="scard">
+        <div class="srow"><div class="l"><b>Policy document.pdf</b><small>1.8 MB · attach when sharing</small></div><span class="chk on"><svg class="ic"><use href="#i-tick"/></svg></span></div>
+      </div>
+
+      <div class="lab">Schedulers</div>
+      <div class="scard">
+        <div class="srow"><div class="l"><b>30 days before Policy Expiry</b><small>Notify · 11-Sep-2026 09:00</small></div></div>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="new">Share icon in the bar</td><td>Out of the ⋮ menu and onto the bar itself — one tap from anywhere on the card</td></tr>
+    <tr><td class="sr">2</td><td class="new">Share as the primary button</td><td>Gradient-filled and 60 % wider than its neighbours: the single most obvious thing on the screen. <b>My decision</b>, since you asked me to take it — Share earns the primary slot, Edit steps down to an equal-sized button <i class="q">Q1</i></td></tr>
+    <tr><td class="sr">3</td><td class="new">QR beside it</td><td>Shares the row so the two “get this out of the app” actions sit together</td></tr>
+    <tr><td class="sr">4</td><td class="new">Per-value QR and copy</td><td>Every data row gets its own QR button — one tap from a value to a scannable code, no menus <i class="q">Q7</i></td></tr>
+    <tr><td class="sr">5</td><td class="k">What ⋮ keeps</td><td>Move, Duplicate, Danger zone. Nothing you do often</td></tr>
+  </table>
+</figure>
+
+<!-- S2 -->
+<figure>
+  <h3>S2 · Choose what goes<small>feature 2 · nothing shares untouched</small></h3>
+  <div class="phone" style="height:1135px">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="tbar"><div class="ib"><svg class="ic"><use href="#i-back"/></svg></div>
+      <div class="t"><b>Car Insurance — HDFC Ergo</b></div></div>
+    <div class="body"><div class="dim"></div>
+      <div class="sheet">
+        <div class="grab"></div>
+        <h4><svg class="ic" style="color:var(--pri)"><use href="#i-share"/></svg>What to share</h4>
+
+        <div class="presets">
+          <span class="pchip on">Last used</span><span class="pchip">Everything</span>
+          <span class="pchip">IDs only</span><span class="pchip">Dates only</span>
+          <b class="n" style="position:relative;top:-14px">1</b>
+        </div>
+
+        <div class="frow"><span class="chk on"><svg class="ic"><use href="#i-tick"/></svg></span>
+          <div class="l"><div class="k">Card name</div><div class="v">Car Insurance — HDFC Ergo</div></div></div>
+        <div class="frow"><span class="chk"></span>
+          <div class="l"><div class="k">Category and tags</div><div class="v">Insurance · #renewal #vehicle</div></div></div>
+
+        <div class="lab" style="margin-top:8px">Data <span class="r">3 of 4</span></div>
+        <div class="frow"><span class="chk on"><svg class="ic"><use href="#i-tick"/></svg></span>
+          <div class="l"><div class="k">Policy No</div><div class="v">HD-2291-KX-2026</div></div>
+          <span class="qrbtn"><svg class="ic s"><use href="#i-mask"/></svg></span>
+          <b class="n" style="position:absolute;right:6px">2</b></div>
+        <div class="frow"><span class="chk on"><svg class="ic"><use href="#i-tick"/></svg></span>
+          <div class="l"><div class="k">Registration</div><div class="v">WB 24 AB 1234</div></div>
+          <span class="qrbtn"><svg class="ic s"><use href="#i-mask"/></svg></span></div>
+        <div class="frow"><span class="chk on"><svg class="ic"><use href="#i-tick"/></svg></span>
+          <div class="l"><div class="k">Garage</div><div class="v">Barrackpore Motors</div></div>
+          <span class="qrbtn"><svg class="ic s"><use href="#i-mask"/></svg></span></div>
+        <div class="frow"><span class="chk"></span>
+          <div class="l"><div class="k">Premium</div><div class="v">₹ 14,208</div></div>
+          <span class="qrbtn"><svg class="ic s"><use href="#i-mask"/></svg></span></div>
+
+        <div class="lab">Dates <span class="r">1 of 2</span></div>
+        <div class="frow"><span class="chk on"><svg class="ic"><use href="#i-tick"/></svg></span>
+          <div class="l"><div class="k">Policy Expiry ★</div><div class="v">11-Oct-2026</div></div></div>
+        <div class="frow"><span class="chk"></span>
+          <div class="l"><div class="k">Start date</div><div class="v">12-Oct-2025</div></div></div>
+
+        <div class="lab">Extras</div>
+        <div class="frow"><span class="chk"></span>
+          <div class="l"><div class="k">Reminders</div><div class="v">2 schedulers</div></div></div>
+        <div class="frow"><span class="chk on"><svg class="ic"><use href="#i-tick"/></svg></span>
+          <div class="l"><div class="k">Attach file</div><div class="v">Policy document.pdf · 1.8 MB</div></div>
+          <b class="n" style="position:absolute;right:6px">3</b></div>
+
+        <div class="lab">Preview</div>
+        <div class="prev"><span class="plab">WHAT THEY SEE</span>Car Insurance — HDFC Ergo
+
+Policy No: HD-2291-KX-2026
+Registration: WB 24 AB 1234
+Garage: Barrackpore Motors
+Policy Expiry: 11-Oct-2026
+
+Shared from InfoDeck
++ Policy document.pdf attached<b class="n g" style="position:absolute;right:6px;bottom:6px">4</b></div>
+
+        <div class="btnrow">
+          <span class="abtn cancel"><svg class="ic"><use href="#i-close"/></svg>Cancel</span>
+          <span class="abtn save"><svg class="ic"><use href="#i-share"/></svg>Next</span>
+        </div>
+        <div class="sbs">bottom clearance = max(25 % screen height, nav bar + 24 dp)</div>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="new">Presets</td><td><b>Last used</b> is the default and is remembered <b>per card</b>, so the second share of the same card is two taps. Everything · IDs only · Dates only are one-tap sets <i class="q">Q3</i></td></tr>
+    <tr><td class="sr">2</td><td class="new">Mask a value</td><td>The eye button shares it as <code>HD-2291-****</code> — for when someone needs to see that a policy exists, not its number <i class="q">Q4</i></td></tr>
+    <tr><td class="sr">3</td><td class="new">Attach the file</td><td>Ticked here, the PDF rides along with the text into WhatsApp or Gmail</td></tr>
+    <tr><td class="sr">4</td><td class="new">Live preview</td><td>The exact text that leaves the app, updating as you tick. No surprises after the fact</td></tr>
+    <tr><td class="sr">5</td><td class="k">Default ticks</td><td>Card name, all data, the key date. Category, tags, reminders and other dates start off <i class="q">Q2</i></td></tr>
+  </table>
+</figure>
+
+<!-- S3 -->
+<figure>
+  <h3>S3 · Your apps, first<small>feature 1 · favourites and export</small></h3>
+  <div class="phone">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="tbar"><div class="ib"><svg class="ic"><use href="#i-back"/></svg></div>
+      <div class="t"><b>Car Insurance — HDFC Ergo</b></div></div>
+    <div class="body"><div class="dim"></div>
+      <div class="sheet">
+        <div class="grab"></div>
+        <h4><svg class="ic" style="color:var(--pri)"><use href="#i-share"/></svg>Send with</h4>
+        <p class="sd">4 fields · 1 file · 186 characters</p>
+
+        <div class="apps">
+          <div class="app"><span class="ico wa"><svg class="ic"><use href="#i-wa"/></svg></span><span>WhatsApp</span></div>
+          <div class="app"><span class="ico gm"><svg class="ic"><use href="#i-mail"/></svg></span><span>Gmail</span></div>
+          <div class="app"><span class="ico sms"><svg class="ic"><use href="#i-sms"/></svg></span><span>SMS</span></div>
+          <div class="app"><span class="ico mail"><svg class="ic"><use href="#i-mail"/></svg></span><span>Email</span></div>
+          <b class="n" style="position:relative;top:-30px;left:-6px">1</b>
+        </div>
+
+        <div class="lab" style="margin-top:10px">Or keep it as a file</div>
+        <div class="scard">
+          <div class="srow"><span class="si"><svg class="ic s"><use href="#i-file"/></svg></span>
+            <div class="l"><b>Export as text file</b><small>InfoDeck-CarInsurance-18Aug2026.txt</small></div><svg class="ic ch"><use href="#i-chev"/></svg>
+            <b class="n g" style="position:absolute;right:6px;top:6px">2</b></div>
+          <div class="srow"><span class="si"><svg class="ic s"><use href="#i-copy"/></svg></span>
+            <div class="l"><b>Copy to clipboard</b><small>Paste anywhere yourself</small></div></div>
+          <div class="srow"><span class="si"><svg class="ic s"><use href="#i-qr"/></svg></span>
+            <div class="l"><b>Show as QR code</b><small>The same fields, scannable</small></div><svg class="ic ch"><use href="#i-chev"/></svg>
+            <b class="n" style="position:absolute;right:6px;top:110px">3</b></div>
+          <div class="srow"><span class="si"><svg class="ic s"><use href="#i-apps"/></svg></span>
+            <div class="l"><b>All other apps…</b><small>The usual Android chooser</small></div><svg class="ic ch"><use href="#i-chev"/></svg></div>
+        </div>
+
+        <div style="background:var(--warn-c);border-radius:12px;padding:9px 11px;margin-top:12px;display:flex;gap:8px;align-items:flex-start">
+          <svg class="ic s" style="color:var(--warn);margin-top:1px"><use href="#i-warn"/></svg>
+          <div style="font-size:11px;color:#7A4A00;line-height:1.45">
+            Once it is in WhatsApp or Gmail, it is out of InfoDeck's hands. The app itself still has no internet permission.
+          </div>
+          <b class="n d" style="position:absolute;right:20px">4</b>
+        </div>
+
+        <div class="btnrow">
+          <span class="abtn cancel"><svg class="ic"><use href="#i-back"/></svg>Back</span>
+          <span class="abtn save"><svg class="ic"><use href="#i-share"/></svg>Send</span>
+        </div>
+        <div class="sbs">bottom clearance = max(25 % screen height, nav bar + 24 dp)</div>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="new">Four favourites</td><td>WhatsApp · Gmail · SMS · Email as you named them, each opening that app directly rather than the chooser. An app you do not have is simply not shown, and you can change the four in Settings (S4) <i class="q">Q5</i></td></tr>
+    <tr><td class="sr">2</td><td class="new">Export as text file</td><td>A plain <code>.txt</code> written wherever you choose with the system picker — no folder permission needed. Notepad, Drive, anywhere <i class="q">Q6</i></td></tr>
+    <tr><td class="sr">3</td><td class="k">QR from here too</td><td>Same field selection, shown as a code instead of sent</td></tr>
+    <tr><td class="sr">4</td><td class="k">The honest line</td><td>Written into the sheet — InfoDeck cannot control what the receiving app does</td></tr>
+  </table>
+</figure>
+
+<!-- S4 -->
+<figure>
+  <h3>S4 · Settings ▸ Sharing<small>feature 1 · pick your four</small></h3>
+  <div class="phone">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="tbar"><div class="ib"><svg class="ic"><use href="#i-menu"/></svg></div>
+      <div class="t"><b>Settings</b><small>Sharing</small></div><div class="ib"><svg class="ic"><use href="#i-close"/></svg></div></div>
+    <div class="body">
+      <div class="lab" style="margin-top:2px">Favourite apps <span class="r">4 of 4 chosen</span></div>
+      <div class="scard">
+        <div class="srow"><span class="si" style="background:#DFF7E8;color:#0F7A3D"><svg class="ic s"><use href="#i-wa"/></svg></span>
+          <div class="l"><b>WhatsApp</b><small>Installed</small></div><span class="chk on"><svg class="ic"><use href="#i-tick"/></svg></span></div>
+        <div class="srow"><span class="si" style="background:#FDE7E5;color:#C0392F"><svg class="ic s"><use href="#i-mail"/></svg></span>
+          <div class="l"><b>Gmail</b><small>Installed</small></div><span class="chk on"><svg class="ic"><use href="#i-tick"/></svg></span></div>
+        <div class="srow"><span class="si" style="background:#E3F0FD;color:#1E88E5"><svg class="ic s"><use href="#i-sms"/></svg></span>
+          <div class="l"><b>Messages (SMS)</b><small>Installed · text only, files are dropped</small></div><span class="chk on"><svg class="ic"><use href="#i-tick"/></svg></span>
+          <b class="n" style="position:absolute;right:6px;top:110px">1</b></div>
+        <div class="srow"><span class="si" style="background:#ECEFF2;color:#546E7A"><svg class="ic s"><use href="#i-mail"/></svg></span>
+          <div class="l"><b>Email (default app)</b><small>Whatever handles mail on this phone</small></div><span class="chk on"><svg class="ic"><use href="#i-tick"/></svg></span></div>
+        <div class="srow" style="opacity:.5"><span class="si"><svg class="ic s"><use href="#i-apps"/></svg></span>
+          <div class="l"><b>Telegram</b><small>Not installed</small></div><span class="chk"></span>
+          <b class="n" style="position:absolute;right:6px;top:220px">2</b></div>
+      </div>
+
+      <div class="lab">What to share by default</div>
+      <div class="scard">
+        <div class="srow"><div class="l"><b>Remember per card</b><small>Reopen with the same ticks you used last time</small></div><span class="chk rnd on"><svg class="ic"><use href="#i-tick"/></svg></span>
+          <b class="n g" style="position:absolute;right:6px;top:6px">3</b></div>
+        <div class="srow"><div class="l"><b>Include the card name</b></div><span class="chk rnd on"><svg class="ic"><use href="#i-tick"/></svg></span></div>
+        <div class="srow"><div class="l"><b>Include category and tags</b></div><span class="chk rnd"></span></div>
+        <div class="srow"><div class="l"><b>Include reminders</b></div><span class="chk rnd"></span></div>
+        <div class="srow"><div class="l"><b>Add “Shared from InfoDeck” footer</b></div><span class="chk rnd on"><svg class="ic"><use href="#i-tick"/></svg></span>
+          <b class="n" style="position:absolute;right:6px;top:172px">4</b></div>
+      </div>
+
+      <div class="lab">Text file</div>
+      <div class="scard">
+        <div class="srow"><div class="l"><b>File name</b><small>InfoDeck-&lt;card&gt;-&lt;date&gt;.txt</small></div><span class="val">Default</span><svg class="ic ch"><use href="#i-chev"/></svg></div>
+        <div class="srow"><div class="l"><b>Many cards export as</b><small>One .txt each, or a single .csv table</small></div><span class="val">CSV</span><svg class="ic ch"><use href="#i-chev"/></svg>
+          <b class="n" style="position:absolute;right:6px;top:56px">5</b></div>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="k">SMS is text only</td><td>Android will not carry an attachment into a plain SMS — the row says so rather than silently dropping your PDF</td></tr>
+    <tr><td class="sr">2</td><td class="new">Only installed apps</td><td>InfoDeck asks Android which of a short list are present. On Android 11+ this needs a <code>&lt;queries&gt;</code> declaration in the manifest, which is listed in §C2 — no new runtime permission</td></tr>
+    <tr><td class="sr">3</td><td class="new">Remember per card</td><td>The single biggest time saver: the same card almost always gets shared the same way</td></tr>
+    <tr><td class="sr">4</td><td class="k">Footer</td><td>One line, on by default, easily turned off</td></tr>
+    <tr><td class="sr">5</td><td class="new">Bulk export format</td><td>Several cards at once become a CSV table — one row per card, one column per field <i class="q">Q8</i></td></tr>
+  </table>
+</figure>
+
+<!-- S5 -->
+<figure>
+  <h3>S5 · QR for one value<small>feature 3</small></h3>
+  <div class="phone">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="tbar"><div class="ib"><svg class="ic"><use href="#i-close"/></svg></div>
+      <div class="t"><b>QR code</b><small>Policy No · Car Insurance — HDFC Ergo</small></div>
+      <div class="ib"><svg class="ic"><use href="#i-share"/></svg></div></div>
+    <div class="body">
+      <div class="qrwrap" style="margin-top:8px">
+        <div class="qrimg"><svg width="196" height="196" viewBox="0 0 196 196" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><rect width="196" height="196" fill="#fff"/><g fill="#0F1522"><rect x="0.0" y="0.0" width="6.76" height="6.76"/><rect x="6.76" y="0.0" width="6.76" height="6.76"/><rect x="13.52" y="0.0" width="6.76" height="6.76"/><rect x="20.28" y="0.0" width="6.76" height="6.76"/><rect x="27.03" y="0.0" width="6.76" height="6.76"/><rect x="33.79" y="0.0" width="6.76" height="6.76"/><rect x="40.55" y="0.0" width="6.76" height="6.76"/><rect x="74.34" y="0.0" width="6.76" height="6.76"/><rect x="81.1" y="0.0" width="6.76" height="6.76"/><rect x="108.14" y="0.0" width="6.76" height="6.76"/><rect x="114.9" y="0.0" width="6.76" height="6.76"/><rect x="135.17" y="0.0" width="6.76" height="6.76"/><rect x="148.69" y="0.0" width="6.76" height="6.76"/><rect x="155.45" y="0.0" width="6.76" height="6.76"/><rect x="162.21" y="0.0" width="6.76" height="6.76"/><rect x="168.97" y="0.0" width="6.76" height="6.76"/><rect x="175.72" y="0.0" width="6.76" height="6.76"/><rect x="182.48" y="0.0" width="6.76" height="6.76"/><rect x="189.24" y="0.0" width="6.76" height="6.76"/><rect x="0.0" y="6.76" width="6.76" height="6.76"/><rect x="40.55" y="6.76" width="6.76" height="6.76"/><rect x="60.83" y="6.76" width="6.76" height="6.76"/><rect x="67.59" y="6.76" width="6.76" height="6.76"/><rect x="74.34" y="6.76" width="6.76" height="6.76"/><rect x="87.86" y="6.76" width="6.76" height="6.76"/><rect x="94.62" y="6.76" width="6.76" height="6.76"/><rect x="101.38" y="6.76" width="6.76" height="6.76"/><rect x="108.14" y="6.76" width="6.76" height="6.76"/><rect x="121.66" y="6.76" width="6.76" height="6.76"/><rect x="148.69" y="6.76" width="6.76" height="6.76"/><rect x="189.24" y="6.76" width="6.76" height="6.76"/><rect x="0.0" y="13.52" width="6.76" height="6.76"/><rect x="13.52" y="13.52" width="6.76" height="6.76"/><rect x="20.28" y="13.52" width="6.76" height="6.76"/><rect x="27.03" y="13.52" width="6.76" height="6.76"/><rect x="40.55" y="13.52" width="6.76" height="6.76"/><rect x="60.83" y="13.52" width="6.76" height="6.76"/><rect x="67.59" y="13.52" width="6.76" height="6.76"/><rect x="81.1" y="13.52" width="6.76" height="6.76"/><rect x="87.86" y="13.52" width="6.76" height="6.76"/><rect x="108.14" y="13.52" width="6.76" height="6.76"/><rect x="121.66" y="13.52" width="6.76" height="6.76"/><rect x="128.41" y="13.52" width="6.76" height="6.76"/><rect x="148.69" y="13.52" width="6.76" height="6.76"/><rect x="162.21" y="13.52" width="6.76" height="6.76"/><rect x="168.97" y="13.52" width="6.76" height="6.76"/><rect x="175.72" y="13.52" width="6.76" height="6.76"/><rect x="189.24" y="13.52" width="6.76" height="6.76"/><rect x="0.0" y="20.28" width="6.76" height="6.76"/><rect x="13.52" y="20.28" width="6.76" height="6.76"/><rect x="20.28" y="20.28" width="6.76" height="6.76"/><rect x="27.03" y="20.28" width="6.76" height="6.76"/><rect x="40.55" y="20.28" width="6.76" height="6.76"/><rect x="60.83" y="20.28" width="6.76" height="6.76"/><rect x="67.59" y="20.28" width="6.76" height="6.76"/><rect x="74.34" y="20.28" width="6.76" height="6.76"/><rect x="81.1" y="20.28" width="6.76" height="6.76"/><rect x="101.38" y="20.28" width="6.76" height="6.76"/><rect x="108.14" y="20.28" width="6.76" height="6.76"/><rect x="114.9" y="20.28" width="6.76" height="6.76"/><rect x="121.66" y="20.28" width="6.76" height="6.76"/><rect x="135.17" y="20.28" width="6.76" height="6.76"/><rect x="148.69" y="20.28" width="6.76" height="6.76"/><rect x="162.21" y="20.28" width="6.76" height="6.76"/><rect x="168.97" y="20.28" width="6.76" height="6.76"/><rect x="175.72" y="20.28" width="6.76" height="6.76"/><rect x="189.24" y="20.28" width="6.76" height="6.76"/><rect x="0.0" y="27.03" width="6.76" height="6.76"/><rect x="13.52" y="27.03" width="6.76" height="6.76"/><rect x="20.28" y="27.03" width="6.76" height="6.76"/><rect x="27.03" y="27.03" width="6.76" height="6.76"/><rect x="40.55" y="27.03" width="6.76" height="6.76"/><rect x="67.59" y="27.03" width="6.76" height="6.76"/><rect x="87.86" y="27.03" width="6.76" height="6.76"/><rect x="94.62" y="27.03" width="6.76" height="6.76"/><rect x="101.38" y="27.03" width="6.76" height="6.76"/><rect x="108.14" y="27.03" width="6.76" height="6.76"/><rect x="114.9" y="27.03" width="6.76" height="6.76"/><rect x="121.66" y="27.03" width="6.76" height="6.76"/><rect x="135.17" y="27.03" width="6.76" height="6.76"/><rect x="148.69" y="27.03" width="6.76" height="6.76"/><rect x="162.21" y="27.03" width="6.76" height="6.76"/><rect x="168.97" y="27.03" width="6.76" height="6.76"/><rect x="175.72" y="27.03" width="6.76" height="6.76"/><rect x="189.24" y="27.03" width="6.76" height="6.76"/><rect x="0.0" y="33.79" width="6.76" height="6.76"/><rect x="40.55" y="33.79" width="6.76" height="6.76"/><rect x="74.34" y="33.79" width="6.76" height="6.76"/><rect x="94.62" y="33.79" width="6.76" height="6.76"/><rect x="101.38" y="33.79" width="6.76" height="6.76"/><rect x="108.14" y="33.79" width="6.76" height="6.76"/><rect x="148.69" y="33.79" width="6.76" height="6.76"/><rect x="189.24" y="33.79" width="6.76" height="6.76"/><rect x="0.0" y="40.55" width="6.76" height="6.76"/><rect x="6.76" y="40.55" width="6.76" height="6.76"/><rect x="13.52" y="40.55" width="6.76" height="6.76"/><rect x="20.28" y="40.55" width="6.76" height="6.76"/><rect x="27.03" y="40.55" width="6.76" height="6.76"/><rect x="33.79" y="40.55" width="6.76" height="6.76"/><rect x="40.55" y="40.55" width="6.76" height="6.76"/><rect x="54.07" y="40.55" width="6.76" height="6.76"/><rect x="67.59" y="40.55" width="6.76" height="6.76"/><rect x="81.1" y="40.55" width="6.76" height="6.76"/><rect x="94.62" y="40.55" width="6.76" height="6.76"/><rect x="108.14" y="40.55" width="6.76" height="6.76"/><rect x="121.66" y="40.55" width="6.76" height="6.76"/><rect x="135.17" y="40.55" width="6.76" height="6.76"/><rect x="148.69" y="40.55" width="6.76" height="6.76"/><rect x="155.45" y="40.55" width="6.76" height="6.76"/><rect x="162.21" y="40.55" width="6.76" height="6.76"/><rect x="168.97" y="40.55" width="6.76" height="6.76"/><rect x="175.72" y="40.55" width="6.76" height="6.76"/><rect x="182.48" y="40.55" width="6.76" height="6.76"/><rect x="189.24" y="40.55" width="6.76" height="6.76"/><rect x="67.59" y="47.31" width="6.76" height="6.76"/><rect x="87.86" y="47.31" width="6.76" height="6.76"/><rect x="94.62" y="47.31" width="6.76" height="6.76"/><rect x="114.9" y="47.31" width="6.76" height="6.76"/><rect x="121.66" y="47.31" width="6.76" height="6.76"/><rect x="40.55" y="54.07" width="6.76" height="6.76"/><rect x="60.83" y="54.07" width="6.76" height="6.76"/><rect x="67.59" y="54.07" width="6.76" height="6.76"/><rect x="87.86" y="54.07" width="6.76" height="6.76"/><rect x="128.41" y="54.07" width="6.76" height="6.76"/><rect x="0.0" y="60.83" width="6.76" height="6.76"/><rect x="13.52" y="60.83" width="6.76" height="6.76"/><rect x="20.28" y="60.83" width="6.76" height="6.76"/><rect x="27.03" y="60.83" width="6.76" height="6.76"/><rect x="54.07" y="60.83" width="6.76" height="6.76"/><rect x="60.83" y="60.83" width="6.76" height="6.76"/><rect x="67.59" y="60.83" width="6.76" height="6.76"/><rect x="101.38" y="60.83" width="6.76" height="6.76"/><rect x="108.14" y="60.83" width="6.76" height="6.76"/><rect x="121.66" y="60.83" width="6.76" height="6.76"/><rect x="155.45" y="60.83" width="6.76" height="6.76"/><rect x="168.97" y="60.83" width="6.76" height="6.76"/><rect x="182.48" y="60.83" width="6.76" height="6.76"/><rect x="6.76" y="67.59" width="6.76" height="6.76"/><rect x="27.03" y="67.59" width="6.76" height="6.76"/><rect x="33.79" y="67.59" width="6.76" height="6.76"/><rect x="40.55" y="67.59" width="6.76" height="6.76"/><rect x="60.83" y="67.59" width="6.76" height="6.76"/><rect x="67.59" y="67.59" width="6.76" height="6.76"/><rect x="74.34" y="67.59" width="6.76" height="6.76"/><rect x="81.1" y="67.59" width="6.76" height="6.76"/><rect x="87.86" y="67.59" width="6.76" height="6.76"/><rect x="108.14" y="67.59" width="6.76" height="6.76"/><rect x="114.9" y="67.59" width="6.76" height="6.76"/><rect x="121.66" y="67.59" width="6.76" height="6.76"/><rect x="135.17" y="67.59" width="6.76" height="6.76"/><rect x="141.93" y="67.59" width="6.76" height="6.76"/><rect x="148.69" y="67.59" width="6.76" height="6.76"/><rect x="162.21" y="67.59" width="6.76" height="6.76"/><rect x="168.97" y="67.59" width="6.76" height="6.76"/><rect x="175.72" y="67.59" width="6.76" height="6.76"/><rect x="189.24" y="67.59" width="6.76" height="6.76"/><rect x="6.76" y="74.34" width="6.76" height="6.76"/><rect x="20.28" y="74.34" width="6.76" height="6.76"/><rect x="27.03" y="74.34" width="6.76" height="6.76"/><rect x="33.79" y="74.34" width="6.76" height="6.76"/><rect x="47.31" y="74.34" width="6.76" height="6.76"/><rect x="54.07" y="74.34" width="6.76" height="6.76"/><rect x="67.59" y="74.34" width="6.76" height="6.76"/><rect x="74.34" y="74.34" width="6.76" height="6.76"/><rect x="81.1" y="74.34" width="6.76" height="6.76"/><rect x="87.86" y="74.34" width="6.76" height="6.76"/><rect x="94.62" y="74.34" width="6.76" height="6.76"/><rect x="101.38" y="74.34" width="6.76" height="6.76"/><rect x="128.41" y="74.34" width="6.76" height="6.76"/><rect x="141.93" y="74.34" width="6.76" height="6.76"/><rect x="155.45" y="74.34" width="6.76" height="6.76"/><rect x="162.21" y="74.34" width="6.76" height="6.76"/><rect x="175.72" y="74.34" width="6.76" height="6.76"/><rect x="182.48" y="74.34" width="6.76" height="6.76"/><rect x="0.0" y="81.1" width="6.76" height="6.76"/><rect x="27.03" y="81.1" width="6.76" height="6.76"/><rect x="40.55" y="81.1" width="6.76" height="6.76"/><rect x="47.31" y="81.1" width="6.76" height="6.76"/><rect x="67.59" y="81.1" width="6.76" height="6.76"/><rect x="108.14" y="81.1" width="6.76" height="6.76"/><rect x="141.93" y="81.1" width="6.76" height="6.76"/><rect x="189.24" y="81.1" width="6.76" height="6.76"/><rect x="27.03" y="87.86" width="6.76" height="6.76"/><rect x="33.79" y="87.86" width="6.76" height="6.76"/><rect x="47.31" y="87.86" width="6.76" height="6.76"/><rect x="67.59" y="87.86" width="6.76" height="6.76"/><rect x="81.1" y="87.86" width="6.76" height="6.76"/><rect x="94.62" y="87.86" width="6.76" height="6.76"/><rect x="101.38" y="87.86" width="6.76" height="6.76"/><rect x="114.9" y="87.86" width="6.76" height="6.76"/><rect x="128.41" y="87.86" width="6.76" height="6.76"/><rect x="148.69" y="87.86" width="6.76" height="6.76"/><rect x="162.21" y="87.86" width="6.76" height="6.76"/><rect x="175.72" y="87.86" width="6.76" height="6.76"/><rect x="189.24" y="87.86" width="6.76" height="6.76"/><rect x="0.0" y="94.62" width="6.76" height="6.76"/><rect x="20.28" y="94.62" width="6.76" height="6.76"/><rect x="27.03" y="94.62" width="6.76" height="6.76"/><rect x="33.79" y="94.62" width="6.76" height="6.76"/><rect x="40.55" y="94.62" width="6.76" height="6.76"/><rect x="47.31" y="94.62" width="6.76" height="6.76"/><rect x="67.59" y="94.62" width="6.76" height="6.76"/><rect x="87.86" y="94.62" width="6.76" height="6.76"/><rect x="108.14" y="94.62" width="6.76" height="6.76"/><rect x="155.45" y="94.62" width="6.76" height="6.76"/><rect x="162.21" y="94.62" width="6.76" height="6.76"/><rect x="189.24" y="94.62" width="6.76" height="6.76"/><rect x="0.0" y="101.38" width="6.76" height="6.76"/><rect x="20.28" y="101.38" width="6.76" height="6.76"/><rect x="27.03" y="101.38" width="6.76" height="6.76"/><rect x="33.79" y="101.38" width="6.76" height="6.76"/><rect x="47.31" y="101.38" width="6.76" height="6.76"/><rect x="60.83" y="101.38" width="6.76" height="6.76"/><rect x="67.59" y="101.38" width="6.76" height="6.76"/><rect x="74.34" y="101.38" width="6.76" height="6.76"/><rect x="81.1" y="101.38" width="6.76" height="6.76"/><rect x="94.62" y="101.38" width="6.76" height="6.76"/><rect x="114.9" y="101.38" width="6.76" height="6.76"/><rect x="121.66" y="101.38" width="6.76" height="6.76"/><rect x="135.17" y="101.38" width="6.76" height="6.76"/><rect x="141.93" y="101.38" width="6.76" height="6.76"/><rect x="162.21" y="101.38" width="6.76" height="6.76"/><rect x="175.72" y="101.38" width="6.76" height="6.76"/><rect x="182.48" y="101.38" width="6.76" height="6.76"/><rect x="0.0" y="108.14" width="6.76" height="6.76"/><rect x="6.76" y="108.14" width="6.76" height="6.76"/><rect x="13.52" y="108.14" width="6.76" height="6.76"/><rect x="20.28" y="108.14" width="6.76" height="6.76"/><rect x="40.55" y="108.14" width="6.76" height="6.76"/><rect x="47.31" y="108.14" width="6.76" height="6.76"/><rect x="54.07" y="108.14" width="6.76" height="6.76"/><rect x="60.83" y="108.14" width="6.76" height="6.76"/><rect x="67.59" y="108.14" width="6.76" height="6.76"/><rect x="81.1" y="108.14" width="6.76" height="6.76"/><rect x="94.62" y="108.14" width="6.76" height="6.76"/><rect x="114.9" y="108.14" width="6.76" height="6.76"/><rect x="121.66" y="108.14" width="6.76" height="6.76"/><rect x="128.41" y="108.14" width="6.76" height="6.76"/><rect x="135.17" y="108.14" width="6.76" height="6.76"/><rect x="141.93" y="108.14" width="6.76" height="6.76"/><rect x="148.69" y="108.14" width="6.76" height="6.76"/><rect x="162.21" y="108.14" width="6.76" height="6.76"/><rect x="182.48" y="108.14" width="6.76" height="6.76"/><rect x="6.76" y="114.9" width="6.76" height="6.76"/><rect x="13.52" y="114.9" width="6.76" height="6.76"/><rect x="20.28" y="114.9" width="6.76" height="6.76"/><rect x="67.59" y="114.9" width="6.76" height="6.76"/><rect x="87.86" y="114.9" width="6.76" height="6.76"/><rect x="94.62" y="114.9" width="6.76" height="6.76"/><rect x="114.9" y="114.9" width="6.76" height="6.76"/><rect x="121.66" y="114.9" width="6.76" height="6.76"/><rect x="141.93" y="114.9" width="6.76" height="6.76"/><rect x="148.69" y="114.9" width="6.76" height="6.76"/><rect x="168.97" y="114.9" width="6.76" height="6.76"/><rect x="13.52" y="121.66" width="6.76" height="6.76"/><rect x="27.03" y="121.66" width="6.76" height="6.76"/><rect x="40.55" y="121.66" width="6.76" height="6.76"/><rect x="47.31" y="121.66" width="6.76" height="6.76"/><rect x="54.07" y="121.66" width="6.76" height="6.76"/><rect x="60.83" y="121.66" width="6.76" height="6.76"/><rect x="81.1" y="121.66" width="6.76" height="6.76"/><rect x="87.86" y="121.66" width="6.76" height="6.76"/><rect x="94.62" y="121.66" width="6.76" height="6.76"/><rect x="128.41" y="121.66" width="6.76" height="6.76"/><rect x="135.17" y="121.66" width="6.76" height="6.76"/><rect x="148.69" y="121.66" width="6.76" height="6.76"/><rect x="182.48" y="121.66" width="6.76" height="6.76"/><rect x="0.0" y="128.41" width="6.76" height="6.76"/><rect x="13.52" y="128.41" width="6.76" height="6.76"/><rect x="33.79" y="128.41" width="6.76" height="6.76"/><rect x="60.83" y="128.41" width="6.76" height="6.76"/><rect x="67.59" y="128.41" width="6.76" height="6.76"/><rect x="87.86" y="128.41" width="6.76" height="6.76"/><rect x="94.62" y="128.41" width="6.76" height="6.76"/><rect x="101.38" y="128.41" width="6.76" height="6.76"/><rect x="108.14" y="128.41" width="6.76" height="6.76"/><rect x="114.9" y="128.41" width="6.76" height="6.76"/><rect x="135.17" y="128.41" width="6.76" height="6.76"/><rect x="141.93" y="128.41" width="6.76" height="6.76"/><rect x="148.69" y="128.41" width="6.76" height="6.76"/><rect x="162.21" y="128.41" width="6.76" height="6.76"/><rect x="168.97" y="128.41" width="6.76" height="6.76"/><rect x="175.72" y="128.41" width="6.76" height="6.76"/><rect x="189.24" y="128.41" width="6.76" height="6.76"/><rect x="0.0" y="135.17" width="6.76" height="6.76"/><rect x="6.76" y="135.17" width="6.76" height="6.76"/><rect x="20.28" y="135.17" width="6.76" height="6.76"/><rect x="33.79" y="135.17" width="6.76" height="6.76"/><rect x="40.55" y="135.17" width="6.76" height="6.76"/><rect x="54.07" y="135.17" width="6.76" height="6.76"/><rect x="60.83" y="135.17" width="6.76" height="6.76"/><rect x="67.59" y="135.17" width="6.76" height="6.76"/><rect x="74.34" y="135.17" width="6.76" height="6.76"/><rect x="81.1" y="135.17" width="6.76" height="6.76"/><rect x="94.62" y="135.17" width="6.76" height="6.76"/><rect x="101.38" y="135.17" width="6.76" height="6.76"/><rect x="108.14" y="135.17" width="6.76" height="6.76"/><rect x="114.9" y="135.17" width="6.76" height="6.76"/><rect x="121.66" y="135.17" width="6.76" height="6.76"/><rect x="128.41" y="135.17" width="6.76" height="6.76"/><rect x="135.17" y="135.17" width="6.76" height="6.76"/><rect x="141.93" y="135.17" width="6.76" height="6.76"/><rect x="148.69" y="135.17" width="6.76" height="6.76"/><rect x="155.45" y="135.17" width="6.76" height="6.76"/><rect x="162.21" y="135.17" width="6.76" height="6.76"/><rect x="189.24" y="135.17" width="6.76" height="6.76"/><rect x="67.59" y="141.93" width="6.76" height="6.76"/><rect x="81.1" y="141.93" width="6.76" height="6.76"/><rect x="87.86" y="141.93" width="6.76" height="6.76"/><rect x="101.38" y="141.93" width="6.76" height="6.76"/><rect x="108.14" y="141.93" width="6.76" height="6.76"/><rect x="121.66" y="141.93" width="6.76" height="6.76"/><rect x="135.17" y="141.93" width="6.76" height="6.76"/><rect x="162.21" y="141.93" width="6.76" height="6.76"/><rect x="182.48" y="141.93" width="6.76" height="6.76"/><rect x="0.0" y="148.69" width="6.76" height="6.76"/><rect x="6.76" y="148.69" width="6.76" height="6.76"/><rect x="13.52" y="148.69" width="6.76" height="6.76"/><rect x="20.28" y="148.69" width="6.76" height="6.76"/><rect x="27.03" y="148.69" width="6.76" height="6.76"/><rect x="33.79" y="148.69" width="6.76" height="6.76"/><rect x="40.55" y="148.69" width="6.76" height="6.76"/><rect x="60.83" y="148.69" width="6.76" height="6.76"/><rect x="81.1" y="148.69" width="6.76" height="6.76"/><rect x="121.66" y="148.69" width="6.76" height="6.76"/><rect x="135.17" y="148.69" width="6.76" height="6.76"/><rect x="148.69" y="148.69" width="6.76" height="6.76"/><rect x="162.21" y="148.69" width="6.76" height="6.76"/><rect x="189.24" y="148.69" width="6.76" height="6.76"/><rect x="0.0" y="155.45" width="6.76" height="6.76"/><rect x="40.55" y="155.45" width="6.76" height="6.76"/><rect x="101.38" y="155.45" width="6.76" height="6.76"/><rect x="135.17" y="155.45" width="6.76" height="6.76"/><rect x="162.21" y="155.45" width="6.76" height="6.76"/><rect x="168.97" y="155.45" width="6.76" height="6.76"/><rect x="175.72" y="155.45" width="6.76" height="6.76"/><rect x="182.48" y="155.45" width="6.76" height="6.76"/><rect x="0.0" y="162.21" width="6.76" height="6.76"/><rect x="13.52" y="162.21" width="6.76" height="6.76"/><rect x="20.28" y="162.21" width="6.76" height="6.76"/><rect x="27.03" y="162.21" width="6.76" height="6.76"/><rect x="40.55" y="162.21" width="6.76" height="6.76"/><rect x="67.59" y="162.21" width="6.76" height="6.76"/><rect x="81.1" y="162.21" width="6.76" height="6.76"/><rect x="94.62" y="162.21" width="6.76" height="6.76"/><rect x="101.38" y="162.21" width="6.76" height="6.76"/><rect x="114.9" y="162.21" width="6.76" height="6.76"/><rect x="128.41" y="162.21" width="6.76" height="6.76"/><rect x="135.17" y="162.21" width="6.76" height="6.76"/><rect x="141.93" y="162.21" width="6.76" height="6.76"/><rect x="148.69" y="162.21" width="6.76" height="6.76"/><rect x="155.45" y="162.21" width="6.76" height="6.76"/><rect x="162.21" y="162.21" width="6.76" height="6.76"/><rect x="182.48" y="162.21" width="6.76" height="6.76"/><rect x="0.0" y="168.97" width="6.76" height="6.76"/><rect x="13.52" y="168.97" width="6.76" height="6.76"/><rect x="20.28" y="168.97" width="6.76" height="6.76"/><rect x="27.03" y="168.97" width="6.76" height="6.76"/><rect x="40.55" y="168.97" width="6.76" height="6.76"/><rect x="60.83" y="168.97" width="6.76" height="6.76"/><rect x="74.34" y="168.97" width="6.76" height="6.76"/><rect x="87.86" y="168.97" width="6.76" height="6.76"/><rect x="94.62" y="168.97" width="6.76" height="6.76"/><rect x="114.9" y="168.97" width="6.76" height="6.76"/><rect x="121.66" y="168.97" width="6.76" height="6.76"/><rect x="128.41" y="168.97" width="6.76" height="6.76"/><rect x="135.17" y="168.97" width="6.76" height="6.76"/><rect x="155.45" y="168.97" width="6.76" height="6.76"/><rect x="175.72" y="168.97" width="6.76" height="6.76"/><rect x="0.0" y="175.72" width="6.76" height="6.76"/><rect x="13.52" y="175.72" width="6.76" height="6.76"/><rect x="20.28" y="175.72" width="6.76" height="6.76"/><rect x="27.03" y="175.72" width="6.76" height="6.76"/><rect x="40.55" y="175.72" width="6.76" height="6.76"/><rect x="60.83" y="175.72" width="6.76" height="6.76"/><rect x="108.14" y="175.72" width="6.76" height="6.76"/><rect x="114.9" y="175.72" width="6.76" height="6.76"/><rect x="141.93" y="175.72" width="6.76" height="6.76"/><rect x="148.69" y="175.72" width="6.76" height="6.76"/><rect x="168.97" y="175.72" width="6.76" height="6.76"/><rect x="175.72" y="175.72" width="6.76" height="6.76"/><rect x="182.48" y="175.72" width="6.76" height="6.76"/><rect x="189.24" y="175.72" width="6.76" height="6.76"/><rect x="0.0" y="182.48" width="6.76" height="6.76"/><rect x="40.55" y="182.48" width="6.76" height="6.76"/><rect x="67.59" y="182.48" width="6.76" height="6.76"/><rect x="74.34" y="182.48" width="6.76" height="6.76"/><rect x="81.1" y="182.48" width="6.76" height="6.76"/><rect x="87.86" y="182.48" width="6.76" height="6.76"/><rect x="101.38" y="182.48" width="6.76" height="6.76"/><rect x="121.66" y="182.48" width="6.76" height="6.76"/><rect x="128.41" y="182.48" width="6.76" height="6.76"/><rect x="141.93" y="182.48" width="6.76" height="6.76"/><rect x="148.69" y="182.48" width="6.76" height="6.76"/><rect x="168.97" y="182.48" width="6.76" height="6.76"/><rect x="182.48" y="182.48" width="6.76" height="6.76"/><rect x="189.24" y="182.48" width="6.76" height="6.76"/><rect x="0.0" y="189.24" width="6.76" height="6.76"/><rect x="6.76" y="189.24" width="6.76" height="6.76"/><rect x="13.52" y="189.24" width="6.76" height="6.76"/><rect x="20.28" y="189.24" width="6.76" height="6.76"/><rect x="27.03" y="189.24" width="6.76" height="6.76"/><rect x="33.79" y="189.24" width="6.76" height="6.76"/><rect x="40.55" y="189.24" width="6.76" height="6.76"/><rect x="67.59" y="189.24" width="6.76" height="6.76"/><rect x="74.34" y="189.24" width="6.76" height="6.76"/><rect x="81.1" y="189.24" width="6.76" height="6.76"/><rect x="87.86" y="189.24" width="6.76" height="6.76"/><rect x="108.14" y="189.24" width="6.76" height="6.76"/><rect x="114.9" y="189.24" width="6.76" height="6.76"/><rect x="121.66" y="189.24" width="6.76" height="6.76"/><rect x="128.41" y="189.24" width="6.76" height="6.76"/><rect x="141.93" y="189.24" width="6.76" height="6.76"/><rect x="155.45" y="189.24" width="6.76" height="6.76"/><rect x="175.72" y="189.24" width="6.76" height="6.76"/><rect x="182.48" y="189.24" width="6.76" height="6.76"/><rect x="189.24" y="189.24" width="6.76" height="6.76"/></g></svg></div>
+        <div class="qrcap"><b style="font-size:14px;color:var(--ink)">HD-2291-KX-2026</b><br>Policy No · 15 characters</div>
+        <b class="n" style="position:absolute;right:22px;top:22px">1</b>
+      </div>
+
+      <div class="bright"><svg class="ic s" style="color:var(--warn)"><use href="#i-sun"/></svg>
+        Screen brightened to full while this is open — scanners need the light
+        <b class="n" style="position:relative;top:-14px">2</b></div>
+
+      <div class="lab">What it contains</div>
+      <div class="prev" style="font-size:11px"><span class="plab">ENCODED</span>HD-2291-KX-2026<b class="n" style="position:absolute;right:6px;bottom:6px">3</b></div>
+
+      <div class="scard" style="margin-top:12px">
+        <div class="srow"><span class="si"><svg class="ic s"><use href="#i-save"/></svg></span>
+          <div class="l"><b>Save as image</b><small>PNG, 1024 × 1024, wherever you choose</small></div><svg class="ic ch"><use href="#i-chev"/></svg></div>
+        <div class="srow"><span class="si"><svg class="ic s"><use href="#i-share"/></svg></span>
+          <div class="l"><b>Share the image</b><small>WhatsApp, Gmail, anywhere</small></div><svg class="ic ch"><use href="#i-chev"/></svg></div>
+        <div class="srow"><span class="si"><svg class="ic s"><use href="#i-qr"/></svg></span>
+          <div class="l"><b>Add more fields to this code</b><small>Registration, Garage, dates…</small></div><svg class="ic ch"><use href="#i-chev"/></svg>
+          <b class="n g" style="position:absolute;right:6px;top:110px">4</b></div>
+      </div>
+
+      <div style="background:var(--err-c);border-radius:12px;padding:9px 11px;margin-top:12px;display:flex;gap:8px;align-items:flex-start">
+        <svg class="ic s" style="color:var(--err);margin-top:1px"><use href="#i-warn"/></svg>
+        <div style="font-size:11px;color:#8A1F19;line-height:1.45">
+          Anyone who can see your screen can scan this. A QR is not a secret — it is just faster typing.
+        </div>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="new">Generated on the phone</td><td>No internet, no service — the code is drawn locally and never leaves unless you save or share it</td></tr>
+    <tr><td class="sr">2</td><td class="new">Brightness boost</td><td>Full brightness while the code is on screen, restored when you leave. The difference between a scan that works and one that does not <i class="q">Q9</i></td></tr>
+    <tr><td class="sr">3</td><td class="k">Nothing hidden</td><td>Exactly what is encoded is printed underneath — you never scan a mystery</td></tr>
+    <tr><td class="sr">4</td><td class="new">Grow into a multi-field code</td><td>Straight into S6 without going back to the card</td></tr>
+  </table>
+</figure>
+
+<!-- S6 -->
+<figure>
+  <h3>S6 · QR for several values<small>feature 3 · one code or one each</small></h3>
+  <div class="phone" style="height:860px">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="tbar"><div class="ib"><svg class="ic"><use href="#i-close"/></svg></div>
+      <div class="t"><b>QR code</b><small>3 fields selected</small></div>
+      <div class="ib"><svg class="ic"><use href="#i-share"/></svg></div></div>
+    <div class="body">
+      <div class="presets" style="margin-top:4px">
+        <span class="pchip on">One code, all fields</span><span class="pchip">One code per field</span>
+        <b class="n" style="position:relative;top:-14px">1</b>
+      </div>
+
+      <div class="qrwrap">
+        <div class="qrimg"><svg width="208" height="208" viewBox="0 0 208 208" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><rect width="208" height="208" fill="#fff"/><g fill="#0F1522"><rect x="0.0" y="0.0" width="7.17" height="7.17"/><rect x="7.17" y="0.0" width="7.17" height="7.17"/><rect x="14.34" y="0.0" width="7.17" height="7.17"/><rect x="21.52" y="0.0" width="7.17" height="7.17"/><rect x="28.69" y="0.0" width="7.17" height="7.17"/><rect x="35.86" y="0.0" width="7.17" height="7.17"/><rect x="43.03" y="0.0" width="7.17" height="7.17"/><rect x="71.72" y="0.0" width="7.17" height="7.17"/><rect x="78.9" y="0.0" width="7.17" height="7.17"/><rect x="107.59" y="0.0" width="7.17" height="7.17"/><rect x="136.28" y="0.0" width="7.17" height="7.17"/><rect x="157.79" y="0.0" width="7.17" height="7.17"/><rect x="164.97" y="0.0" width="7.17" height="7.17"/><rect x="172.14" y="0.0" width="7.17" height="7.17"/><rect x="179.31" y="0.0" width="7.17" height="7.17"/><rect x="186.48" y="0.0" width="7.17" height="7.17"/><rect x="193.66" y="0.0" width="7.17" height="7.17"/><rect x="200.83" y="0.0" width="7.17" height="7.17"/><rect x="0.0" y="7.17" width="7.17" height="7.17"/><rect x="43.03" y="7.17" width="7.17" height="7.17"/><rect x="78.9" y="7.17" width="7.17" height="7.17"/><rect x="86.07" y="7.17" width="7.17" height="7.17"/><rect x="93.24" y="7.17" width="7.17" height="7.17"/><rect x="107.59" y="7.17" width="7.17" height="7.17"/><rect x="114.76" y="7.17" width="7.17" height="7.17"/><rect x="136.28" y="7.17" width="7.17" height="7.17"/><rect x="157.79" y="7.17" width="7.17" height="7.17"/><rect x="200.83" y="7.17" width="7.17" height="7.17"/><rect x="0.0" y="14.34" width="7.17" height="7.17"/><rect x="14.34" y="14.34" width="7.17" height="7.17"/><rect x="21.52" y="14.34" width="7.17" height="7.17"/><rect x="28.69" y="14.34" width="7.17" height="7.17"/><rect x="43.03" y="14.34" width="7.17" height="7.17"/><rect x="64.55" y="14.34" width="7.17" height="7.17"/><rect x="71.72" y="14.34" width="7.17" height="7.17"/><rect x="78.9" y="14.34" width="7.17" height="7.17"/><rect x="86.07" y="14.34" width="7.17" height="7.17"/><rect x="93.24" y="14.34" width="7.17" height="7.17"/><rect x="100.41" y="14.34" width="7.17" height="7.17"/><rect x="107.59" y="14.34" width="7.17" height="7.17"/><rect x="129.1" y="14.34" width="7.17" height="7.17"/><rect x="143.45" y="14.34" width="7.17" height="7.17"/><rect x="157.79" y="14.34" width="7.17" height="7.17"/><rect x="172.14" y="14.34" width="7.17" height="7.17"/><rect x="179.31" y="14.34" width="7.17" height="7.17"/><rect x="186.48" y="14.34" width="7.17" height="7.17"/><rect x="200.83" y="14.34" width="7.17" height="7.17"/><rect x="0.0" y="21.52" width="7.17" height="7.17"/><rect x="14.34" y="21.52" width="7.17" height="7.17"/><rect x="21.52" y="21.52" width="7.17" height="7.17"/><rect x="28.69" y="21.52" width="7.17" height="7.17"/><rect x="43.03" y="21.52" width="7.17" height="7.17"/><rect x="64.55" y="21.52" width="7.17" height="7.17"/><rect x="78.9" y="21.52" width="7.17" height="7.17"/><rect x="107.59" y="21.52" width="7.17" height="7.17"/><rect x="136.28" y="21.52" width="7.17" height="7.17"/><rect x="143.45" y="21.52" width="7.17" height="7.17"/><rect x="157.79" y="21.52" width="7.17" height="7.17"/><rect x="172.14" y="21.52" width="7.17" height="7.17"/><rect x="179.31" y="21.52" width="7.17" height="7.17"/><rect x="186.48" y="21.52" width="7.17" height="7.17"/><rect x="200.83" y="21.52" width="7.17" height="7.17"/><rect x="0.0" y="28.69" width="7.17" height="7.17"/><rect x="14.34" y="28.69" width="7.17" height="7.17"/><rect x="21.52" y="28.69" width="7.17" height="7.17"/><rect x="28.69" y="28.69" width="7.17" height="7.17"/><rect x="43.03" y="28.69" width="7.17" height="7.17"/><rect x="64.55" y="28.69" width="7.17" height="7.17"/><rect x="86.07" y="28.69" width="7.17" height="7.17"/><rect x="93.24" y="28.69" width="7.17" height="7.17"/><rect x="129.1" y="28.69" width="7.17" height="7.17"/><rect x="143.45" y="28.69" width="7.17" height="7.17"/><rect x="157.79" y="28.69" width="7.17" height="7.17"/><rect x="172.14" y="28.69" width="7.17" height="7.17"/><rect x="179.31" y="28.69" width="7.17" height="7.17"/><rect x="186.48" y="28.69" width="7.17" height="7.17"/><rect x="200.83" y="28.69" width="7.17" height="7.17"/><rect x="0.0" y="35.86" width="7.17" height="7.17"/><rect x="43.03" y="35.86" width="7.17" height="7.17"/><rect x="64.55" y="35.86" width="7.17" height="7.17"/><rect x="71.72" y="35.86" width="7.17" height="7.17"/><rect x="86.07" y="35.86" width="7.17" height="7.17"/><rect x="100.41" y="35.86" width="7.17" height="7.17"/><rect x="129.1" y="35.86" width="7.17" height="7.17"/><rect x="136.28" y="35.86" width="7.17" height="7.17"/><rect x="143.45" y="35.86" width="7.17" height="7.17"/><rect x="157.79" y="35.86" width="7.17" height="7.17"/><rect x="200.83" y="35.86" width="7.17" height="7.17"/><rect x="0.0" y="43.03" width="7.17" height="7.17"/><rect x="7.17" y="43.03" width="7.17" height="7.17"/><rect x="14.34" y="43.03" width="7.17" height="7.17"/><rect x="21.52" y="43.03" width="7.17" height="7.17"/><rect x="28.69" y="43.03" width="7.17" height="7.17"/><rect x="35.86" y="43.03" width="7.17" height="7.17"/><rect x="43.03" y="43.03" width="7.17" height="7.17"/><rect x="57.38" y="43.03" width="7.17" height="7.17"/><rect x="71.72" y="43.03" width="7.17" height="7.17"/><rect x="86.07" y="43.03" width="7.17" height="7.17"/><rect x="100.41" y="43.03" width="7.17" height="7.17"/><rect x="114.76" y="43.03" width="7.17" height="7.17"/><rect x="129.1" y="43.03" width="7.17" height="7.17"/><rect x="143.45" y="43.03" width="7.17" height="7.17"/><rect x="157.79" y="43.03" width="7.17" height="7.17"/><rect x="164.97" y="43.03" width="7.17" height="7.17"/><rect x="172.14" y="43.03" width="7.17" height="7.17"/><rect x="179.31" y="43.03" width="7.17" height="7.17"/><rect x="186.48" y="43.03" width="7.17" height="7.17"/><rect x="193.66" y="43.03" width="7.17" height="7.17"/><rect x="200.83" y="43.03" width="7.17" height="7.17"/><rect x="64.55" y="50.21" width="7.17" height="7.17"/><rect x="71.72" y="50.21" width="7.17" height="7.17"/><rect x="86.07" y="50.21" width="7.17" height="7.17"/><rect x="100.41" y="50.21" width="7.17" height="7.17"/><rect x="107.59" y="50.21" width="7.17" height="7.17"/><rect x="121.93" y="50.21" width="7.17" height="7.17"/><rect x="136.28" y="50.21" width="7.17" height="7.17"/><rect x="143.45" y="50.21" width="7.17" height="7.17"/><rect x="43.03" y="57.38" width="7.17" height="7.17"/><rect x="86.07" y="57.38" width="7.17" height="7.17"/><rect x="93.24" y="57.38" width="7.17" height="7.17"/><rect x="100.41" y="57.38" width="7.17" height="7.17"/><rect x="136.28" y="57.38" width="7.17" height="7.17"/><rect x="143.45" y="57.38" width="7.17" height="7.17"/><rect x="7.17" y="64.55" width="7.17" height="7.17"/><rect x="14.34" y="64.55" width="7.17" height="7.17"/><rect x="21.52" y="64.55" width="7.17" height="7.17"/><rect x="28.69" y="64.55" width="7.17" height="7.17"/><rect x="35.86" y="64.55" width="7.17" height="7.17"/><rect x="50.21" y="64.55" width="7.17" height="7.17"/><rect x="57.38" y="64.55" width="7.17" height="7.17"/><rect x="78.9" y="64.55" width="7.17" height="7.17"/><rect x="86.07" y="64.55" width="7.17" height="7.17"/><rect x="150.62" y="64.55" width="7.17" height="7.17"/><rect x="179.31" y="64.55" width="7.17" height="7.17"/><rect x="186.48" y="64.55" width="7.17" height="7.17"/><rect x="193.66" y="64.55" width="7.17" height="7.17"/><rect x="7.17" y="71.72" width="7.17" height="7.17"/><rect x="14.34" y="71.72" width="7.17" height="7.17"/><rect x="21.52" y="71.72" width="7.17" height="7.17"/><rect x="28.69" y="71.72" width="7.17" height="7.17"/><rect x="43.03" y="71.72" width="7.17" height="7.17"/><rect x="50.21" y="71.72" width="7.17" height="7.17"/><rect x="57.38" y="71.72" width="7.17" height="7.17"/><rect x="86.07" y="71.72" width="7.17" height="7.17"/><rect x="93.24" y="71.72" width="7.17" height="7.17"/><rect x="107.59" y="71.72" width="7.17" height="7.17"/><rect x="121.93" y="71.72" width="7.17" height="7.17"/><rect x="136.28" y="71.72" width="7.17" height="7.17"/><rect x="157.79" y="71.72" width="7.17" height="7.17"/><rect x="164.97" y="71.72" width="7.17" height="7.17"/><rect x="186.48" y="71.72" width="7.17" height="7.17"/><rect x="193.66" y="71.72" width="7.17" height="7.17"/><rect x="200.83" y="71.72" width="7.17" height="7.17"/><rect x="0.0" y="78.9" width="7.17" height="7.17"/><rect x="7.17" y="78.9" width="7.17" height="7.17"/><rect x="14.34" y="78.9" width="7.17" height="7.17"/><rect x="21.52" y="78.9" width="7.17" height="7.17"/><rect x="28.69" y="78.9" width="7.17" height="7.17"/><rect x="50.21" y="78.9" width="7.17" height="7.17"/><rect x="64.55" y="78.9" width="7.17" height="7.17"/><rect x="78.9" y="78.9" width="7.17" height="7.17"/><rect x="86.07" y="78.9" width="7.17" height="7.17"/><rect x="100.41" y="78.9" width="7.17" height="7.17"/><rect x="114.76" y="78.9" width="7.17" height="7.17"/><rect x="143.45" y="78.9" width="7.17" height="7.17"/><rect x="150.62" y="78.9" width="7.17" height="7.17"/><rect x="157.79" y="78.9" width="7.17" height="7.17"/><rect x="172.14" y="78.9" width="7.17" height="7.17"/><rect x="200.83" y="78.9" width="7.17" height="7.17"/><rect x="0.0" y="86.07" width="7.17" height="7.17"/><rect x="35.86" y="86.07" width="7.17" height="7.17"/><rect x="43.03" y="86.07" width="7.17" height="7.17"/><rect x="50.21" y="86.07" width="7.17" height="7.17"/><rect x="57.38" y="86.07" width="7.17" height="7.17"/><rect x="71.72" y="86.07" width="7.17" height="7.17"/><rect x="114.76" y="86.07" width="7.17" height="7.17"/><rect x="121.93" y="86.07" width="7.17" height="7.17"/><rect x="129.1" y="86.07" width="7.17" height="7.17"/><rect x="136.28" y="86.07" width="7.17" height="7.17"/><rect x="172.14" y="86.07" width="7.17" height="7.17"/><rect x="179.31" y="86.07" width="7.17" height="7.17"/><rect x="193.66" y="86.07" width="7.17" height="7.17"/><rect x="0.0" y="93.24" width="7.17" height="7.17"/><rect x="7.17" y="93.24" width="7.17" height="7.17"/><rect x="21.52" y="93.24" width="7.17" height="7.17"/><rect x="28.69" y="93.24" width="7.17" height="7.17"/><rect x="35.86" y="93.24" width="7.17" height="7.17"/><rect x="64.55" y="93.24" width="7.17" height="7.17"/><rect x="93.24" y="93.24" width="7.17" height="7.17"/><rect x="107.59" y="93.24" width="7.17" height="7.17"/><rect x="114.76" y="93.24" width="7.17" height="7.17"/><rect x="121.93" y="93.24" width="7.17" height="7.17"/><rect x="129.1" y="93.24" width="7.17" height="7.17"/><rect x="172.14" y="93.24" width="7.17" height="7.17"/><rect x="186.48" y="93.24" width="7.17" height="7.17"/><rect x="0.0" y="100.41" width="7.17" height="7.17"/><rect x="7.17" y="100.41" width="7.17" height="7.17"/><rect x="21.52" y="100.41" width="7.17" height="7.17"/><rect x="35.86" y="100.41" width="7.17" height="7.17"/><rect x="43.03" y="100.41" width="7.17" height="7.17"/><rect x="71.72" y="100.41" width="7.17" height="7.17"/><rect x="100.41" y="100.41" width="7.17" height="7.17"/><rect x="121.93" y="100.41" width="7.17" height="7.17"/><rect x="129.1" y="100.41" width="7.17" height="7.17"/><rect x="157.79" y="100.41" width="7.17" height="7.17"/><rect x="164.97" y="100.41" width="7.17" height="7.17"/><rect x="193.66" y="100.41" width="7.17" height="7.17"/><rect x="14.34" y="107.59" width="7.17" height="7.17"/><rect x="50.21" y="107.59" width="7.17" height="7.17"/><rect x="57.38" y="107.59" width="7.17" height="7.17"/><rect x="64.55" y="107.59" width="7.17" height="7.17"/><rect x="78.9" y="107.59" width="7.17" height="7.17"/><rect x="86.07" y="107.59" width="7.17" height="7.17"/><rect x="107.59" y="107.59" width="7.17" height="7.17"/><rect x="121.93" y="107.59" width="7.17" height="7.17"/><rect x="129.1" y="107.59" width="7.17" height="7.17"/><rect x="136.28" y="107.59" width="7.17" height="7.17"/><rect x="143.45" y="107.59" width="7.17" height="7.17"/><rect x="150.62" y="107.59" width="7.17" height="7.17"/><rect x="157.79" y="107.59" width="7.17" height="7.17"/><rect x="164.97" y="107.59" width="7.17" height="7.17"/><rect x="186.48" y="107.59" width="7.17" height="7.17"/><rect x="200.83" y="107.59" width="7.17" height="7.17"/><rect x="0.0" y="114.76" width="7.17" height="7.17"/><rect x="14.34" y="114.76" width="7.17" height="7.17"/><rect x="43.03" y="114.76" width="7.17" height="7.17"/><rect x="50.21" y="114.76" width="7.17" height="7.17"/><rect x="78.9" y="114.76" width="7.17" height="7.17"/><rect x="86.07" y="114.76" width="7.17" height="7.17"/><rect x="93.24" y="114.76" width="7.17" height="7.17"/><rect x="114.76" y="114.76" width="7.17" height="7.17"/><rect x="121.93" y="114.76" width="7.17" height="7.17"/><rect x="157.79" y="114.76" width="7.17" height="7.17"/><rect x="172.14" y="114.76" width="7.17" height="7.17"/><rect x="179.31" y="114.76" width="7.17" height="7.17"/><rect x="186.48" y="114.76" width="7.17" height="7.17"/><rect x="200.83" y="114.76" width="7.17" height="7.17"/><rect x="7.17" y="121.93" width="7.17" height="7.17"/><rect x="35.86" y="121.93" width="7.17" height="7.17"/><rect x="50.21" y="121.93" width="7.17" height="7.17"/><rect x="57.38" y="121.93" width="7.17" height="7.17"/><rect x="64.55" y="121.93" width="7.17" height="7.17"/><rect x="71.72" y="121.93" width="7.17" height="7.17"/><rect x="86.07" y="121.93" width="7.17" height="7.17"/><rect x="100.41" y="121.93" width="7.17" height="7.17"/><rect x="107.59" y="121.93" width="7.17" height="7.17"/><rect x="121.93" y="121.93" width="7.17" height="7.17"/><rect x="136.28" y="121.93" width="7.17" height="7.17"/><rect x="143.45" y="121.93" width="7.17" height="7.17"/><rect x="172.14" y="121.93" width="7.17" height="7.17"/><rect x="179.31" y="121.93" width="7.17" height="7.17"/><rect x="186.48" y="121.93" width="7.17" height="7.17"/><rect x="14.34" y="129.1" width="7.17" height="7.17"/><rect x="21.52" y="129.1" width="7.17" height="7.17"/><rect x="35.86" y="129.1" width="7.17" height="7.17"/><rect x="43.03" y="129.1" width="7.17" height="7.17"/><rect x="50.21" y="129.1" width="7.17" height="7.17"/><rect x="57.38" y="129.1" width="7.17" height="7.17"/><rect x="64.55" y="129.1" width="7.17" height="7.17"/><rect x="71.72" y="129.1" width="7.17" height="7.17"/><rect x="78.9" y="129.1" width="7.17" height="7.17"/><rect x="86.07" y="129.1" width="7.17" height="7.17"/><rect x="107.59" y="129.1" width="7.17" height="7.17"/><rect x="114.76" y="129.1" width="7.17" height="7.17"/><rect x="179.31" y="129.1" width="7.17" height="7.17"/><rect x="0.0" y="136.28" width="7.17" height="7.17"/><rect x="7.17" y="136.28" width="7.17" height="7.17"/><rect x="14.34" y="136.28" width="7.17" height="7.17"/><rect x="35.86" y="136.28" width="7.17" height="7.17"/><rect x="50.21" y="136.28" width="7.17" height="7.17"/><rect x="57.38" y="136.28" width="7.17" height="7.17"/><rect x="64.55" y="136.28" width="7.17" height="7.17"/><rect x="78.9" y="136.28" width="7.17" height="7.17"/><rect x="86.07" y="136.28" width="7.17" height="7.17"/><rect x="114.76" y="136.28" width="7.17" height="7.17"/><rect x="121.93" y="136.28" width="7.17" height="7.17"/><rect x="136.28" y="136.28" width="7.17" height="7.17"/><rect x="150.62" y="136.28" width="7.17" height="7.17"/><rect x="164.97" y="136.28" width="7.17" height="7.17"/><rect x="186.48" y="136.28" width="7.17" height="7.17"/><rect x="193.66" y="136.28" width="7.17" height="7.17"/><rect x="7.17" y="143.45" width="7.17" height="7.17"/><rect x="14.34" y="143.45" width="7.17" height="7.17"/><rect x="21.52" y="143.45" width="7.17" height="7.17"/><rect x="28.69" y="143.45" width="7.17" height="7.17"/><rect x="35.86" y="143.45" width="7.17" height="7.17"/><rect x="43.03" y="143.45" width="7.17" height="7.17"/><rect x="50.21" y="143.45" width="7.17" height="7.17"/><rect x="57.38" y="143.45" width="7.17" height="7.17"/><rect x="64.55" y="143.45" width="7.17" height="7.17"/><rect x="78.9" y="143.45" width="7.17" height="7.17"/><rect x="93.24" y="143.45" width="7.17" height="7.17"/><rect x="107.59" y="143.45" width="7.17" height="7.17"/><rect x="114.76" y="143.45" width="7.17" height="7.17"/><rect x="129.1" y="143.45" width="7.17" height="7.17"/><rect x="143.45" y="143.45" width="7.17" height="7.17"/><rect x="150.62" y="143.45" width="7.17" height="7.17"/><rect x="157.79" y="143.45" width="7.17" height="7.17"/><rect x="164.97" y="143.45" width="7.17" height="7.17"/><rect x="172.14" y="143.45" width="7.17" height="7.17"/><rect x="179.31" y="143.45" width="7.17" height="7.17"/><rect x="64.55" y="150.62" width="7.17" height="7.17"/><rect x="71.72" y="150.62" width="7.17" height="7.17"/><rect x="78.9" y="150.62" width="7.17" height="7.17"/><rect x="93.24" y="150.62" width="7.17" height="7.17"/><rect x="121.93" y="150.62" width="7.17" height="7.17"/><rect x="129.1" y="150.62" width="7.17" height="7.17"/><rect x="143.45" y="150.62" width="7.17" height="7.17"/><rect x="172.14" y="150.62" width="7.17" height="7.17"/><rect x="200.83" y="150.62" width="7.17" height="7.17"/><rect x="0.0" y="157.79" width="7.17" height="7.17"/><rect x="7.17" y="157.79" width="7.17" height="7.17"/><rect x="14.34" y="157.79" width="7.17" height="7.17"/><rect x="21.52" y="157.79" width="7.17" height="7.17"/><rect x="28.69" y="157.79" width="7.17" height="7.17"/><rect x="35.86" y="157.79" width="7.17" height="7.17"/><rect x="43.03" y="157.79" width="7.17" height="7.17"/><rect x="64.55" y="157.79" width="7.17" height="7.17"/><rect x="71.72" y="157.79" width="7.17" height="7.17"/><rect x="86.07" y="157.79" width="7.17" height="7.17"/><rect x="129.1" y="157.79" width="7.17" height="7.17"/><rect x="136.28" y="157.79" width="7.17" height="7.17"/><rect x="143.45" y="157.79" width="7.17" height="7.17"/><rect x="157.79" y="157.79" width="7.17" height="7.17"/><rect x="172.14" y="157.79" width="7.17" height="7.17"/><rect x="179.31" y="157.79" width="7.17" height="7.17"/><rect x="186.48" y="157.79" width="7.17" height="7.17"/><rect x="0.0" y="164.97" width="7.17" height="7.17"/><rect x="43.03" y="164.97" width="7.17" height="7.17"/><rect x="78.9" y="164.97" width="7.17" height="7.17"/><rect x="86.07" y="164.97" width="7.17" height="7.17"/><rect x="100.41" y="164.97" width="7.17" height="7.17"/><rect x="114.76" y="164.97" width="7.17" height="7.17"/><rect x="121.93" y="164.97" width="7.17" height="7.17"/><rect x="136.28" y="164.97" width="7.17" height="7.17"/><rect x="143.45" y="164.97" width="7.17" height="7.17"/><rect x="172.14" y="164.97" width="7.17" height="7.17"/><rect x="179.31" y="164.97" width="7.17" height="7.17"/><rect x="186.48" y="164.97" width="7.17" height="7.17"/><rect x="0.0" y="172.14" width="7.17" height="7.17"/><rect x="14.34" y="172.14" width="7.17" height="7.17"/><rect x="21.52" y="172.14" width="7.17" height="7.17"/><rect x="28.69" y="172.14" width="7.17" height="7.17"/><rect x="43.03" y="172.14" width="7.17" height="7.17"/><rect x="64.55" y="172.14" width="7.17" height="7.17"/><rect x="93.24" y="172.14" width="7.17" height="7.17"/><rect x="107.59" y="172.14" width="7.17" height="7.17"/><rect x="114.76" y="172.14" width="7.17" height="7.17"/><rect x="121.93" y="172.14" width="7.17" height="7.17"/><rect x="129.1" y="172.14" width="7.17" height="7.17"/><rect x="143.45" y="172.14" width="7.17" height="7.17"/><rect x="150.62" y="172.14" width="7.17" height="7.17"/><rect x="157.79" y="172.14" width="7.17" height="7.17"/><rect x="164.97" y="172.14" width="7.17" height="7.17"/><rect x="172.14" y="172.14" width="7.17" height="7.17"/><rect x="0.0" y="179.31" width="7.17" height="7.17"/><rect x="14.34" y="179.31" width="7.17" height="7.17"/><rect x="21.52" y="179.31" width="7.17" height="7.17"/><rect x="28.69" y="179.31" width="7.17" height="7.17"/><rect x="43.03" y="179.31" width="7.17" height="7.17"/><rect x="64.55" y="179.31" width="7.17" height="7.17"/><rect x="78.9" y="179.31" width="7.17" height="7.17"/><rect x="100.41" y="179.31" width="7.17" height="7.17"/><rect x="107.59" y="179.31" width="7.17" height="7.17"/><rect x="121.93" y="179.31" width="7.17" height="7.17"/><rect x="136.28" y="179.31" width="7.17" height="7.17"/><rect x="164.97" y="179.31" width="7.17" height="7.17"/><rect x="193.66" y="179.31" width="7.17" height="7.17"/><rect x="0.0" y="186.48" width="7.17" height="7.17"/><rect x="14.34" y="186.48" width="7.17" height="7.17"/><rect x="21.52" y="186.48" width="7.17" height="7.17"/><rect x="28.69" y="186.48" width="7.17" height="7.17"/><rect x="43.03" y="186.48" width="7.17" height="7.17"/><rect x="71.72" y="186.48" width="7.17" height="7.17"/><rect x="78.9" y="186.48" width="7.17" height="7.17"/><rect x="107.59" y="186.48" width="7.17" height="7.17"/><rect x="114.76" y="186.48" width="7.17" height="7.17"/><rect x="143.45" y="186.48" width="7.17" height="7.17"/><rect x="172.14" y="186.48" width="7.17" height="7.17"/><rect x="200.83" y="186.48" width="7.17" height="7.17"/><rect x="0.0" y="193.66" width="7.17" height="7.17"/><rect x="43.03" y="193.66" width="7.17" height="7.17"/><rect x="64.55" y="193.66" width="7.17" height="7.17"/><rect x="71.72" y="193.66" width="7.17" height="7.17"/><rect x="86.07" y="193.66" width="7.17" height="7.17"/><rect x="93.24" y="193.66" width="7.17" height="7.17"/><rect x="114.76" y="193.66" width="7.17" height="7.17"/><rect x="129.1" y="193.66" width="7.17" height="7.17"/><rect x="136.28" y="193.66" width="7.17" height="7.17"/><rect x="143.45" y="193.66" width="7.17" height="7.17"/><rect x="150.62" y="193.66" width="7.17" height="7.17"/><rect x="157.79" y="193.66" width="7.17" height="7.17"/><rect x="164.97" y="193.66" width="7.17" height="7.17"/><rect x="172.14" y="193.66" width="7.17" height="7.17"/><rect x="193.66" y="193.66" width="7.17" height="7.17"/><rect x="0.0" y="200.83" width="7.17" height="7.17"/><rect x="7.17" y="200.83" width="7.17" height="7.17"/><rect x="14.34" y="200.83" width="7.17" height="7.17"/><rect x="21.52" y="200.83" width="7.17" height="7.17"/><rect x="28.69" y="200.83" width="7.17" height="7.17"/><rect x="35.86" y="200.83" width="7.17" height="7.17"/><rect x="43.03" y="200.83" width="7.17" height="7.17"/><rect x="64.55" y="200.83" width="7.17" height="7.17"/><rect x="71.72" y="200.83" width="7.17" height="7.17"/><rect x="86.07" y="200.83" width="7.17" height="7.17"/><rect x="114.76" y="200.83" width="7.17" height="7.17"/><rect x="143.45" y="200.83" width="7.17" height="7.17"/><rect x="150.62" y="200.83" width="7.17" height="7.17"/><rect x="157.79" y="200.83" width="7.17" height="7.17"/><rect x="179.31" y="200.83" width="7.17" height="7.17"/><rect x="186.48" y="200.83" width="7.17" height="7.17"/></g></svg></div>
+        <div class="qrcap">3 fields · 96 characters · plenty of room</div>
+        <div class="pager"><i class="on"></i></div>
+      </div>
+
+      <div class="lab">Fields in this code <span class="r">Change</span></div>
+      <div class="scard">
+        <div class="srow"><span class="chk on"><svg class="ic"><use href="#i-tick"/></svg></span>
+          <div class="l"><b>Policy No</b><small>HD-2291-KX-2026</small></div></div>
+        <div class="srow"><span class="chk on"><svg class="ic"><use href="#i-tick"/></svg></span>
+          <div class="l"><b>Registration</b><small>WB 24 AB 1234</small></div></div>
+        <div class="srow"><span class="chk on"><svg class="ic"><use href="#i-tick"/></svg></span>
+          <div class="l"><b>Policy Expiry</b><small>11-Oct-2026</small></div></div>
+        <div class="srow"><span class="chk"></span>
+          <div class="l"><b>Garage</b><small>Barrackpore Motors</small></div>
+          <b class="n" style="position:absolute;right:6px;top:150px">2</b></div>
+      </div>
+
+      <div class="lab">What it contains</div>
+      <div class="prev" style="font-size:10.5px"><span class="plab">ENCODED</span>Car Insurance — HDFC Ergo
+Policy No: HD-2291-KX-2026
+Registration: WB 24 AB 1234
+Policy Expiry: 11-Oct-2026<b class="n g" style="position:absolute;right:6px;bottom:6px">3</b></div>
+
+      <div style="display:flex;gap:9px;margin-top:12px">
+        <span class="abtn cancel"><svg class="ic"><use href="#i-save"/></svg>Save PNG</span>
+        <span class="abtn save"><svg class="ic"><use href="#i-share"/></svg>Share</span>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="new">Two modes</td><td><b>One code, all fields</b> — a scanner shows the whole block. <b>One code per field</b> — swipe through them, for when a counter clerk scans one thing at a time <i class="q">Q10</i></td></tr>
+    <tr><td class="sr">2</td><td class="k">Tick to include</td><td>The same picker as sharing, so there is one mental model for both</td></tr>
+    <tr><td class="sr">3</td><td class="new">Capacity is watched</td><td>The caption says how full the code is. Past roughly 1 200 characters the code becomes too dense to scan, and InfoDeck says so and offers per-field codes instead of drawing something unusable <i class="q">Q11</i></td></tr>
+    <tr><td class="sr">4</td><td class="k">Plain text only</td><td>No vCard, no JSON — any camera app shows readable text. That is the point</td></tr>
+  </table>
+</figure>
+
+<!-- S7 -->
+<figure>
+  <h3>S7 · Sharing several cards<small>feature 1 and 2 together</small></h3>
+  <div class="phone">
+    <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div>
+    <div class="tbar" style="background:linear-gradient(135deg,#1E357F,#4B63E8)">
+      <div class="ib"><svg class="ic"><use href="#i-close"/></svg></div>
+      <div class="t"><b>3 selected</b><small>Insurance · Warranties</small></div>
+      <div class="ib"><svg class="ic"><use href="#i-tick"/></svg></div></div>
+    <div class="body">
+      <div class="idc"><span class="cbx on"><svg class="ic"><use href="#i-tick"/></svg></span>
+        <div class="l"><div class="tt">Car Insurance — HDFC Ergo</div><div class="kv">Policy Expiry 11-Oct-2026</div></div></div>
+      <div class="idc"><span class="cbx on"><svg class="ic"><use href="#i-tick"/></svg></span>
+        <div class="l"><div class="tt">Bike Insurance — ICICI Lombard</div><div class="kv">Policy Expiry 12-Oct-2025</div></div></div>
+      <div class="idc"><span class="cbx on"><svg class="ic"><use href="#i-tick"/></svg></span>
+        <div class="l"><div class="tt">Laptop Warranty — Dell XPS</div><div class="kv">Warranty End 07-Sep-2026</div></div></div>
+      <div class="idc"><span class="cbx"></span>
+        <div class="l"><div class="tt">Passport — K. D. Bhunia</div><div class="kv">Expiry 25-Aug-2027</div></div></div>
+
+      <div class="lab">What the CSV looks like</div>
+      <div class="prev" style="font-size:9.5px"><span class="plab">CSV</span>Card,Category,Policy No,Registration,Key date
+Car Insurance — HDFC Ergo,Insurance,HD-2291-KX-2026,WB 24 AB 1234,2026-10-11
+Bike Insurance — ICICI Lombard,Insurance,IC-8841-B,WB 24 XY 9911,2025-10-12
+Laptop Warranty — Dell XPS,Warranties,,,2026-09-07<b class="n" style="position:absolute;right:6px;bottom:6px">2</b></div>
+
+      <div class="selbar">
+        <span class="sa primary"><svg class="ic"><use href="#i-share"/></svg>Share</span>
+        <span class="sa"><svg class="ic"><use href="#i-file"/></svg>Export</span>
+        <span class="sa"><svg class="ic"><use href="#i-copy"/></svg>Duplicate</span>
+        <span class="sa"><svg class="ic"><use href="#i-more"/></svg>More</span>
+        <b class="n" style="position:absolute;left:6px;top:-8px">1</b>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <tr><th class="sr">#</th><th>Element</th><th>Behaviour</th></tr>
+    <tr><td class="sr">1</td><td class="new">Share is the primary in selection mode too</td><td>Filled and first, ahead of Export, Duplicate and More. Move and Delete stay under More, where destructive things belong</td></tr>
+    <tr><td class="sr">2</td><td class="new">CSV for many cards</td><td>Columns are the union of the fields you ticked; a card missing a field leaves an empty cell. Dates written ISO so a spreadsheet sorts them properly <i class="q">Q8</i></td></tr>
+    <tr><td class="sr">3</td><td class="k">One picker for all three</td><td>The same “what to share” sheet appears, with counts across all selected cards</td></tr>
+  </table>
+</figure>
+
+</div><!-- /frames -->
+
+<h2 class="sec">B · Specification</h2>
+
+<h3 class="sub">C1 · Where Share now lives — the decision you asked me to take</h3>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Place</th><th>1.4 today</th><th>Proposed</th></tr>
+  <tr><td class="sr">1</td><td class="k">Card view</td><td class="del">⋮ → “Share as text”, three taps deep</td><td class="rec">A <b>primary gradient Share button</b> in an action row, plus a share icon in the bar. One tap</td></tr>
+  <tr><td class="sr">2</td><td class="k">Card view — per value</td><td class="del">copy only</td><td class="rec">Every data row gets a QR button beside copy</td></tr>
+  <tr><td class="sr">3</td><td class="k">Selection mode</td><td class="del">no share at all</td><td class="rec">Share is the filled, first action; Export sits beside it</td></tr>
+  <tr><td class="sr">4</td><td class="k">Home card row</td><td>—</td><td>Unchanged — long-press to select, then Share. A per-row share icon would clutter the list <i class="q">Q1</i></td></tr>
+  <tr><td class="sr">5</td><td class="k">⋮ keeps</td><td>—</td><td>Move, Duplicate, Danger zone</td></tr>
+</table>
+
+<h3 class="sub">C2 · Favourite apps</h3>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Point</th><th>Detail</th></tr>
+  <tr><td class="sr">1</td><td class="k">The four</td><td>WhatsApp · Gmail · SMS · Email by default, changeable in Settings ▸ Sharing</td></tr>
+  <tr><td class="sr">2</td><td class="k">How they open</td><td>A direct intent naming that package, so no chooser appears. “All other apps…” still gives you the normal chooser</td></tr>
+  <tr><td class="sr">3</td><td class="k">Seeing what is installed</td><td>Android 11+ hides the app list unless the manifest declares a <code>&lt;queries&gt;</code> block naming the packages and the SEND intent. No runtime permission, but it must be declared honestly and it is visible in the manifest</td></tr>
+  <tr><td class="sr">4</td><td class="k">Missing apps</td><td>Never shown as a dead icon — the row is greyed in Settings and absent from the sheet</td></tr>
+  <tr><td class="sr">5</td><td class="k">SMS limits</td><td>Text only; an attachment is dropped by Android, so the app says so before you send</td></tr>
+</table>
+
+<h3 class="sub">C3 · What gets shared, and in what shape</h3>
+<pre class="txt">Car Insurance — HDFC Ergo
+
+Policy No: HD-2291-KX-2026
+Registration: WB 24 AB 1234
+Garage: Barrackpore Motors
+Policy Expiry: 11-Oct-2026
+
+Shared from InfoDeck</pre>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Rule</th><th>Detail</th></tr>
+  <tr><td class="sr">1</td><td class="k">Order</td><td>Card name · data in card order · dates with the ★ first · reminders last</td></tr>
+  <tr><td class="sr">2</td><td class="k">Dates</td><td>dd-MMM-yyyy in text, ISO <code>yyyy-mm-dd</code> in CSV so spreadsheets sort</td></tr>
+  <tr><td class="sr">3</td><td class="k">Masking</td><td>Keeps the first four characters: <code>HD-2291-****</code></td></tr>
+  <tr><td class="sr">4</td><td class="k">Footer</td><td>One line, switchable off</td></tr>
+  <tr><td class="sr">5</td><td class="k">Text file</td><td>UTF-8 <code>.txt</code>, same body, written through the system picker</td></tr>
+  <tr><td class="sr">6</td><td class="k">Many cards</td><td>One <code>.csv</code>, columns = union of ticked fields, empty cell when a card lacks one</td></tr>
+</table>
+
+<h3 class="sub">C4 · QR codes</h3>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Point</th><th>Detail</th></tr>
+  <tr><td class="sr">1</td><td class="k">Generated on device</td><td>A small encoder built into the app — roughly <b>100–150 KB</b>, no service, no network <i class="q">Q11</i></td></tr>
+  <tr><td class="sr">2</td><td class="k">Content</td><td>Plain text — one value, or a labelled block for several. Any camera app reads it</td></tr>
+  <tr><td class="sr">3</td><td class="k">Error correction</td><td>Level M, which survives a scratched print and stays readable at 1 024 px</td></tr>
+  <tr><td class="sr">4</td><td class="k">Capacity</td><td>Comfortable to about 1 200 characters. Beyond that, InfoDeck refuses to draw a dense unscannable code and offers one code per field instead</td></tr>
+  <tr><td class="sr">5</td><td class="k">On screen</td><td>Full brightness while showing, restored on exit; the encoded text is always printed underneath</td></tr>
+  <tr><td class="sr">6</td><td class="k">Saving</td><td>1 024 × 1 024 PNG with a white margin, through the system picker; or share the image directly</td></tr>
+  <tr><td class="sr">7</td><td class="k">Not a secret</td><td>Stated on screen. A QR is faster typing, not encryption</td></tr>
+</table>
+
+<h3 class="sub">C5 · Three companions</h3>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Item</th><th>Exception handling</th><th>Logger.e</th><th>Tests</th></tr>
+  <tr><td class="sr">1</td><td class="k">Prominent share</td><td>A missing target app falls back to the system chooser; a share with nothing ticked is blocked with a message rather than sending an empty string</td><td>logs a missing package, a failed intent and an empty share attempt</td><td>JUnit on the text builder — order, masking, footer on/off, empty selection; device pass into all four apps</td></tr>
+  <tr><td class="sr">2</td><td class="k">Field picker</td><td>Remembered selections are validated against the card as it is now — a field deleted since last time is simply dropped</td><td>logs a stale remembered field</td><td>JUnit on preset sets, per-card memory, stale-field pruning, and the CSV column union</td></tr>
+  <tr><td class="sr">3</td><td class="k">QR</td><td>Over-capacity input is refused before drawing; a failed PNG write leaves no partial file; brightness is always restored, even on a crash path</td><td>logs over-capacity, encode failure, failed save</td><td>JUnit on capacity limits, the multi-field text builder, per-field splitting, and file naming</td></tr>
+</table>
+
+<h3 class="sub">C6 · Privacy</h3>
+<div class="warn-box"><b>Sharing is the one place data leaves InfoDeck</b>, so the rules are explicit: nothing is shared without your tick; the exact text is previewed first; the app still holds <b>no internet permission</b>, so everything travels through an app <i>you</i> chose; QR codes are drawn locally; and the “not a secret” warning sits on the QR screen itself rather than in a help page.</div>
+
+<h2 class="sec">C · Open questions</h2>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Q</th><th>Question</th><th>Options</th><th>My recommendation</th></tr>
+  <tr><td class="sr">1</td><td class="q">Q1</td><td>Share on the Home list rows too</td><td>(a) no, selection mode only &nbsp; (b) a share icon on every row</td><td class="rec">(a) — (b) is 18 more icons on a screen you asked me to declutter</td></tr>
+  <tr><td class="sr">2</td><td class="q">Q2</td><td>Default ticks</td><td>(a) name + all data + key date &nbsp; (b) name + everything &nbsp; (c) nothing, tick it yourself</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">3</td><td class="q">Q3</td><td>Remember the selection per card</td><td>(a) yes &nbsp; (b) always start from the default</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">4</td><td class="q">Q4</td><td>Masking a value</td><td>(a) yes, first four characters kept &nbsp; (b) no masking</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">5</td><td class="q">Q5</td><td>Favourite apps</td><td>(a) WhatsApp, Gmail, SMS, Email as drawn &nbsp; (b) let me pick any four &nbsp; (c) both — these four by default, changeable</td><td class="rec">(c)</td></tr>
+  <tr><td class="sr">6</td><td class="q">Q6</td><td>Export format for one card</td><td>(a) .txt &nbsp; (b) .txt and .csv &nbsp; (c) also .pdf</td><td class="rec">(a) now; .pdf is a bigger job and deserves its own round</td></tr>
+  <tr><td class="sr">7</td><td class="q">Q7</td><td>QR button on every data row</td><td>(a) yes &nbsp; (b) only from the share sheet</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">8</td><td class="q">Q8</td><td>Many cards export as</td><td>(a) one CSV &nbsp; (b) one .txt per card &nbsp; (c) ask each time</td><td class="rec">(a), with (b) selectable in Settings</td></tr>
+  <tr><td class="sr">9</td><td class="q">Q9</td><td>Brightness boost on the QR screen</td><td>(a) yes, automatic &nbsp; (b) a button you press</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">10</td><td class="q">Q10</td><td>Multi-field QR</td><td>(a) one code with all fields, switchable to one per field &nbsp; (b) always one per field</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">11</td><td class="q">Q11</td><td>QR encoder adds ~150 KB</td><td>(a) accept &nbsp; (b) skip QR</td><td class="rec">(a)</td></tr>
+  <tr><td class="sr">12</td><td class="q">Q12</td><td><b>Your bug list stopped at 1</b> two rounds ago</td><td>—</td><td class="rec">Send bug 2 if it exists</td></tr>
+  <tr><td class="sr">13</td><td class="q">Q13</td><td><b>Item “3.”</b> from six rounds ago</td><td>—</td><td class="rec">Still blank</td></tr>
+</table>
+
+<h2 class="sec">D · If accepted</h2>
+<table class="tb">
+  <tr><th class="sr">#</th><th>Field</th><th>Value</th></tr>
+  <tr><td class="sr">1</td><td class="k">Queue</td><td>N50 prominent share + favourite apps + text/CSV export · N51 field picker with presets, per-card memory and masking · N52 QR codes, single and multi-field</td></tr>
+  <tr><td class="sr">2</td><td class="k">Release</td><td>Folds into the next build with N46–N49 → <b>1.5</b>, versionCode <b>1005000</b></td></tr>
+  <tr><td class="sr">3</td><td class="k">Database</td><td>No new tables. One small preferences blob per card for the remembered share selection</td></tr>
+  <tr><td class="sr">4</td><td class="k">Manifest</td><td>A <code>&lt;queries&gt;</code> block for the favourite apps. Still <b>no INTERNET</b></td></tr>
+  <tr><td class="sr">5</td><td class="k">Size</td><td>+ ~150 KB for the QR encoder</td></tr>
+  <tr><td class="sr">6</td><td class="k">Trigger</td><td>Nothing is built until you say <b>build</b> / <b>release</b></td></tr>
+</table>
+
+</div>
+</body>
+</html>
