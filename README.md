@@ -40,6 +40,14 @@ Without the signing environment variables the release APK is built **unsigned**.
 set `INFODECK_KEYSTORE`, `INFODECK_STOREPASS` and `INFODECK_KEYPASS` — never commit the
 keystore or its passwords. Details in [docs/release-process.md](docs/release-process.md).
 
+## Data and privacy
+
+The app does not request internet access, and automatic Android cloud/device-transfer backups
+are disabled. Export is user initiated. **Current JSON export does not include attached
+documents**; keep separate copies of your original PDFs and Word documents until an
+attachment-inclusive encrypted backup is available. JSON exports contain readable values;
+store them securely.
+
 ## Working on this repo
 
 Read [CONTRIBUTING.md](CONTRIBUTING.md) — PR naming (`cld-` / `cgpt-`), the release label

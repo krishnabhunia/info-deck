@@ -1,6 +1,7 @@
 package com.krishna.infodeck.core
 
 import android.util.Log
+import kotlinx.coroutines.CancellationException
 import com.krishna.infodeck.data.AppDatabase
 import com.krishna.infodeck.data.ErrorLogEntity
 import kotlinx.coroutines.CoroutineScope
@@ -42,11 +43,15 @@ object Logger {
     inline fun <T> guard(tag: String, fallback: T, block: () -> T): T = try {
         block()
     } catch (t: Throwable) {
+        if (t is CancellationException) throw t
         e(tag, "guarded failure", t)
         fallback
     }
 
     inline fun guardUnit(tag: String, block: () -> Unit) {
-        try { block() } catch (t: Throwable) { e(tag, "guarded failure", t) }
+        try { block() } catch (t: Throwable) {
+            if (t is CancellationException) throw t
+            e(tag, "guarded failure", t)
+        }
     }
 }
