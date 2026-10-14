@@ -258,8 +258,13 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         done(repo.attachFile(getApplication(), cardId, uri))
     }
 
-    fun renameFile(id: Long, name: String, done: () -> Unit = {}) = viewModelScope.launch {
-        repo.renameFile(id, name); done()
+    fun renameFile(
+        id: Long,
+        name: String,
+        extensionConfirmed: Boolean = false,
+        done: (String?) -> Unit = {}
+    ) = viewModelScope.launch {
+        done(repo.renameFile(id, name, extensionConfirmed))
     }
 
     fun removeFile(id: Long, done: () -> Unit = {}) = viewModelScope.launch {

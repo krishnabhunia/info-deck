@@ -455,9 +455,17 @@ fun CardEditorScreen(
     )
 
     val rf = renamingFile
-    if (rf != null) NameDialog("Rename file", rf.displayName, { renamingFile = null }) { name ->
-        vm.renameFile(rf.id, name) { renamingFile = null; vm.viewModelRefreshFiles(cardId ?: 0L) { files = it } }
-    }
+    if (rf != null) ProtectedFileRenameDialog(
+        file = rf,
+        onDismiss = { renamingFile = null },
+        onRename = { name, extensionConfirmed ->
+            vm.renameFile(rf.id, name, extensionConfirmed) { error ->
+                fileMsg = error
+                renamingFile = null
+                if (error == null) vm.viewModelRefreshFiles(cardId ?: 0L) { files = it }
+            }
+        }
+    )
 
     val xf = removingFile
     if (xf != null) AlertDialog(

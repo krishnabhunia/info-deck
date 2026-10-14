@@ -4,6 +4,9 @@ Versions follow [versioning.md](versioning.md). Item IDs (N = feature, B = bug) 
 Releases 1.1 – 1.9 were built and signed locally before this repository existed; from now on every
 release is built by GitHub Actions.
 
+## Unreleased · version assigned by PR release workflow
+- **N60** Approved Design A: file names can be edited with a protected extension; changing, adding, removing or altering its case requires a second confirmation and acknowledgement. Repository validation rejects unconfirmed changes; file contents and MIME remain unchanged. Includes unit tests and a device checklist.
+
 ## 1.9 — 10-Sep-2026 · versionCode 1009000
 - **B11** Search reads every field: all data names and values, every date (as shown and ISO), file names, tags, reminder rules; AND across words, partial, accent-folded, separator-blind for codes; ranked label › data › date › file › reminder
 - **B12** Search pill with focus and keyboard on open, clear button, "N results" line with Data / Dates / Files buckets, matching field highlighted on each row with a kind badge, empty state naming the missing words
