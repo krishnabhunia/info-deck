@@ -2,6 +2,8 @@ package com.krishna.infodeck
 
 import android.os.Build
 import android.os.Bundle
+import android.security.keystore.KeyGenParameterSpec
+import android.security.keystore.KeyProperties
 import androidx.activity.compose.setContent
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
@@ -43,11 +45,20 @@ import com.krishna.infodeck.ui.InfoDeckTheme
 import com.krishna.infodeck.ui.SettingsScreen
 import com.krishna.infodeck.ui.SystemBars
 import com.krishna.infodeck.ui.UpcomingScreen
+import java.security.KeyStore
 import java.util.concurrent.Executor
+import javax.crypto.Cipher
+import javax.crypto.KeyGenerator
+import javax.crypto.SecretKey
 
 class MainActivity : FragmentActivity() {
 
-    companion object { const val EXTRA_CARD_ID = "card_id" }
+    companion object {
+        const val EXTRA_CARD_ID = "card_id"
+        private const val APP_LOCK_KEY_ALIAS = "infodeck_app_lock_key"
+        private const val APP_LOCK_TRANSFORMATION =
+            "${KeyProperties.KEY_ALGORITHM_AES}/${KeyProperties.BLOCK_MODE_CBC}/${KeyProperties.ENCRYPTION_PADDING_PKCS7}"
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         com.krishna.infodeck.ui.ShareFiles.sweep(this)
@@ -90,6 +101,39 @@ class MainActivity : FragmentActivity() {
         }
     }
 
+    private fun getOrCreateSecretKey(): SecretKey {
+        val existing = getSecretKey()
+        if (existing != null) return existing
+
+        val keyGenerator = KeyGenerator.getInstance(
+            KeyProperties.KEY_ALGORITHM_AES,
+            "AndroidKeyStore"
+        )
+        val spec = KeyGenParameterSpec.Builder(
+            APP_LOCK_KEY_ALIAS,
+            KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
+        )
+            .setBlockModes(KeyProperties.BLOCK_MODE_CBC)
+            .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7)
+            .setUserAuthenticationRequired(true)
+            .setInvalidatedByBiometricEnrollment(true)
+            .build()
+        keyGenerator.init(spec)
+        return keyGenerator.generateKey()
+    }
+
+    private fun getSecretKey(): SecretKey? {
+        val keyStore = KeyStore.getInstance("AndroidKeyStore")
+        keyStore.load(null)
+        return keyStore.getKey(APP_LOCK_KEY_ALIAS, null) as? SecretKey
+    }
+
+    private fun buildEncryptCipher(): Cipher {
+        val cipher = Cipher.getInstance(APP_LOCK_TRANSFORMATION)
+        cipher.init(Cipher.ENCRYPT_MODE, getOrCreateSecretKey())
+        return cipher
+    }
+
     @Composable
     private fun LockScreen(onUnlock: () -> Unit) {
         val activity = this
@@ -105,22 +149,35 @@ class MainActivity : FragmentActivity() {
                     Logger.e("Lock", "no biometric or device credential available - unlocking")
                     onUnlock(); return
                 }
+                val promptInfo = BiometricPrompt.PromptInfo.Builder()
+                    .setTitle("Unlock InfoDeck")
+                    .setSubtitle("Use your fingerprint or device PIN")
+                    .setAllowedAuthenticators(allowed)
+                    .build()
+
+                val cipher = buildEncryptCipher()
                 val prompt = BiometricPrompt(
                     activity, executor,
                     object : BiometricPrompt.AuthenticationCallback() {
-                        override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) = onUnlock()
+                        override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                            try {
+                                val authenticatedCipher = result.cryptoObject?.cipher
+                                if (authenticatedCipher == null) {
+                                    Logger.e("Lock", "auth succeeded but no crypto object returned")
+                                    return
+                                }
+                                authenticatedCipher.doFinal("unlock".toByteArray(Charsets.UTF_8))
+                                onUnlock()
+                            } catch (t: Throwable) {
+                                Logger.e("Lock", "crypto verification failed", t)
+                            }
+                        }
                         override fun onAuthenticationError(code: Int, msg: CharSequence) {
                             Logger.e("Lock", "auth error $code: $msg")
                         }
                     }
                 )
-                prompt.authenticate(
-                    BiometricPrompt.PromptInfo.Builder()
-                        .setTitle("Unlock InfoDeck")
-                        .setSubtitle("Use your fingerprint or device PIN")
-                        .setAllowedAuthenticators(allowed)
-                        .build()
-                )
+                prompt.authenticate(promptInfo, BiometricPrompt.CryptoObject(cipher))
             } catch (t: Throwable) {
                 Logger.e("Lock", "prompt failed - unlocking to avoid a lock-out", t)
                 onUnlock()

@@ -5,17 +5,16 @@ plugins {
     id("com.google.devtools.ksp")
 }
 
-/** Reads x.y.z (z optional) from the repo-root VERSION file. */
+/** Reads the required x.y.z from the repository-root VERSION file. */
 data class AppVersion(val name: String, val code: Int)
 
 val appVersion: AppVersion = run {
     val f = rootProject.file("../VERSION")
     require(f.exists()) { "VERSION file missing at ${f.absolutePath}" }
     val name = f.readText().trim()
-    val m = Regex("^(\\d+)\\.(\\d+)(?:\\.(\\d+))?$").matchEntire(name)
-        ?: error("VERSION must be x.y or x.y.z of plain integers, got '$name'")
-    val (x, y) = m.destructured.toList().take(2).map { it.toInt() }
-    val z = m.groupValues[3].ifEmpty { "0" }.toInt()
+    val m = Regex("^((?:0|[1-9][0-9]*))\\.((?:0|[1-9][0-9]*))\\.((?:0|[1-9][0-9]*))$").matchEntire(name)
+        ?: error("VERSION must use exactly x.y.z with no zero-padded parts, got '$name'")
+    val (x, y, z) = m.destructured.toList().map { it.toInt() }
     require(y < 1000 && z < 1000) { "y and z must stay below 1000 for versionCode" }
     AppVersion(name, x * 1_000_000 + y * 1_000 + z)
 }
@@ -30,7 +29,7 @@ android {
         targetSdk = 34
         // Versioning (project-wide): x.y.z of plain integers, read from the repo-root VERSION file.
         // versionCode = x*1,000,000 + y*1,000 + z — computed, never typed, so it cannot drift.
-        // CI may override the name for beta builds with -PversionNameOverride=1.10-beta.3
+        // CI may override the name for beta builds with -PversionNameOverride=1.12.0-beta.3
         versionCode = appVersion.code
         versionName = (project.findProperty("versionNameOverride") as String?) ?: appVersion.name
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
