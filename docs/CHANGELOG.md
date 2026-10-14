@@ -4,6 +4,10 @@ Versions follow [versioning.md](versioning.md). Item IDs (N = feature, B = bug) 
 Releases 1.1 – 1.9 were built and signed locally before this repository existed; from now on every
 release is built by GitHub Actions.
 
+## 1.10 — 15-Oct-2026 · versionCode 1010000
+- **N60** Rename keeps the extension: the name box holds the name only, with the extension locked beside it; changing the extension is a separate "Change extension…" step followed by a confirmation, because a new extension never converts the file. Undo after every rename; file rows keep the extension visible and say "Really a PDF" while the name disagrees with the real type
+- **B13** File rename no longer cuts names at 24 characters (it reused the tag box), and the 80-character limit now shortens the name, never the extension
+
 ## 1.9 — 10-Sep-2026 · versionCode 1009000
 - **B11** Search reads every field: all data names and values, every date (as shown and ISO), file names, tags, reminder rules; AND across words, partial, accent-folded, separator-blind for codes; ranked label › data › date › file › reminder
 - **B12** Search pill with focus and keyboard on open, clear button, "N results" line with Data / Dates / Files buckets, matching field highlighted on each row with a kind badge, empty state naming the missing words

@@ -66,6 +66,7 @@ import com.krishna.infodeck.data.Repo
 import com.krishna.infodeck.data.RingDirection
 import com.krishna.infodeck.data.RingUnit
 import java.time.LocalDate
+import kotlinx.coroutines.launch
 import java.time.ZoneOffset
 
 private data class DataRow(val localId: Long, var name: String, var value: String)
@@ -110,6 +111,8 @@ fun CardEditorScreen(
     var showDanger by remember { mutableStateOf(false) }
     var renamingFile by remember { mutableStateOf<com.krishna.infodeck.data.FileEntity?>(null) }
     var removingFile by remember { mutableStateOf<com.krishna.infodeck.data.FileEntity?>(null) }
+    val snackbar = remember { androidx.compose.material3.SnackbarHostState() }
+    val snackScope = androidx.compose.runtime.rememberCoroutineScope()
     val allTags by vm.tags.collectAsState()
     val recentTags by vm.recentTags.collectAsState()
     val tagUsage by vm.tagUsage.collectAsState()
@@ -166,6 +169,7 @@ fun CardEditorScreen(
     BackHandler { leave() }
 
     Scaffold(
+        snackbarHost = { androidx.compose.material3.SnackbarHost(snackbar) },
         topBar = {
             TopAppBar(
                 title = { Text(if (cardId != null && cardId > 0) "Edit card" else "New card") },
@@ -454,9 +458,33 @@ fun CardEditorScreen(
         onDone = { showTagPicker = false }
     )
 
+    // N60 + B13 (design 1.9.D1): name with the extension locked; a new extension is confirmed first
     val rf = renamingFile
-    if (rf != null) NameDialog("Rename file", rf.displayName, { renamingFile = null }) { name ->
-        vm.renameFile(rf.id, name) { renamingFile = null; vm.viewModelRefreshFiles(cardId ?: 0L) { files = it } }
+    if (rf != null) RenameFileSheet(file = rf, onDismiss = { renamingFile = null }) { newName ->
+        val oldName = rf.displayName
+        val fileId = rf.id
+        renamingFile = null
+        vm.renameFile(fileId, newName) { ok ->
+            vm.viewModelRefreshFiles(cardId ?: 0L) { files = it }
+            if (!ok) {
+                fileMsg = "Couldn't rename - nothing changed"
+            } else snackScope.launch {
+                // Q4: Undo after every rename, 5 s, restores the old name in one step
+                val r = kotlinx.coroutines.withTimeoutOrNull(5_000) {
+                    snackbar.showSnackbar(
+                        com.krishna.infodeck.core.FileNameRules.outcome(oldName, newName),
+                        actionLabel = "Undo",
+                        duration = androidx.compose.material3.SnackbarDuration.Indefinite
+                    )
+                }
+                if (r == androidx.compose.material3.SnackbarResult.ActionPerformed) {
+                    vm.renameFile(fileId, oldName) { undone ->
+                        if (!undone) fileMsg = "Couldn't undo the rename"
+                        vm.viewModelRefreshFiles(cardId ?: 0L) { files = it }
+                    }
+                }
+            }
+        }
     }
 
     val xf = removingFile

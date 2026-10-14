@@ -189,6 +189,34 @@ If accepted these ship as **1.9**, versionCode **1009000**, no schema change.
 | 1 | B11 | Search reads every field: `core/SearchRules.kt` (fold, stripped twin, AND across words, rank, hit, missing, kindsHit); `CardRow.searchFields/searchIndex` built in Repo from label, category, all data, all dates (displayed + ISO), file names, tags, reminder rules; debounce 150 ms; query trimmed at 100 | shipped |
 | 2 | B12 | Search pill (38 dp, indigo tint, focus + keyboard on open, ✕ inside, IME Search hides keyboard); "N results for 'q'" line with All/Data/Dates/Files buckets when hits span kinds; row meta line becomes the matching field with highlight + kind badge; empty state naming the missing words; flat list while searching | shipped — pill on Home only (Upcoming/Settings never had a search field) |
 
+### APPROVED 15-Oct-2026 ("design 1.9.d1 is accepted") — drawn in `infodeck-1.9.D1-design.html` — PR `cld-file-rename-extension-guard`
+
+Accepted as drawn; open questions Q1–Q7 taken at the recommended option (a). Ships as **1.10**,
+versionCode **1010000** — mixed release (feature + fix), so y bumps and z is dropped. No schema change.
+
+| SrNo. | ID | Item | Three companions |
+|---|---|---|---|
+| A | N60 | **Rename keeps the extension.** Step 1: the name box holds the NAME only, selected on open, with the extension locked inside the box (lock chip, tap flashes the lock row) and a live "Saved as" line; a name-only change saves straight away. Step 2: "Change extension…" unlocks an amber New-extension box (dot fixed, ASCII letters/digits, max 8, at least one letter, blank = remove), chips .pdf · .doc · .docx with the real type ticked, a permanent "does not convert" note, "Keep .pdf" re-locks; Save becomes "Save…". Step 3: a dialog with From / To (old extension struck through, new one tinted) and a real-type line; nothing is written until "Change to .x"; Keep / Back / outside return to Step 1 with name edits kept. Q1 case-only change is a plain save; Q2 chips + typing; Q3 "Really a PDF" line on the file row; Q4 Undo snackbar 5 s after every rename; Q5 typed-extension hint with "Use .x as the extension…" (or "Remove the extra .pdf"); Q6 two-button confirm; Q7 file row cuts inside the name so the extension stays visible | `core/FileNameRules` is pure and total (split/join, cleanExt, fit, decide → Direct / NeedsConfirm / Invalid, typedExtension, realType, mismatch, outcome); `Repo.renameFile` returns Boolean and a failed write shows "Couldn't rename - nothing changed"; Undo failure shows "Couldn't undo the rename"; focus request guarded; `Logger.e` on a failed rename / missing file (file id, never the name), on a focus failure, and once per file for an unknown MIME; JUnit `FileRenameRulesTest` (12 split shapes, round trip, ext sanitiser, every decision branch, 30/120-char names, outcome text, typed-extension, real type, mismatch) |
+| B | B13 | **File rename clipped at 24 characters.** Rename reused `NameDialog`, whose box keeps `TagRules.MAX_NAME` = 24, so the first key press on a longer name cut the end — the extension first. `FileRules.sanitise` also cut the first 80 characters, dropping the extension of a long name on attach. Fix: the rename sheet caps the NAME at `80 − (ext + 1)`; `sanitise` now delegates to `FileNameRules.clean`, which shortens the name and keeps the extension | JUnit: 29-char name plus a key keeps .pdf; 200-char name sanitises to 80 ending ".docx"; old sanitiser tests (traversal, blank → "file", 80 bound) still pass; negative control: tag names still stop at 24 |
+
+Implementation notes, stated so nothing is silent:
+1. Extension rule refined from the design's "1–8 letters/digits": it must also contain **one letter**, so "Policy v2.1" or "12.05.2026" stays whole instead of showing ".1" / ".2026" as a locked extension.
+2. The rename popup is now a bottom sheet with the standard 25 % clearance; while the keyboard is up it shrinks to 24 dp (the documented keyboard rule). **Gap found:** the shared `SheetBottomSpace()` used by every other sheet has no keyboard rule yet — queued below as B14.
+3. `EditorSheetButtons` gained an optional `saveBrush` (default = brand gradient, so every other caller is unchanged).
+
+Device checklist (only a phone can prove these):
+1. ⋮ ▸ Rename on a PDF → name selected, keyboard up, ".pdf 🔒" in the box, sheet clears the nav bar.
+2. Rename to "Car Policy" → Save → row shows "Car Policy.pdf", Undo snackbar for 5 s, Undo restores the old name.
+3. Change extension… → .docx → Save… → dialog → Keep .pdf → back in Step 1, name edit kept, nothing renamed.
+4. Same again → Change to .docx → row shows ".docx" and "Really a PDF"; Open still opens the PDF viewer; Share arrives as "….docx" (unverified on device — if a receiving app refuses it, rename back with Undo).
+5. Type "Policy.docx" into the name box → amber hint → "Use .docx as the extension…" → Step 2 prefilled, confirm still asked.
+6. A 30+ character name → typing never drops the extension.
+7. With the keyboard up the buttons stay above it (unverified on device — if the keyboard covers Save, hide the keyboard; the sheet then shows the full 25 % clearance).
+
+| SrNo. | ID | Item | Status |
+|---|---|---|---|
+| 1 | B14 | Keyboard rule for every sheet: `SheetBottomSpace()` shrinks to 24 dp while the keyboard is up (tag picker inline create, scheduler sheet, …). Found while building N60 | queued — needs design + approval |
+
 ### Consolidated queue as of 08-Sep-2026
 
 | SrNo. | ID | Item | Status | Design |
@@ -205,6 +233,9 @@ If accepted these ship as **1.9**, versionCode **1009000**, no schema change.
 | 2h | B10 | Exact file names when sharing | SHIPPED 1.8 | 1.7.D1 |
 | 2i | B11 | Search reads every field | SHIPPED 1.9 | 1.8.D1 |
 | 2j | B12 | Search field UX | SHIPPED 1.9 | 1.8.D1 |
+| 2k | N60 | Rename keeps the extension; extension change is Step 2 + confirm | IN PR for 1.10 | 1.9.D1 |
+| 2l | B13 | File rename clipped at 24 characters | IN PR for 1.10 | 1.9.D1 |
+| 2m | B14 | Keyboard rule for every sheet | queued | - |
 | 3 | N53 leftover | Header scroll-collapse 48 -> 40 dp | approved | 1.5.D1 |
 | 4 | N55 leftover | Recolour card-view section rows and Settings group tiles | approved | 1.5.D1 |
 | 5 | N57 leftover | Zip packing progress, "Export everything as .zip" | DORMANT after B2 unless revived | 1.5.D2 |

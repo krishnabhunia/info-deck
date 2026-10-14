@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InfoDeck — v1.9 D1 design · rename keeps the extension</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100..900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#131A26; --ink2:#5A6675; --hint:#96A0AF;
+    --indigo:#3B5BDB; --indigo-c:#E8ECFD;
+    --teal:#0E9384; --teal-c:#DDF3F0;
+    --violet:#7A5AF8; --violet-c:#EEE9FE;
+    --green:#12A150; --green-c:#DFF5E8;
+    --amber:#B76E00; --amber-c:#FDF0DA; --amber-d:#8A5300; --amber-btn:#B45309;
+    --rose:#E5484D; --rose-c:#FDE7E8;
+    --slate:#64748B; --slate-c:#EEF1F5;
+    --bg:#F6F8FC; --line:#E9EDF4; --outline:#C6CEDC;
+    --page:#E3E7F0; --tag:#22337F; --q:#7A5A00; --q-bg:#FFF3C4; --q-bd:#E2C35C;
+    --pri-d:#1E357F;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--page);font-family:Roboto,"Segoe UI",system-ui,sans-serif;color:var(--ink);padding:26px 18px 70px}
+  .wrap{max-width:1180px;margin:0 auto}
+  header.page h1{font-size:24px;font-weight:800;color:var(--pri-d)}
+  header.page p{font-size:13.5px;color:var(--ink2);margin-top:5px;line-height:1.55}
+  .stamp{display:inline-block;margin:10px 8px 0 0;font-size:12px;font-weight:700;color:#7A2E00;background:#FFE1CC;border:1px solid #E8B08C;border-radius:20px;padding:3px 12px}
+  .stamp.g{color:#22337F;background:var(--indigo-c);border-color:#B9C3F5}
+  h2.sec{font-size:18px;font-weight:800;color:var(--pri-d);margin:38px 0 12px;padding-bottom:6px;border-bottom:2px solid #C9D1DD}
+  h3.sub{font-size:15px;color:var(--pri-d);margin:22px 0 4px}
+  .rej-box{background:var(--rose-c);border:1px solid #E7ADA8;border-radius:10px;padding:12px 14px;font-size:13.5px;line-height:1.55;margin:14px 0 4px}
+  .rej-box b{color:#8A1F19}
+  .ok-box{background:var(--green-c);border:1px solid #A7DDBE;border-radius:10px;padding:12px 14px;font-size:13.5px;line-height:1.55;margin:10px 0 4px}
+
+  table.tb{width:100%;border-collapse:collapse;font-size:12.5px;background:#fff;margin:6px 0 4px}
+  table.tb th{background:#E9EDF8;color:var(--pri-d);text-align:left;padding:6px 8px;border:1px solid #BFC9D8;font-size:12px}
+  table.tb td{padding:6px 8px;border:1px solid #D2D9E3;vertical-align:top;line-height:1.45}
+  table.tb .sr{width:1%;white-space:nowrap;text-align:center}
+  table.tb td.k{white-space:nowrap;font-weight:700;color:var(--tag)}
+  table.tb td.q{white-space:nowrap;font-weight:700;color:var(--q)}
+  table.tb td.rec{color:var(--green);font-weight:600}
+  table.tb td.del{font-weight:700;color:var(--rose)}
+  table.tb tr:nth-child(odd) td{background:#FAFBFD}
+  code{font-family:Consolas,Menlo,monospace;font-size:12px;background:#EEF1F5;padding:1px 4px;border-radius:3px}
+
+  .frames{display:grid;grid-template-columns:repeat(auto-fit,minmax(520px,1fr));gap:34px 28px;margin-top:14px}
+  figure{display:flex;flex-direction:column;align-items:center;gap:10px}
+  figure h3{font-size:15px;font-weight:800;color:var(--pri-d);align-self:flex-start}
+  figure h3 small{font-weight:500;color:var(--ink2);font-size:12.5px;margin-left:6px}
+  figure table.tb{font-size:12px}
+  figure.full{grid-column:1 / -1}
+  figure.full h3{align-self:center}
+  figure.full table.tb{max-width:900px}
+  .duo{display:flex;gap:26px;justify-content:center;flex-wrap:wrap}
+  .cap{font-size:12px;font-weight:700;color:var(--ink2);text-align:center;margin-top:6px}
+
+  b.n{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:9px;background:var(--tag);color:#fff;font-size:10.5px;font-weight:800;flex-shrink:0;font-style:normal;box-shadow:0 0 0 2px #fff}
+  b.n.d{background:var(--rose)}
+  b.n.g{background:var(--green)}
+  b.n.a{background:var(--amber)}
+  .pin{position:absolute;z-index:9}
+  b.n.il{margin-left:6px;vertical-align:-3px}
+  .saved,.lockrow,.btn,.xh,.chips,.warn,.names,.dnote,.mfld,.acts span,.badge{position:relative}
+  i.q{display:inline-flex;font-style:normal;font-size:10px;font-weight:800;color:var(--q);background:var(--q-bg);border:1px solid var(--q-bd);border-radius:9px;padding:1px 6px}
+
+  /* ---------- phone ---------- */
+  .phone{width:378px;height:790px;background:var(--bg);border:9px solid #12151C;border-radius:38px;overflow:hidden;position:relative;box-shadow:0 16px 38px rgba(20,30,50,.22);display:flex;flex-direction:column;flex-shrink:0}
+  .phone.sm{width:352px;height:600px}
+  .sb{height:22px;color:var(--ink2);font-size:10.5px;font-weight:700;display:flex;align-items:center;justify-content:space-between;padding:0 16px;flex-shrink:0;background:#fff}
+  .nbar{height:48px;background:#fff;display:flex;align-items:center;gap:6px;padding:0 6px 0 8px;flex-shrink:0}
+  .nbar .ib{width:38px;height:38px;border-radius:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--slate)}
+  .nbar .tt{flex:1;font-size:16.5px;font-weight:800}
+  .hair{height:3px;background:linear-gradient(90deg,var(--indigo),var(--violet) 45%,var(--teal));flex-shrink:0}
+  .ic{width:21px;height:21px;fill:currentColor;flex-shrink:0}
+  .ic.s{width:17px;height:17px}
+  .ic.xs{width:14px;height:14px}
+  .body{flex:1;overflow:hidden;position:relative;padding:10px 12px 0}
+
+  /* editor background */
+  .lab{font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--indigo);margin:4px 0 7px 2px}
+  .ef{background:#fff;border-radius:12px;border:1px solid var(--line);padding:6px 11px 7px;margin-bottom:7px}
+  .ef small{display:block;font-size:10.5px;color:var(--ink2);font-weight:700}
+  .ef b{font-size:13.5px;font-weight:600}
+  .fhead{display:flex;justify-content:space-between;align-items:center;margin:12px 2px 7px;font-size:10.5px;font-weight:800;color:var(--indigo);text-transform:uppercase;letter-spacing:.06em}
+  .fhead .att{text-transform:none;letter-spacing:0;font-size:12.5px;display:flex;align-items:center;gap:3px}
+  .frow{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #D9DFEA;border-radius:11px;padding:8px 4px 8px 10px;margin-bottom:7px;position:relative}
+  .badge{width:30px;height:37px;border-radius:5px;display:flex;align-items:flex-end;justify-content:center;color:#fff;font-size:8.5px;font-weight:800;padding-bottom:4px;flex-shrink:0}
+  .badge.pdf{background:#C0392B}
+  .badge.doc{background:#2B5797}
+  .frow .l{flex:1;min-width:0}
+  .frow .nm{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .frow .nm2{display:flex;font-size:13px;font-weight:600;min-width:0}
+  .frow .nm2 .b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+  .frow .nm2 .e{flex-shrink:0}
+  .frow .mt{font-size:11px;color:var(--ink2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .frow .mm{font-size:11px;color:var(--amber-d);font-weight:700;margin-top:2px;display:flex;align-items:center;gap:3px}
+  .frow .op{font-size:12.5px;font-weight:800;color:var(--indigo);padding:0 4px}
+  .frow .shp{height:28px;border-radius:14px;background:#DFF5E8;color:#0B6B36;font-size:11px;font-weight:800;display:flex;align-items:center;gap:3px;padding:0 9px}
+  .frow .mv{color:var(--ink2);display:flex}
+  .fnote{font-size:11px;color:var(--ink2);margin:2px 4px 0;line-height:1.45}
+  .ebar{position:absolute;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);padding:9px 12px 14px;display:flex;gap:10px;z-index:1}
+  .menu{position:absolute;right:14px;width:150px;background:#fff;border-radius:6px;box-shadow:0 8px 22px rgba(15,25,45,.22);padding:6px 0;z-index:3}
+  .menu .mi{display:flex;align-items:center;gap:10px;padding:9px 14px;font-size:13.5px}
+  .menu .mi.hl{background:#EEF1FB}
+  .menu .mi.dn{color:#C0392F}
+
+  /* scrim, sheet, dialog */
+  .scrim{position:absolute;inset:0;background:rgba(14,20,34,.46);z-index:2}
+  .sheet{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:22px 22px 0 0;padding:6px 16px 0;box-shadow:0 -6px 24px rgba(10,20,40,.18);z-index:3}
+  .sheet.kb{bottom:196px}
+  .handle{width:36px;height:4px;border-radius:2px;background:#C9D0DC;margin:2px auto 10px}
+  .sh-t{font-size:17px;font-weight:800;margin:0 0 10px}
+  .fh{display:flex;align-items:center;gap:10px;padding:7px 10px;border:1px solid var(--line);border-radius:11px;background:#FAFBFD;margin-bottom:16px}
+  .fh .badge{width:26px;height:32px;font-size:8px;padding-bottom:3px}
+  .fh .l{min-width:0;flex:1}
+  .fh .l b{display:block;font-size:12.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .fh .l small{display:block;font-size:11px;color:var(--ink2)}
+  .fld{position:relative;height:54px;border:1.5px solid var(--outline);border-radius:12px;display:flex;align-items:stretch}
+  .fld.on{border:2px solid var(--indigo)}
+  .fld.am{border:2px solid #C27A0E}
+  .fld .lbl{position:absolute;top:-9px;left:10px;background:#fff;padding:0 4px;font-size:11px;font-weight:700;color:var(--ink2);line-height:16px}
+  .fld.on .lbl{color:var(--indigo)}
+  .fld.am .lbl{color:var(--amber-d)}
+  .fld .v{flex:1;display:flex;align-items:center;padding:0 12px;font-size:15px;white-space:nowrap;overflow:hidden;min-width:0}
+  .fld .v.rtl{justify-content:flex-end}
+  .fld .pre{display:flex;align-items:center;padding-left:13px;font-size:16px;font-weight:800;color:var(--ink2)}
+  .fld .pre + .v{padding-left:2px}
+  .sel{background:#C9D3FA}
+  .car{display:inline-block;width:2px;height:18px;background:var(--indigo);vertical-align:-4px;margin-left:1px}
+  .fld.am .car{background:#C27A0E}
+  .fld .x{display:flex;align-items:center;gap:5px;padding:0 11px;background:#EEF1F5;border-left:1px solid var(--outline);border-radius:0 10px 10px 0;font-size:14.5px;font-weight:800;color:var(--slate)}
+  .saved{font-size:12px;color:var(--ink2);margin:7px 2px 0;display:flex;align-items:center;gap:2px;min-height:18px}
+  .saved .st{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+  .saved b{color:var(--ink);font-weight:600}
+  .saved .xk{color:var(--slate);font-weight:800}
+  .saved .xc{background:var(--amber-c);color:var(--amber-d);font-weight:800;border-radius:3px;padding:0 2px}
+  .lockrow{display:flex;align-items:center;gap:7px;margin-top:12px;padding:8px 10px;border-radius:10px;background:#F4F6FA;font-size:12.5px;color:var(--ink2)}
+  .lockrow b{color:var(--ink)}
+  .lockrow .tb{margin-left:auto;font-weight:800;color:#A15C00;font-size:13px;white-space:nowrap}
+  .btns{display:flex;gap:10px;margin-top:16px}
+  .btn{flex:1;height:50px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14.5px}
+  .btn.out{border:1.5px solid var(--outline);color:var(--ink);background:#fff}
+  .btn.fill{background:linear-gradient(90deg,#3B5BDB,#7A5AF8);color:#fff}
+  .btn.warnb{background:var(--amber-btn);color:#fff}
+  .btn.sm{height:46px;font-size:14px}
+  .clr{margin:16px -16px 0;border-top:1.5px dashed #D9932F;background:repeating-linear-gradient(135deg,#FFF3DF 0 7px,#FFFCF6 7px 14px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:11.5px;font-weight:800;color:var(--amber-d);text-align:center}
+  .clr small{font-weight:600;font-size:10.5px;color:#9A6A1E}
+  .clr.q{height:193px}
+  .clr.k{height:24px;font-size:10px;flex-direction:row;gap:6px}
+  .band{position:absolute;left:0;right:0;bottom:0;border-top:1.5px dashed #F2B65A;background:repeating-linear-gradient(135deg,rgba(255,206,130,.32) 0 7px,rgba(255,255,255,.04) 7px 14px);z-index:4;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:11.5px;font-weight:800;color:#FFE2B3;text-align:center}
+  .band small{font-weight:600;font-size:10.5px}
+  .band.q{height:193px}
+  .band.qs{height:146px}
+  .warn{display:flex;gap:9px;padding:9px 11px;border-radius:11px;background:var(--amber-c);border:1px solid #EBC27A;font-size:12.2px;line-height:1.45;color:#5C3A00;margin-top:12px}
+  .warn .ic{color:var(--amber)}
+  .warn .go{display:inline-block;margin-top:5px;font-weight:800;color:#A15C00}
+  .xh{display:flex;align-items:center;gap:6px;margin-top:16px;margin-bottom:10px;font-size:11px;font-weight:800;color:var(--amber-d);text-transform:uppercase;letter-spacing:.06em}
+  .xh .tb{margin-left:auto;text-transform:none;letter-spacing:0;color:var(--indigo);font-size:12.5px}
+  .chips{display:flex;gap:7px;margin-top:10px;flex-wrap:wrap;align-items:center}
+  .chip{height:30px;padding:0 12px;border-radius:15px;border:1.5px solid var(--outline);font-size:13px;font-weight:700;display:inline-flex;align-items:center;gap:4px;color:var(--ink2);background:#fff}
+  .chip.real{border-color:#9FD7B6;color:#0B6B36;background:#E9F7EF}
+  .chip.on{background:var(--amber-btn);border-color:var(--amber-btn);color:#fff}
+  .kbd{position:absolute;left:0;right:0;bottom:0;height:196px;background:#D5D9E2;border-top:1px solid #BFC5D1;display:flex;flex-direction:column;justify-content:center;gap:7px;padding:0 6px;z-index:3}
+  .kbd .row{display:flex;gap:5px;justify-content:center}
+  .kbd .k{width:29px;height:36px;border-radius:5px;background:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;color:var(--ink2)}
+  .kbd .k.w{width:46px;background:#BCC2CF}
+  .kbd .k.sp{width:150px}
+  .kbd .k.go{width:62px;background:var(--indigo);color:#fff;font-weight:800}
+
+  .adlg{position:absolute;left:20px;right:20px;top:150px;background:#F1EFF7;border-radius:26px;padding:22px 20px 12px;z-index:3}
+  .adlg h4{font-size:20px;font-weight:500;margin-bottom:16px}
+  .adlg .mfld{position:relative;height:54px;border:2px solid #4A57C9;border-radius:6px;display:flex;align-items:center;padding:0 12px;font-size:15px}
+  .adlg .mfld .mv{white-space:nowrap;overflow:hidden;min-width:0}
+  .adlg .mfld .lbl{position:absolute;top:-9px;left:9px;background:#F1EFF7;padding:0 4px;font-size:11px;color:#4A57C9;line-height:16px}
+  .adlg .acts{display:flex;justify-content:flex-end;gap:6px;margin-top:20px}
+  .adlg .acts span{font-size:14px;font-weight:600;color:#4A57C9;padding:9px 12px}
+  .dlg{position:absolute;left:22px;right:22px;top:176px;background:#fff;border-radius:22px;padding:18px 16px 16px;z-index:3;box-shadow:0 14px 36px rgba(10,20,40,.28)}
+  .dlg .ico{width:42px;height:42px;border-radius:21px;background:var(--amber-c);color:var(--amber);display:flex;align-items:center;justify-content:center;margin:0 auto 10px}
+  .dlg h4{font-size:18px;font-weight:800;text-align:center}
+  .dlg p{font-size:12.5px;color:var(--ink2);text-align:center;margin-top:4px;line-height:1.45}
+  .names{margin:14px 0 0;border:1px solid var(--line);border-radius:11px}
+  .names .r{display:flex;gap:8px;padding:9px 10px;font-size:12.5px;align-items:baseline}
+  .names .r + .r{border-top:1px solid var(--line)}
+  .names .k{width:30px;font-size:10px;font-weight:800;color:var(--ink2);text-transform:uppercase;flex-shrink:0}
+  .names .v{min-width:0;word-break:break-all}
+  s.old{color:#C0392F;font-weight:800}
+  b.new{background:var(--amber-c);color:var(--amber-d);font-weight:800;border-radius:3px;padding:0 2px}
+  .dnote{display:flex;gap:7px;align-items:flex-start;margin-top:10px;font-size:12px;line-height:1.45;color:#5C3A00;background:#FFF8EC;border-radius:9px;padding:8px 9px}
+  .dnote .ic{color:var(--amber)}
+  .snack{position:absolute;left:10px;right:10px;bottom:84px;background:#2A2F3A;color:#fff;border-radius:10px;height:48px;display:flex;align-items:center;padding:0 6px 0 14px;font-size:13px;z-index:2;box-shadow:0 6px 18px rgba(10,20,40,.25)}
+  .snack span{flex:1}
+  .snack b{color:#AFC0FF;font-weight:800;font-size:13px;padding:8px 10px}
+
+  /* flow diagram */
+  .flowwrap{overflow-x:auto;background:#fff;border:1px solid #D2D9E3;border-radius:12px;padding:18px 16px;margin-top:8px}
+  .flow{display:grid;grid-template-columns:160px 104px 176px 104px 176px 112px 164px;row-gap:10px;align-items:center;min-width:1010px}
+  .fb{border:1.5px solid #9AA7BD;border-radius:12px;padding:10px 11px;font-size:13px;line-height:1.4;color:var(--ink);text-align:center;min-height:62px;display:flex;flex-direction:column;justify-content:center}
+  .fb b{font-size:13.5px}
+  .fb.n{background:#F3F5F9}
+  .fb.i{background:#EAEEFD;border-color:#9DAEEE}
+  .fb.a{background:#FDF2DF;border-color:#E3B467}
+  .fb.g{background:#E5F6EC;border-color:#94D0AE}
+  .fa{font-size:12px;font-weight:700;color:var(--ink2);text-align:center;line-height:1.3;padding:0 4px}
+  .fa .ar{display:block;font-size:20px;color:#6B778A;line-height:1}
+  .fdown{grid-column:3;text-align:center;font-size:12px;font-weight:800;color:#A15C00}
+  .fdown .ar{display:block;font-size:20px;line-height:1;color:#A15C00}
+  .fback{grid-column:3 / 6;text-align:center;font-size:12px;font-weight:700;color:var(--ink2);border:1.5px dashed #B9C3D3;border-radius:10px;padding:7px 8px;background:#FAFBFD}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></symbol>
+  <symbol id="i-unlock" viewBox="0 0 24 24"><path d="M12 17c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm6-9h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6h1.9c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm0 12H6V10h12v10z"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></symbol>
+  <symbol id="i-share" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></symbol>
+  <symbol id="i-add" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></symbol>
+  <symbol id="i-tick" viewBox="0 0 24 24"><path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></symbol>
+  <symbol id="i-swap" viewBox="0 0 24 24"><path d="M6.99 11 3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z"/></symbol>
+</svg>
+
+<div class="wrap">
+<header class="page">
+  <h1>InfoDeck — v1.9 · D1 design</h1>
+  <p>Renaming a file changes its <b>name only</b>. The extension (<b>.pdf</b>, <b>.docx</b>) is locked; changing it takes a deliberate second step and then a confirmation — because a new extension never converts the file, it only changes how other apps treat it. Mock date <b>Wed 14-Oct-2026</b>.</p>
+  <span class="stamp">DESIGN ONLY · nothing built · no version bump</span>
+  <span class="stamp g">Reply by tag: “S4.3 → chips only”, “Q2 → b”, or “defaults” = all recommended</span>
+</header>
+
+<div class="rej-box"><b>Checked in the 1.9 source.</b> File rename reuses <code>NameDialog</code> in <code>TagFileUi.kt</code> — the tag-rename box. The whole file name is one free field, and its <code>onValueChange</code> keeps only <code>TagRules.MAX_NAME</code> = <b>24</b> characters. On any name longer than 24, the first key press cuts the end off — the extension goes first. <code>FileRules.sanitise</code> also cuts at 80 from the end. Logged as <b>B13</b> and fixed in the same change.</div>
+
+<h2 class="sec">A · Flow</h2>
+<div class="flowwrap"><div class="flow">
+    <div class="fb n"><b>⋮ ▸ Rename</b>file row in the card editor</div>
+    <div class="fa"><span class="ar">→</span>opens</div>
+    <div class="fb i"><b>Step 1 · Name</b><span>extension locked <svg class="ic xs" style="vertical-align:-2px"><use href="#i-lock"/></svg></span></div>
+    <div class="fa"><span class="ar">→</span>Save<br>(name only)</div>
+    <div class="fb g"><b>Saved</b>no extra step — as today</div>
+    <div></div><div></div>
+
+    <div></div><div></div>
+    <div class="fdown"><span class="ar">↓</span>Change extension…</div>
+    <div></div><div></div><div></div><div></div>
+
+    <div></div><div></div>
+    <div class="fb a"><b>Step 2 · Extension</b>unlocked · warning · chips</div>
+    <div class="fa"><span class="ar">→</span>Save…<br>(extension differs)</div>
+    <div class="fb a"><b>Step 3 · Confirm</b>.pdf → .docx</div>
+    <div class="fa"><span class="ar">→</span>Change to .docx</div>
+    <div class="fb g"><b>Saved + Undo</b>row marks the mismatch</div>
+
+    <div></div><div></div>
+    <div class="fback">↺ <b>Keep .pdf</b> (or Back) on Step 2 or Step 3 → back to Step 1, extension locked again, name edits kept, nothing written</div>
+    <div></div><div></div>
+  </div></div>
+
+<h2 class="sec">B · Screens</h2>
+<div class="frames">
+<figure class="full"><h3>S1 · Today<small>⋮ ▸ Rename on a file in the card editor</small></h3>
+      <div class="duo"><div><div class="phone sm">
+      <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div><div class="nbar"><span class="ib"><svg class="ic s"><use href="#i-back"/></svg></span><span class="tt">Edit card</span></div><div class="hair"></div><div class="body">
+      <div class="lab">Card</div>
+      <div class="ef"><small>Label</small><b>Car Insurance — HDFC Ergo</b></div>
+      <div class="ef"><small>Policy No.</small><b>2311 4567 8890</b></div>
+      <div class="ef"><small>Policy Expiry ★</small><b>11-Oct-2027</b></div>
+      <div class="fhead"><span>Files</span><span class="att"><svg class="ic xs"><use href="#i-add"/></svg>Attach</span></div>
+      <div class="frow"><span class="badge pdf">PDF</span><div class="l"><div class="nm">Car_Insurance_Policy_2026.pdf</div><div class="mt">1.2 MB - 02-Oct-2026</div></div><span class="op">Open</span><span class="shp"><svg class="ic xs"><use href="#i-share"/></svg>Share</span><span class="mv"><svg class="ic s"><use href="#i-more"/></svg></span></div>
+      <div class="frow"><span class="badge pdf">PDF</span><div class="l"><div class="nm">RC_Book_scan.pdf</div><div class="mt">640 KB - 02-Oct-2026</div></div><span class="op">Open</span><span class="shp"><svg class="ic xs"><use href="#i-share"/></svg>Share</span><span class="mv"><svg class="ic s"><use href="#i-more"/></svg></span></div>
+      
+      <p class="fnote">PDF and Word files, up to 25 MB each, 10 per card.</p>
+    </div>
+      <div class="scrim"></div>
+      <div class="adlg"><h4>Rename file</h4>
+        <div class="mfld"><span class="lbl">Name</span><span class="mv">Car_Insurance_Policy_2026.pdf<span class="car" style="background:#4A57C9"></span></span><b class="n d pin" style="top:-9px;right:-9px">1</b></div>
+        <div class="acts"><span>Cancel</span><span>Save</span></div>
+      </div>
+      <div class="band qs">25 % kept clear<small>146 dp on this phone</small></div>
+    </div><div class="cap">As it opens</div></div><div><div class="phone sm">
+      <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div><div class="nbar"><span class="ib"><svg class="ic s"><use href="#i-back"/></svg></span><span class="tt">Edit card</span></div><div class="hair"></div><div class="body">
+      <div class="lab">Card</div>
+      <div class="ef"><small>Label</small><b>Car Insurance — HDFC Ergo</b></div>
+      <div class="ef"><small>Policy No.</small><b>2311 4567 8890</b></div>
+      <div class="ef"><small>Policy Expiry ★</small><b>11-Oct-2027</b></div>
+      <div class="fhead"><span>Files</span><span class="att"><svg class="ic xs"><use href="#i-add"/></svg>Attach</span></div>
+      <div class="frow"><span class="badge pdf">PDF</span><div class="l"><div class="nm">Car_Insurance_Policy_2026.pdf</div><div class="mt">1.2 MB - 02-Oct-2026</div></div><span class="op">Open</span><span class="shp"><svg class="ic xs"><use href="#i-share"/></svg>Share</span><span class="mv"><svg class="ic s"><use href="#i-more"/></svg></span></div>
+      <div class="frow"><span class="badge pdf">PDF</span><div class="l"><div class="nm">RC_Book_scan.pdf</div><div class="mt">640 KB - 02-Oct-2026</div></div><span class="op">Open</span><span class="shp"><svg class="ic xs"><use href="#i-share"/></svg>Share</span><span class="mv"><svg class="ic s"><use href="#i-more"/></svg></span></div>
+      
+      <p class="fnote">PDF and Word files, up to 25 MB each, 10 per card.</p>
+    </div>
+      <div class="scrim"></div>
+      <div class="adlg"><h4>Rename file</h4>
+        <div class="mfld"><span class="lbl">Name</span><span class="mv">Car_Insurance_Policy_202<span class="car" style="background:#4A57C9"></span></span><b class="n d pin" style="top:-9px;right:-9px">2</b></div>
+        <div class="acts"><span>Cancel</span><span>Save<b class="n d pin" style="top:-9px;right:-9px">3</b></span></div>
+      </div>
+      <div class="band qs">25 % kept clear<small>146 dp on this phone</small></div>
+    </div><div class="cap">After pressing one key</div></div></div><table class="tb"><tr><th class="sr">SrNo.</th><th>What you see today (1.9)</th></tr><tr><td class="sr">1</td><td>The whole name, extension included, is one free text box. <b>.pdf</b> can be deleted or retyped with no warning at all.</td></tr><tr><td class="sr">2</td><td><b>Bug B13.</b> The box is the tag-rename box and keeps only 24 characters. This name is 29, so the first key press cuts it to <b>Car_Insurance_Policy_202</b> — the extension is the first thing lost.</td></tr><tr><td class="sr">3</td><td>Save stays enabled, so one tap stores a name with no extension. The file still opens (the real type is kept), but Share sends a file with no extension.</td></tr></table></figure>
+<figure class="full"><h3>S2 · Step 1 — rename the name, extension locked<small>new</small></h3>
+      <div class="duo"><div><div class="phone">
+      <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div><div class="nbar"><span class="ib"><svg class="ic s"><use href="#i-back"/></svg></span><span class="tt">Edit card</span></div><div class="hair"></div><div class="body">
+      <div class="lab">Card</div>
+      <div class="ef"><small>Label</small><b>Car Insurance — HDFC Ergo</b></div>
+      <div class="ef"><small>Policy No.</small><b>2311 4567 8890</b></div>
+      <div class="ef"><small>Policy Expiry ★</small><b>11-Oct-2027</b></div>
+      <div class="fhead"><span>Files</span><span class="att"><svg class="ic xs"><use href="#i-add"/></svg>Attach</span></div>
+      <div class="frow"><span class="badge pdf">PDF</span><div class="l"><div class="nm">Car_Insurance_Policy_2026.pdf</div><div class="mt">1.2 MB - 02-Oct-2026</div></div><span class="op">Open</span><span class="shp"><svg class="ic xs"><use href="#i-share"/></svg>Share</span><span class="mv"><svg class="ic s"><use href="#i-more"/></svg></span></div>
+      <div class="frow"><span class="badge pdf">PDF</span><div class="l"><div class="nm">RC_Book_scan.pdf</div><div class="mt">640 KB - 02-Oct-2026</div></div><span class="op">Open</span><span class="shp"><svg class="ic xs"><use href="#i-share"/></svg>Share</span><span class="mv"><svg class="ic s"><use href="#i-more"/></svg></span></div>
+      
+      <p class="fnote">PDF and Word files, up to 25 MB each, 10 per card.</p>
+    </div>
+      <div class="scrim"></div>
+      <div class="sheet kb"><div class="handle"></div>
+        <div class="sh-t">Rename file</div>
+        <div class="fh"><span class="badge pdf">PDF</span><div class="l"><b>Car_Insurance_Policy_2026.pdf</b><small>PDF document · 1.2 MB · added 02-Oct-2026</small></div></div>
+        <div class="fld on"><span class="lbl">Name</span><span class="v"><span class="sel">Car_Insurance_Policy_2026</span><span class="car"></span></span><span class="x">.pdf<svg class="ic xs"><use href="#i-lock"/></svg></span><b class="n pin" style="top:-9px;left:-9px">1</b><b class="n pin" style="top:-9px;right:-9px">2</b></div>
+        <div class="saved"><span class="st">Saved as <b>Car_Insurance_Policy_2026<span class="xk">.pdf</span></b></span><b class="n il">3</b></div>
+        <div class="lockrow"><svg class="ic xs"><use href="#i-lock"/></svg><span>Extension stays <b>.pdf</b></span><span class="tb">Change extension…</span><b class="n pin" style="top:-9px;right:-9px">4</b></div>
+        <div class="btns"><span class="btn out">Cancel</span><span class="btn fill">Save<b class="n pin" style="top:-9px;right:-9px">5</b></span></div>
+        <div class="clr k">24 dp<small>above the keyboard</small></div>
+      </div>
+      <div class="kbd"><div class="row"><span class="k">q</span><span class="k">w</span><span class="k">e</span><span class="k">r</span><span class="k">t</span><span class="k">y</span><span class="k">u</span><span class="k">i</span><span class="k">o</span><span class="k">p</span></div><div class="row"><span class="k">a</span><span class="k">s</span><span class="k">d</span><span class="k">f</span><span class="k">g</span><span class="k">h</span><span class="k">j</span><span class="k">k</span><span class="k">l</span></div><div class="row"><span class="k w">⇧</span><span class="k">z</span><span class="k">x</span><span class="k">c</span><span class="k">v</span><span class="k">b</span><span class="k">n</span><span class="k">m</span><span class="k w">⌫</span></div><div class="row"><span class="k w">?123</span><span class="k">_</span><span class="k sp">space</span><span class="k">.</span><span class="k go">Done</span></div></div>
+    </div><div class="cap">As it opens — name selected, keyboard up</div></div><div><div class="phone">
+      <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div><div class="nbar"><span class="ib"><svg class="ic s"><use href="#i-back"/></svg></span><span class="tt">Edit card</span></div><div class="hair"></div><div class="body">
+      <div class="lab">Card</div>
+      <div class="ef"><small>Label</small><b>Car Insurance — HDFC Ergo</b></div>
+      <div class="ef"><small>Policy No.</small><b>2311 4567 8890</b></div>
+      <div class="ef"><small>Policy Expiry ★</small><b>11-Oct-2027</b></div>
+      <div class="fhead"><span>Files</span><span class="att"><svg class="ic xs"><use href="#i-add"/></svg>Attach</span></div>
+      <div class="frow"><span class="badge pdf">PDF</span><div class="l"><div class="nm">Car_Insurance_Policy_2026.pdf</div><div class="mt">1.2 MB - 02-Oct-2026</div></div><span class="op">Open</span><span class="shp"><svg class="ic xs"><use href="#i-share"/></svg>Share</span><span class="mv"><svg class="ic s"><use href="#i-more"/></svg></span></div>
+      <div class="frow"><span class="badge pdf">PDF</span><div class="l"><div class="nm">RC_Book_scan.pdf</div><div class="mt">640 KB - 02-Oct-2026</div></div><span class="op">Open</span><span class="shp"><svg class="ic xs"><use href="#i-share"/></svg>Share</span><span class="mv"><svg class="ic s"><use href="#i-more"/></svg></span></div>
+      
+      <p class="fnote">PDF and Word files, up to 25 MB each, 10 per card.</p>
+    </div>
+      <div class="scrim"></div>
+      <div class="sheet"><div class="handle"></div>
+        <div class="sh-t">Rename file</div>
+        <div class="fh"><span class="badge pdf">PDF</span><div class="l"><b>Car_Insurance_Policy_2026.pdf</b><small>PDF document · 1.2 MB · added 02-Oct-2026</small></div></div>
+        <div class="fld on"><span class="lbl">Name</span><span class="v">Car_Insurance_Policy_2026<span class="car"></span></span><span class="x">.pdf<svg class="ic xs"><use href="#i-lock"/></svg></span><b class="n pin" style="top:-9px;left:-9px">1</b><b class="n pin" style="top:-9px;right:-9px">2</b></div>
+        <div class="saved"><span class="st">Saved as <b>Car_Insurance_Policy_2026<span class="xk">.pdf</span></b></span><b class="n il">3</b></div>
+        <div class="lockrow"><svg class="ic xs"><use href="#i-lock"/></svg><span>Extension stays <b>.pdf</b></span><span class="tb">Change extension…</span><b class="n pin" style="top:-9px;right:-9px">4</b></div>
+        <div class="btns"><span class="btn out">Cancel</span><span class="btn fill">Save<b class="n pin" style="top:-9px;right:-9px">5</b></span></div>
+        <div class="clr q">25 % OF SCREEN KEPT CLEAR<small>SheetBottomSpace · 193 dp on this phone</small><small>shrinks to 24 dp while the keyboard is up</small></div>
+      </div>
+    </div><div class="cap">Keyboard hidden — 25 % clearance</div></div></div><table class="tb"><tr><th class="sr">SrNo.</th><th>Step 1 — the name</th><th>Detail</th></tr><tr><td class="sr">1</td><td class="k">Name only</td><td>The box holds <b>Car_Insurance_Policy_2026</b> — no extension. It opens selected, so typing replaces it; one tap puts the cursor at the end.</td></tr><tr><td class="sr">2</td><td class="k">Locked extension</td><td><b>.pdf</b> sits inside the box on the right, grey, with a lock. It cannot be focused or edited. Tapping it flashes the row below.</td></tr><tr><td class="sr">3</td><td class="k">Saved as</td><td>Live preview of the exact name that will be stored and used when sharing.</td></tr><tr><td class="sr">4</td><td class="k">Change extension…</td><td>The ONLY way to touch the extension — opens Step 2 in the same sheet.</td></tr><tr><td class="sr">5</td><td class="k">Save</td><td>A name-only change saves straight away, exactly as today — no extra step. Blank name keeps Save disabled.</td></tr><tr><td class="sr">6</td><td class="k">Sheet</td><td>Now the standard bottom sheet (InfoSheet) instead of a dialog: Cancel + Save equal width, 50 dp; 25 % bottom clearance, 24 dp above the keyboard.</td></tr></table></figure>
+<figure><h3>S3 · Edge — extension typed in the name<small>new</small></h3><div class="phone">
+      <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div><div class="nbar"><span class="ib"><svg class="ic s"><use href="#i-back"/></svg></span><span class="tt">Edit card</span></div><div class="hair"></div><div class="body">
+      <div class="lab">Card</div>
+      <div class="ef"><small>Label</small><b>Car Insurance — HDFC Ergo</b></div>
+      <div class="ef"><small>Policy No.</small><b>2311 4567 8890</b></div>
+      <div class="ef"><small>Policy Expiry ★</small><b>11-Oct-2027</b></div>
+      <div class="fhead"><span>Files</span><span class="att"><svg class="ic xs"><use href="#i-add"/></svg>Attach</span></div>
+      <div class="frow"><span class="badge pdf">PDF</span><div class="l"><div class="nm">Car_Insurance_Policy_2026.pdf</div><div class="mt">1.2 MB - 02-Oct-2026</div></div><span class="op">Open</span><span class="shp"><svg class="ic xs"><use href="#i-share"/></svg>Share</span><span class="mv"><svg class="ic s"><use href="#i-more"/></svg></span></div>
+      <div class="frow"><span class="badge pdf">PDF</span><div class="l"><div class="nm">RC_Book_scan.pdf</div><div class="mt">640 KB - 02-Oct-2026</div></div><span class="op">Open</span><span class="shp"><svg class="ic xs"><use href="#i-share"/></svg>Share</span><span class="mv"><svg class="ic s"><use href="#i-more"/></svg></span></div>
+      
+      <p class="fnote">PDF and Word files, up to 25 MB each, 10 per card.</p>
+    </div>
+      <div class="scrim"></div>
+      <div class="sheet"><div class="handle"></div>
+        <div class="sh-t">Rename file</div>
+        <div class="fh"><span class="badge pdf">PDF</span><div class="l"><b>Car_Insurance_Policy_2026.pdf</b><small>PDF document · 1.2 MB · added 02-Oct-2026</small></div></div>
+        <div class="fld on"><span class="lbl">Name</span><span class="v rtl"><span style="color:var(--ink2)">…</span>Policy_2026<span style="background:var(--amber-c);color:var(--amber-d);font-weight:800;border-radius:3px;padding:0 2px">.docx</span><span class="car"></span></span><span class="x">.pdf<svg class="ic xs"><use href="#i-lock"/></svg></span><b class="n a pin" style="top:-9px;right:-9px">1</b></div>
+        <div class="saved"><span class="st">Saved as <b>…Policy_2026<span class="xc">.docx.pdf</span></b></span><b class="n a il">2</b></div>
+        <div class="warn"><svg class="ic s"><use href="#i-warn"/></svg><div>The name ends in <b>.docx</b>, but the extension is locked — this saves as <b>…2026.docx.pdf</b>.<br><span class="go">Use .docx as the extension…</span><b class="n a il">3</b></div></div>
+        <div class="btns"><span class="btn out">Cancel</span><span class="btn fill">Save</span></div>
+        <div class="clr q">25 % OF SCREEN KEPT CLEAR<small>SheetBottomSpace · 193 dp on this phone</small><small>shrinks to 24 dp while the keyboard is up</small></div>
+      </div>
+    </div><table class="tb"><tr><th class="sr">SrNo.</th><th>Edge — an extension typed into the name</th></tr><tr><td class="sr">1</td><td>The box scrolls to keep the cursor in view; the typed <b>.docx</b> is tinted so it is obvious.</td></tr><tr><td class="sr">2</td><td>The preview shows the truth: <b>….docx.pdf</b>. Nothing is guessed or stripped silently.</td></tr><tr><td class="sr">3</td><td>Hint appears only when the name ends in a known extension (.pdf .doc .docx .txt .rtf .odt .xls .xlsx .jpg .jpeg .png). <b>Use .docx as the extension…</b> takes the <b>.docx</b> out of the name and opens Step 2 with it filled in — the confirm still follows <i class="q">Q5</i>. Save is still allowed: a dot in a name is legal.</td></tr></table></figure>
+<figure><h3>S4 · Step 2 — Change extension…<small>new</small></h3><div class="phone">
+      <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div><div class="nbar"><span class="ib"><svg class="ic s"><use href="#i-back"/></svg></span><span class="tt">Edit card</span></div><div class="hair"></div><div class="body">
+      <div class="lab">Card</div>
+      <div class="ef"><small>Label</small><b>Car Insurance — HDFC Ergo</b></div>
+      <div class="ef"><small>Policy No.</small><b>2311 4567 8890</b></div>
+      <div class="ef"><small>Policy Expiry ★</small><b>11-Oct-2027</b></div>
+      <div class="fhead"><span>Files</span><span class="att"><svg class="ic xs"><use href="#i-add"/></svg>Attach</span></div>
+      <div class="frow"><span class="badge pdf">PDF</span><div class="l"><div class="nm">Car_Insurance_Policy_2026.pdf</div><div class="mt">1.2 MB - 02-Oct-2026</div></div><span class="op">Open</span><span class="shp"><svg class="ic xs"><use href="#i-share"/></svg>Share</span><span class="mv"><svg class="ic s"><use href="#i-more"/></svg></span></div>
+      <div class="frow"><span class="badge pdf">PDF</span><div class="l"><div class="nm">RC_Book_scan.pdf</div><div class="mt">640 KB - 02-Oct-2026</div></div><span class="op">Open</span><span class="shp"><svg class="ic xs"><use href="#i-share"/></svg>Share</span><span class="mv"><svg class="ic s"><use href="#i-more"/></svg></span></div>
+      
+      <p class="fnote">PDF and Word files, up to 25 MB each, 10 per card.</p>
+    </div>
+      <div class="scrim"></div>
+      <div class="sheet"><div class="handle"></div>
+        <div class="sh-t">Rename file</div>
+        <div class="fh"><span class="badge pdf">PDF</span><div class="l"><b>Car_Insurance_Policy_2026.pdf</b><small>PDF document · 1.2 MB · added 02-Oct-2026</small></div></div>
+        <div class="fld"><span class="lbl">Name</span><span class="v">Car_Insurance_Policy_2026</span></div>
+        <div class="xh"><svg class="ic xs"><use href="#i-unlock"/></svg>Extension · unlocked<span class="tb">Keep .pdf<b class="n a il">1</b></span></div>
+        <div class="fld am"><span class="lbl">New extension</span><span class="pre">.</span><span class="v">docx<span class="car"></span></span><b class="n a pin" style="top:-9px;right:-9px">2</b></div>
+        <div class="chips"><span class="chip real"><svg class="ic xs"><use href="#i-tick"/></svg>.pdf · this file</span><span class="chip">.doc</span><span class="chip on">.docx</span><b class="n a il">3</b></div>
+        <div class="warn"><svg class="ic s"><use href="#i-warn"/></svg><div>Changing the extension does <b>not convert</b> the file. This is a PDF — named .docx it is still a PDF inside, and apps may refuse to open it.</div><b class="n a pin" style="top:-9px;right:-9px">4</b></div>
+        <div class="saved"><span class="st">Saved as <b>Car_Insurance_Policy_2026<span class="xc">.docx</span></b></span><b class="n a il">5</b></div>
+        <div class="btns"><span class="btn out">Cancel</span><span class="btn warnb">Save…<b class="n a pin" style="top:-9px;right:-9px">6</b></span></div>
+        <div class="clr q">25 % OF SCREEN KEPT CLEAR<small>SheetBottomSpace · 193 dp on this phone</small><small>shrinks to 24 dp while the keyboard is up</small></div>
+      </div>
+    </div><table class="tb"><tr><th class="sr">SrNo.</th><th>Step 2 — the extension, unlocked</th></tr><tr><td class="sr">1</td><td><b>Keep .pdf</b> puts the original back and locks it again; nothing else changes.</td></tr><tr><td class="sr">2</td><td>Separate <b>New extension</b> box, amber. The dot is fixed in front; only letters and digits, at most 8, no spaces. Blank = remove the extension (also confirmed).</td></tr><tr><td class="sr">3</td><td>Quick chips for the three kinds InfoDeck stores; the file's real type is ticked green. Free typing is allowed too <i class="q">Q2</i>.</td></tr><tr><td class="sr">4</td><td>Warning, always shown in this step: renaming never converts the file.</td></tr><tr><td class="sr">5</td><td>Preview with the new extension tinted.</td></tr><tr><td class="sr">6</td><td>Save becomes <b>Save…</b> in amber — the dots say one more question follows. If the extension is back to .pdf (any case), it is a plain Save again <i class="q">Q1</i>.</td></tr></table></figure>
+<figure><h3>S5 · Step 3 — confirm<small>new</small></h3><div class="phone">
+      <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div><div class="nbar"><span class="ib"><svg class="ic s"><use href="#i-back"/></svg></span><span class="tt">Edit card</span></div><div class="hair"></div><div class="body">
+      <div class="lab">Card</div>
+      <div class="ef"><small>Label</small><b>Car Insurance — HDFC Ergo</b></div>
+      <div class="ef"><small>Policy No.</small><b>2311 4567 8890</b></div>
+      <div class="ef"><small>Policy Expiry ★</small><b>11-Oct-2027</b></div>
+      <div class="fhead"><span>Files</span><span class="att"><svg class="ic xs"><use href="#i-add"/></svg>Attach</span></div>
+      <div class="frow"><span class="badge pdf">PDF</span><div class="l"><div class="nm">Car_Insurance_Policy_2026.pdf</div><div class="mt">1.2 MB - 02-Oct-2026</div></div><span class="op">Open</span><span class="shp"><svg class="ic xs"><use href="#i-share"/></svg>Share</span><span class="mv"><svg class="ic s"><use href="#i-more"/></svg></span></div>
+      <div class="frow"><span class="badge pdf">PDF</span><div class="l"><div class="nm">RC_Book_scan.pdf</div><div class="mt">640 KB - 02-Oct-2026</div></div><span class="op">Open</span><span class="shp"><svg class="ic xs"><use href="#i-share"/></svg>Share</span><span class="mv"><svg class="ic s"><use href="#i-more"/></svg></span></div>
+      
+      <p class="fnote">PDF and Word files, up to 25 MB each, 10 per card.</p>
+    </div>
+      <div class="scrim"></div>
+      <div class="dlg">
+        <div class="ico"><svg class="ic s"><use href="#i-swap"/></svg></div>
+        <h4>Change the extension?</h4>
+        <p>Only the name changes. The file itself is not converted.</p>
+        <div class="names">
+          <div class="r"><span class="k">From</span><span class="v">Car_Insurance_Policy_2026<s class="old">.pdf</s></span></div>
+          <div class="r"><span class="k">To</span><span class="v">Car_Insurance_Policy_2026<b class="new">.docx</b></span></div>
+          <b class="n a pin" style="top:-9px;right:-9px">1</b>
+        </div>
+        <div class="dnote"><svg class="ic xs"><use href="#i-warn"/></svg><span>Still a <b>PDF</b> inside — it may not open as .docx.</span><b class="n a pin" style="top:-9px;right:-9px">2</b></div>
+        <div class="btns"><span class="btn out sm">Keep .pdf<b class="n a pin" style="top:-9px;left:-9px">3</b></span><span class="btn warnb sm">Change to .docx<b class="n a pin" style="top:-9px;right:-9px">4</b></span></div>
+      </div>
+      <div class="band q">25 % kept clear<small>the dialog sits in the top 75 %</small></div>
+    </div><table class="tb"><tr><th class="sr">SrNo.</th><th>Step 3 — the double check</th></tr><tr><td class="sr">1</td><td>Old and new names one above the other; the old extension struck through in red, the new one tinted amber.</td></tr><tr><td class="sr">2</td><td>Mismatch line names the real type. When the new extension MATCHES the real type (a Word file wrongly named .pdf, say), this line turns green: “✓ .docx matches what this file really is” — the confirm is still asked.</td></tr><tr><td class="sr">3</td><td><b>Keep .pdf</b> — also Back and tap-outside. Returns to Step 1 with the extension locked at .pdf and any name edits kept. Nothing is written.</td></tr><tr><td class="sr">4</td><td><b>Change to .docx</b> — the only button that writes. Two buttons, equal width; no typed confirmation <i class="q">Q6</i>.</td></tr></table></figure>
+<figure><h3>S6 · After<small>file row + undo</small></h3><div class="phone">
+      <div class="sb"><span>9:41</span><span>▲ ▮ 87 %</span></div><div class="nbar"><span class="ib"><svg class="ic s"><use href="#i-back"/></svg></span><span class="tt">Edit card</span></div><div class="hair"></div>
+      <div class="body">
+      <div class="lab">Card</div>
+      <div class="ef"><small>Label</small><b>Car Insurance — HDFC Ergo</b></div>
+      <div class="ef"><small>Policy No.</small><b>2311 4567 8890</b></div>
+      <div class="ef"><small>Policy Expiry ★</small><b>11-Oct-2027</b></div>
+      <div class="fhead"><span>Files</span><span class="att"><svg class="ic xs"><use href="#i-add"/></svg>Attach</span></div>
+      <div class="frow"><span class="badge pdf">PDF<b class="n a pin" style="top:-9px;left:-9px">3</b></span><div class="l"><div class="nm2"><span class="b">Car_Insurance_Policy_2026</span><span class="e">.docx</span><b class="n a il">1</b></div><div class="mt">1.2 MB - 02-Oct-2026</div><div class="mm"><svg class="ic xs"><use href="#i-warn"/></svg>Really a PDF<b class="n a il">2</b></div></div><span class="op">Open</span><span class="shp"><svg class="ic xs"><use href="#i-share"/></svg>Share</span><span class="mv"><svg class="ic s"><use href="#i-more"/></svg></span></div>
+      <div class="frow"><span class="badge pdf">PDF</span><div class="l"><div class="nm">RC_Book_scan.pdf</div><div class="mt">640 KB - 02-Oct-2026</div></div><span class="op">Open</span><span class="shp"><svg class="ic xs"><use href="#i-share"/></svg>Share</span><span class="mv"><svg class="ic s"><use href="#i-more"/></svg></span></div>
+      
+      <p class="fnote">PDF and Word files, up to 25 MB each, 10 per card.</p>
+    </div>
+      <div class="snack"><span>Extension changed to .docx</span><b>UNDO</b><b class="n a pin" style="top:-9px;right:-9px">4</b></div>
+      <div class="ebar"><span class="btn out sm">Cancel</span><span class="btn fill sm">Save</span></div>
+    </div><table class="tb"><tr><th class="sr">SrNo.</th><th>After the change</th></tr><tr><td class="sr">1</td><td>The name is cut inside the NAME part, so the extension is always visible on the row — today the end is cut, which hides it <i class="q">Q7</i>.</td></tr><tr><td class="sr">2</td><td>Amber “Really a PDF” line while the extension disagrees with the real type <i class="q">Q3</i>. Gone again once they agree.</td></tr><tr><td class="sr">3</td><td>The badge keeps showing the REAL type (PDF). Open and Share still tell other apps it is a PDF (B4); Share uses the new name (B10).</td></tr><tr><td class="sr">4</td><td>Snackbar with Undo for 5 s; Undo restores the old name in one step <i class="q">Q4</i>.</td></tr></table></figure>
+</div>
+
+<h2 class="sec">C · Specification</h2>
+<h3 class="sub">C1 · Rules</h3><table class="tb"><tr><th class="sr">SrNo.</th><th>Rule</th><th>Detail</th></tr><tr><td class="sr">1</td><td class="k">Door</td><td>Card editor ▸ Files ▸ ⋮ ▸ Rename — the only place a file is renamed (the card view's Rename already routes to the editor).</td></tr><tr><td class="sr">2</td><td class="k">Split</td><td>Extension = the text after the LAST dot, when it is 1–8 letters/digits and something comes before the dot. <code>Policy v2.1.pdf</code> → name <code>Policy v2.1</code> + <code>pdf</code>. <code>Scan</code> → no extension (the lock chip reads <b>none</b>; Change extension… can add one). <code>.hidden</code> → all name.</td></tr><tr><td class="sr">3</td><td class="k">Step 1</td><td>Name box holds the name only, selected on open; extension chip read-only with a lock; live “Saved as” preview.</td></tr><tr><td class="sr">4</td><td class="k">Name-only save</td><td>Saves straight away — no extra step, no confirm.</td></tr><tr><td class="sr">5</td><td class="k">Step 2</td><td><b>Change extension…</b> unlocks: amber Extension box (dot fixed, letters/digits, max 8), chips .pdf · .doc · .docx with the real type ticked, permanent warning, <b>Keep .pdf</b> to re-lock; Save turns into <b>Save…</b>.</td></tr><tr><td class="sr">6</td><td class="k">Step 3</td><td>Save… with a different extension opens the confirm. Nothing is written until <b>Change to .docx</b>. Keep / Back / outside → Step 1, extension locked again, name edits kept.</td></tr><tr><td class="sr">7</td><td class="k">What counts as a change</td><td>Compared ignoring case: <code>.PDF → .pdf</code> is a plain save <i class="q">Q1</i>. A blank extension means “remove the extension” and is confirmed (“Remove the extension?”).</td></tr><tr><td class="sr">8</td><td class="k">Typed extension</td><td>Name ending in a known extension → amber hint + shortcut into Step 2 <i class="q">Q5</i>.</td></tr><tr><td class="sr">9</td><td class="k">On disk</td><td>Nothing moves or converts: only the display name changes. The real type (MIME) is kept, so Open and Share still hand apps the real type under the new name.</td></tr><tr><td class="sr">10</td><td class="k">Length</td><td>80 characters for the whole name. If it must be cut, the NAME part is cut — never the extension. The 24-character tag limit no longer applies to file names (B13).</td></tr><tr><td class="sr">11</td><td class="k">File row</td><td>Middle cut keeps the extension visible <i class="q">Q7</i>; amber “Really a PDF” line while they disagree <i class="q">Q3</i>; Undo snackbar 5 s <i class="q">Q4</i>.</td></tr><tr><td class="sr">12</td><td class="k">Unchanged</td><td>Tag rename and category rename keep today's plain name box (tags keep the 24 limit). Attach, Open, Share and Remove are untouched.</td></tr></table>
+<h3 class="sub">C2 · Three companions</h3><table class="tb"><tr><th class="sr">SrNo.</th><th>Part</th><th>Exception handling</th><th>Logger.e</th><th>Tests</th></tr><tr><td class="sr">1</td><td class="k">Name split / join</td><td>Pure and total: null or blank → name “file”, no extension; leading-dot and trailing-dot names handled; join never returns blank; the 80 cut always keeps the extension</td><td>— (pure)</td><td>JUnit: 12 shapes (pdf, docx, several dots, none, leading dot, trailing dot, 9-char suffix, spaces, Unicode, upper case), split→join round trip, 30- and 120-char names keep .pdf</td></tr><tr><td class="sr">2</td><td class="k">Extension input</td><td>Leading dots stripped, non letters/digits dropped, capped at 8; “is it a change” ignores case; blank = remove</td><td>—</td><td>JUnit on the input sanitiser and the change test (case-only, blank, same, different)</td></tr><tr><td class="sr">3</td><td class="k">Confirm gate</td><td>The ViewModel returns Direct or NeedsConfirm; the repo write happens only on Direct or after confirm. <code>Repo.renameFile</code> stays guarded; a failed write shows “Couldn't rename — nothing changed”</td><td>logs a failed rename with the file id (not its name)</td><td>JUnit: name-only → Direct, case-only → Direct, new ext → NeedsConfirm, blank ext → NeedsConfirm</td></tr><tr><td class="sr">4</td><td class="k">Mismatch line</td><td>Unknown or empty MIME → no line, never a wrong claim</td><td>logs an unknown MIME once per file</td><td>JUnit: real-type-of-MIME vs extension for pdf/doc/docx and unknown</td></tr><tr><td class="sr">5</td><td class="k">B13</td><td>File rename no longer uses the 24-character tag box</td><td>—</td><td>JUnit: 29-char name + one key keeps .pdf; negative control: tag rename still capped at 24</td></tr><tr><td class="sr">6</td><td class="k">Device checklist</td><td>Only a phone can prove these</td><td>—</td><td>name-only rename · change ext + Keep · change ext + Change · Undo · Open after change · Share after change (name arrives as .docx) · 30+ char name · sheet clears the nav bar with and without keyboard</td></tr></table>
+<h2 class="sec">D · Open questions</h2><table class="tb"><tr><th class="sr">SrNo.</th><th>Q</th><th>Question</th><th>Options</th><th>My recommendation</th></tr><tr><td class="sr">1</td><td class="q">Q1</td><td>Case-only change (.PDF → .pdf)</td><td>(a) plain save, no confirm &nbsp; (b) confirm too</td><td class="rec">(a)</td></tr><tr><td class="sr">2</td><td class="q">Q2</td><td>Extension input</td><td>(a) chips .pdf/.doc/.docx + free typing &nbsp; (b) chips only</td><td class="rec">(a)</td></tr><tr><td class="sr">3</td><td class="q">Q3</td><td>Row marker when the extension disagrees with the real type</td><td>(a) amber “Really a PDF” line &nbsp; (b) nothing</td><td class="rec">(a)</td></tr><tr><td class="sr">4</td><td class="q">Q4</td><td>Undo snackbar</td><td>(a) after every rename &nbsp; (b) only after an extension change &nbsp; (c) none</td><td class="rec">(a)</td></tr><tr><td class="sr">5</td><td class="q">Q5</td><td>Extension typed into the name</td><td>(a) hint + “Use .docx as the extension…” shortcut &nbsp; (b) hint only &nbsp; (c) nothing</td><td class="rec">(a)</td></tr><tr><td class="sr">6</td><td class="q">Q6</td><td>Strength of the confirm</td><td>(a) two-button dialog &nbsp; (b) type the new extension to confirm</td><td class="rec">(a)</td></tr><tr><td class="sr">7</td><td class="q">Q7</td><td>Long names on the file row</td><td>(a) cut the name part, extension always visible &nbsp; (b) keep today's end cut</td><td class="rec">(a)</td></tr></table>
+<h2 class="sec">E · If accepted</h2><table class="tb"><tr><th class="sr">SrNo.</th><th>Field</th><th>Value</th></tr><tr><td class="sr">1</td><td class="k">Queue</td><td><b>N60</b> rename with a locked extension and a two-step change (Steps 1–3, file-row extension visibility, mismatch line, Undo) · <b>B13</b> file rename clipped at 24 characters</td></tr><tr><td class="sr">2</td><td class="k">Release</td><td>Mixed (feature + fix) → feature: <b>1.10</b>, versionCode <b>1010000</b>; z dropped</td></tr><tr><td class="sr">3</td><td class="k">Database</td><td>No schema change — the display name column already exists</td></tr><tr><td class="sr">4</td><td class="k">Pull request</td><td>Branch and PR <b>cld-file-rename-extension-guard</b>, label <code>release:feature</code> → the workflow builds the beta <b>1.10-beta.N</b> on the PR and releases <b>1.10</b> on merge to main</td></tr><tr><td class="sr">5</td><td class="k">Standards</td><td>The rename popup moves onto the standard sheet (25 % bottom clearance, Cancel + Save 50 dp); three companions as above</td></tr><tr><td class="sr">6</td><td class="k">Trigger</td><td>Nothing is coded or pushed until you approve this design</td></tr></table>
+</div>
+</body>
+</html>

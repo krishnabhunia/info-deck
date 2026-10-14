@@ -177,13 +177,11 @@ object FileRules {
     fun kind(mime: String, name: String): String =
         if (mime == "application/pdf" || name.lowercase().endsWith(".pdf")) "PDF" else "DOC"
 
-    /** Filenames are never trusted: no separators, no traversal, bounded length. */
-    fun sanitise(name: String): String {
-        val cleaned = name.replace(Regex("[\\\\/:*?\"<>|\\u0000]"), "_")
-            .trim { it == '.' || it == '_' || it.isWhitespace() }
-        val safe = if (cleaned.isBlank()) "file" else cleaned
-        return safe.take(80)
-    }
+    /**
+     * Filenames are never trusted: no separators, no traversal, bounded length.
+     * N60/B13: the 80-character cut now shortens the NAME part and always keeps the extension.
+     */
+    fun sanitise(name: String): String = com.krishna.infodeck.core.FileNameRules.clean(name)
 
     fun humanSize(bytes: Long): String = when {
         bytes >= 1024L * 1024 -> String.format(java.util.Locale.ENGLISH, "%.1f MB", bytes / 1048576.0)

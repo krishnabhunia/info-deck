@@ -266,12 +266,28 @@ fun FileRow(
         }
         Spacer(Modifier.width(10.dp))
         Column(Modifier.weight(1f)) {
-            Text(file.displayName, fontSize = roleSp(13.5f, TextRole.TITLE), fontWeight = FontWeight.SemiBold,
-                maxLines = 1, overflow = TextOverflow.Ellipsis)
+            // N60 (Q7): cut inside the NAME so the extension always stays visible
+            val parts = com.krishna.infodeck.core.FileNameRules.split(file.displayName)
+            val nameSize = roleSp(13.5f, TextRole.TITLE)
+            Row {
+                Text(parts.base, fontSize = nameSize, fontWeight = FontWeight.SemiBold,
+                    maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+                if (parts.hasExt) Text(".${parts.ext}", fontSize = nameSize, fontWeight = FontWeight.SemiBold, maxLines = 1)
+            }
             Text(
                 "${FileRules.humanSize(file.sizeBytes)} - ${Fmt.date(Fmt.fromMillis(file.addedAt).toLocalDate())}",
-                fontSize = roleSp(11.5f, TextRole.SECONDARY), color = MaterialTheme.colorScheme.onSurfaceVariant
+                fontSize = roleSp(11.5f, TextRole.SECONDARY), color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1, overflow = TextOverflow.Ellipsis
             )
+            // N60 (Q3): say so while the extension disagrees with what the file really is
+            val really = com.krishna.infodeck.core.FileNameRules.mismatch(file.displayName, file.mime)
+            if (com.krishna.infodeck.core.FileNameRules.realType(file.mime) == null) MimeNotice.once(file.id, file.mime)
+            if (really != null) Row(Modifier.padding(top = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Filled.Warning, null, Modifier.size(12.dp), tint = ExtAmberText)
+                Spacer(Modifier.width(3.dp))
+                Text("Really a $really", fontSize = roleSp(11.5f, TextRole.SECONDARY),
+                    fontWeight = FontWeight.Bold, color = ExtAmberText, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
         }
         TextButton(onClick = onOpen) { Text("Open", fontWeight = FontWeight.Bold) }
         // B4 - a visible Share pill per file; green because green means share everywhere now
@@ -474,4 +490,12 @@ fun NameDialog(title: String, initial: String, onDismiss: () -> Unit, onSave: (S
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
     )
+}
+
+/** N60 companion 2: an unknown stored MIME is logged once per file, never on every recomposition. */
+internal object MimeNotice {
+    private val seen = java.util.Collections.synchronizedSet(HashSet<Long>())
+    fun once(fileId: Long, mime: String) {
+        if (seen.add(fileId)) com.krishna.infodeck.core.Logger.e("FileRow.mime", "unknown MIME '$mime' on file id=$fileId - no real-type line shown")
+    }
 }

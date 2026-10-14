@@ -388,8 +388,23 @@ class Repo(private val db: AppDatabase) {
         }
     }
 
-    suspend fun renameFile(id: Long, name: String) = Logger.guardUnit("Repo.renameFile") {
-        dao.file(id)?.let { dao.updateFile(it.copy(displayName = FileRules.sanitise(name))) }
+    /**
+     * N60: true only when the new display name was written. Nothing on disk moves and the
+     * MIME is kept, so Open and Share still hand other apps the real type. Logs the file id,
+     * never the name (companion 2).
+     */
+    suspend fun renameFile(id: Long, name: String): Boolean = try {
+        val f = dao.file(id)
+        if (f == null) {
+            Logger.e("Repo.renameFile", "file id=$id not found - nothing renamed")
+            false
+        } else {
+            dao.updateFile(f.copy(displayName = FileRules.sanitise(name)))
+            true
+        }
+    } catch (t: Throwable) {
+        Logger.e("Repo.renameFile", "rename failed for file id=$id - nothing changed", t)
+        false
     }
 
     suspend fun removeFile(context: android.content.Context, id: Long) = Logger.guardUnit("Repo.removeFile") {
