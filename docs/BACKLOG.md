@@ -1,5 +1,14 @@
 # InfoDeck — PIPELINE QUEUE (BACKLOG)
 
+### N61 — standards compliance audit and three-part versioning · 14-Oct-2026
+- [x] Implement strict `x.y.z` release version parsing and Gradle validation; accept historical two-part input only during one-time `next` migration.
+- [x] Verify required folders, single build workflow and exact ZIP internal paths with runnable tests in CI.
+- [x] Audit attached `github.md`, `workflows.md`, `versions_management.md` requirement-by-requirement in the compliance report.
+- [ ] Implement Android Settings daily/startup update checker, opt-in beta, secure background download and **system-confirmed** installer after design approval. `INTERNET` remains absent until that work.
+- [ ] Implement Windows/macOS title-bar update button/version display when those applications exist.
+- Error handling: standard check returns nonzero on malformed versions or package layout; GitHub Actions surfaces failures.
+- Tests: version selftests, Android Gradle compile, ZIP layouts for Android-only and all-platform fixtures, GitHub Actions build.
+
 ### Unreleased · N60 — protected file extension rename (Design A, approved 14-Oct-2026)
 
 | ID | Feature | Exceptions | Error logging | Tests |

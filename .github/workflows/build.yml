@@ -1,7 +1,7 @@
 # InfoDeck — the ONE workflow for Windows, macOS and Android (docs/standards/workflows.md).
 #
-#   Pull request  -> beta build      vX.Y-beta.N   GitHub pre-release
-#   Merge to main -> normal release  vX.Y          GitHub release
+#   Pull request  -> beta build      vX.Y.Z-beta.N   GitHub pre-release
+#   Merge to main -> normal release  vX.Y.Z        GitHub release
 #
 # The version bump comes from ONE label on the PR (docs/versioning.md):
 #   release:feature  y+1      release:fix  z+1      release:major  x+1 (Krishna only)
@@ -129,6 +129,11 @@ jobs:
           echo "display=$display" >> "$GITHUB_OUTPUT"
           echo "### Version" >> "$GITHUB_STEP_SUMMARY"
           echo "Building **${{ env.SOFTWARE_NAME }} ${display}** (versionCode $(python3 common/scripts/version.py code "$version"))" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Verify repository standards against candidate version
+        env:
+          CANDIDATE_VERSION: ${{ steps.ver.outputs.version }}
+        run: python3 common/scripts/verify_standards.py --version "$CANDIDATE_VERSION"
 
       - name: Write the bumped VERSION back to the PR branch
         if: >-

@@ -1,75 +1,81 @@
 #!/usr/bin/env python3
-"""InfoDeck version rules — the single implementation CI uses.
+"""InfoDeck versioning: releases always use x.y.z, with no zero-padding.
 
-Format x.y.z of plain integers (never decimals, never zero-padded): 2.9 -> 2.10 -> 2.11.
-  x  major            — release:major -> (x+1).1, applied only by Krishna
-  y  feature releases — release:feature  -> y+1, z dropped
-  z  bug-fix releases — release:fix      -> z+1 (z is omitted until the first fix in a y)
-  release:none        — docs/CI-only change: version unchanged, nothing published
-versionCode = x*1,000,000 + y*1,000 + z
-
-Usage:
-  version.py next <current> <major|feature|fix|none>
-  version.py code <version>
-  version.py check <version>
+An existing two-part baseline is accepted ONLY by "next" for migration.
+major -> (x+1).1.0; feature -> x.(y+1).0; fix -> x.y.(z+1);
+none -> x.y.z; versionCode = x*1_000_000+y*1_000+z.
 """
 import re
 import sys
 
-PATTERN = re.compile(r"^(\d+)\.(\d+)(?:\.(\d+))?$")
+PATTERN = re.compile(r"^([0-9]+)\.([0-9]+)\.([0-9]+)$")
+LEGACY = re.compile(r"^([0-9]+)\.([0-9]+)$")
 
 
-def parse(v: str) -> tuple[int, int, int | None]:
-    m = PATTERN.match(v.strip())
-    if not m:
-        raise ValueError(f"version must be x.y or x.y.z of plain integers, got {v!r}")
-    x, y, z = m.groups()
-    if (len(x) > 1 and x.startswith("0")) or (len(y) > 1 and y.startswith("0")) or (z and len(z) > 1 and z.startswith("0")):
-        raise ValueError(f"version parts are never zero-padded: {v!r}")
-    return int(x), int(y), (int(z) if z is not None else None)
+def parse(v: str, *, allow_legacy: bool = False) -> tuple[int, int, int]:
+    m = PATTERN.fullmatch(v)
+    if m is None and allow_legacy:
+        m = LEGACY.fullmatch(v)
+    if m is None:
+        raise ValueError(f"version must be x.y.z of plain integers, got {v!r}")
+    parts = m.groups()
+    if any(len(p) > 1 and p.startswith("0") for p in parts):
+        raise ValueError(f"zero-padded version component: {v!r}")
+    return int(parts[0]), int(parts[1]), int(parts[2]) if len(parts) == 3 else 0
 
 
-def fmt(x: int, y: int, z: int | None) -> str:
-    return f"{x}.{y}" if not z else f"{x}.{y}.{z}"
+def fmt(x: int, y: int, z: int) -> str:
+    return f"{x}.{y}.{z}"
 
 
 def next_version(current: str, kind: str) -> str:
-    x, y, z = parse(current)
+    x, y, z = parse(current, allow_legacy=True)
     if kind == "major":
-        # same rule as a brand-new app (1.1): the first release of a major is x.1
-        return fmt(x + 1, 1, None)
+        return fmt(x + 1, 1, 0)
     if kind == "feature":
-        return fmt(x, y + 1, None)
+        return fmt(x, y + 1, 0)
     if kind == "fix":
-        return fmt(x, y, (z or 0) + 1)
+        return fmt(x, y, z + 1)
     if kind == "none":
         return fmt(x, y, z)
-    raise ValueError(f"unknown bump kind {kind!r} (major|feature|fix|none)")
+    raise ValueError(f"unknown bump kind {kind!r}")
 
 
 def code(v: str) -> int:
     x, y, z = parse(v)
-    if y >= 1000 or (z or 0) >= 1000:
+    if y >= 1000 or z >= 1000:
         raise ValueError("y and z must stay below 1000")
-    return x * 1_000_000 + y * 1_000 + (z or 0)
+    return x * 1_000_000 + y * 1_000 + z
 
 
 def _self_test() -> None:
     cases = [
-        ("1.9", "feature", "1.10"), ("2.9", "feature", "2.10"), ("1.10", "fix", "1.10.1"),
-        ("1.10.1", "fix", "1.10.2"), ("1.10.2", "feature", "1.11"), ("1.9", "none", "1.9"),
-        ("1.9", "major", "2.1"),
+        ("1.11", "feature", "1.12.0"),
+        ("1.9.0", "feature", "1.10.0"),
+        ("2.9.0", "feature", "2.10.0"),
+        ("1.10.0", "fix", "1.10.1"),
+        ("1.10.1", "fix", "1.10.2"),
+        ("1.10.2", "feature", "1.11.0"),
+        ("1.11.0", "none", "1.11.0"),
+        ("1.11.0", "major", "2.1.0"),
     ]
     for cur, kind, want in cases:
-        got = next_version(cur, kind)
-        assert got == want, f"{cur} {kind}: {got} != {want}"
-    assert code("1.9") == 1_009_000 and code("1.10.2") == 1_010_002
-    for bad in ["1.09", "1", "v1.9", "1.9.0.1", "1.x"]:
+        actual = next_version(cur, kind)
+        assert actual == want, (cur, kind, actual, want)
+    assert code("1.9.0") == 1_009_000
+    assert code("1.10.2") == 1_010_002
+    for bad in ("1.11", "1", "v1.9.0", "1.9.0.1", "1.x.0", "1.09.0", "1.9.00", "1.9.-1", "١.٢.٣"):
         try:
             parse(bad)
         except ValueError:
             continue
-        raise AssertionError(f"{bad} should be rejected")
+        raise AssertionError(f"{bad!r} should be rejected")
+    for bad in ("1.11", "1.11.00"):
+        try:
+            code(bad)
+        except ValueError:
+            continue
+        raise AssertionError(f"{bad!r} should be rejected by versionCode")
 
 
 if __name__ == "__main__":
@@ -81,11 +87,12 @@ if __name__ == "__main__":
         elif cmd == "code":
             print(code(sys.argv[2]))
         elif cmd == "check":
-            parse(sys.argv[2]); print("ok")
+            parse(sys.argv[2])
+            print("ok")
         elif cmd == "selftest":
             print("version rules: all self-tests pass")
         else:
             raise IndexError
-    except (IndexError, ValueError) as e:
+    except (ValueError, IndexError) as e:
         print(f"error: {e}" if isinstance(e, ValueError) else __doc__, file=sys.stderr)
         sys.exit(2)
