@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>InfoDeck — approved protected extension rename</title>
+<style>
+:root{font-family:Roboto,"Segoe UI",system-ui,sans-serif;color:#131A26;background:#e8edf5}
+*{box-sizing:border-box}body{margin:0;padding:25px 14px}main{max-width:1080px;margin:auto}
+h1{font-size:24px;color:#1E357F}p{line-height:1.5;color:#5A6675}
+.frames{display:flex;flex-wrap:wrap;gap:25px;justify-content:center}.phone{width:315px;min-height:470px;background:#F5F7FB;border:8px solid #242a35;border-radius:33px;overflow:hidden;box-shadow:0 12px 26px #0002}
+.bar{padding:17px 14px;background:#fff;font-weight:800;color:#1e357f;border-bottom:3px solid #2f4fcd}
+.content{padding:15px}.file{background:white;border-radius:12px;padding:13px;margin-bottom:16px;font-weight:700;font-size:13px}
+.dialog{background:white;border-radius:15px;padding:17px;box-shadow:0 3px 14px #27304a12}
+h2{font-size:17px;margin:0 0 8px}.hint{font-size:12px;color:#5A6675}.field{border:1px solid #afb9ce;border-radius:8px;padding:11px;margin:14px 0;font-size:13px;background:white}
+.lock{padding:11px;background:#e7ebff;color:#1e357f;border-radius:8px;font-weight:bold;font-size:13px}
+.flex{display:flex;gap:8px;align-items:center}.flex .field{flex:1;min-width:0}
+.link{font-size:12px;color:#2f4fcd;font-weight:800;margin-top:10px}.warn{background:#FDF2DC;padding:12px;border-radius:9px;color:#82550c;font-size:12px;margin:12px 0}
+.buttons{display:flex;justify-content:flex-end;gap:12px;margin-top:20px;color:#2f4fcd;font-weight:750;font-size:13px}
+.confirm{background:#2f4fcd;color:#fff;border-radius:9px;padding:10px}
+.badge{display:inline-block;padding:5px 10px;border-radius:12px;background:#DFF5E8;color:#116438;font-size:12px;font-weight:bold}
+</style>
+</head>
+<body><main>
+<h1>InfoDeck · Protected file extension rename — Design A</h1>
+<p><span class="badge">Approved · 14 Oct 2026</span> Android Jetpack Compose implementation. Filename stays editable; extension is locked unless explicitly unlocked. A second acknowledgement is required for every extension change.</p>
+<div class="frames">
+<section><h2>1 · Ordinary rename</h2><div class="phone"><div class="bar">‹ &nbsp; Edit card</div><div class="content"><div class="file">📄 &nbsp; Policy document.pdf</div><div class="dialog"><h2>Rename file</h2><p class="hint">Rename without changing the file type.</p><div class="flex"><div class="field">Renewed policy</div><span class="lock">.pdf</span></div><div class="link">Change extension</div><div class="buttons">Cancel <span class="confirm">Rename</span></div></div></div></div></section>
+<section><h2>2 · Explicitly unlock extension</h2><div class="phone"><div class="bar">‹ &nbsp; Edit card</div><div class="content"><div class="file">📄 &nbsp; Policy document.pdf</div><div class="dialog"><h2>Rename file</h2><div class="flex"><div class="field">Renewed policy</div><span class="lock">.pdf</span></div><div class="link">Keep original extension</div><div class="field">docx</div><div class="warn">Changing the extension does not convert the document.</div><div class="buttons">Cancel <span class="confirm">Rename</span></div></div></div></div></section>
+<section><h2>3 · Second confirmation</h2><div class="phone"><div class="bar">‹ &nbsp; Edit card</div><div class="content"><div class="file">📄 &nbsp; Policy document.pdf</div><div class="dialog"><h2>⚠ Change file extension?</h2><p class="hint">The content and file format will remain unchanged.</p><div class="field">Current: Policy document.pdf</div><div class="field">New: Renewed policy.docx</div><div class="warn">☐ I understand changing an extension does not convert the file.</div><div class="buttons">Back to editing <span class="confirm">Confirm change</span></div></div></div></div></section>
+</div><p>Failure and cancellation keep the original name. The persisted rename is guarded again in the repository. Actual file bytes, stored filename and MIME type remain unchanged.</p>
+</main></body></html>

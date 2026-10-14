@@ -113,7 +113,7 @@ fun EditorSheetButtons(
     undoEnabled: Boolean = false,
     dirty: Boolean = saveEnabled,
     modifier: Modifier = Modifier,
-    /** N60: the rename sheet paints "Save…" amber when a confirmation follows. */
+    /** N62: the rename sheet paints "Save…" amber when a confirmation follows. */
     saveBrush: androidx.compose.ui.graphics.Brush = BrandGradient
 ) {
     val h = scaledDp(50f)

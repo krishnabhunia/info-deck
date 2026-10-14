@@ -179,7 +179,7 @@ object FileRules {
 
     /**
      * Filenames are never trusted: no separators, no traversal, bounded length.
-     * N60/B13: the 80-character cut now shortens the NAME part and always keeps the extension.
+     * N62/B13: the 80-character cut now shortens the NAME part and always keeps the extension.
      */
     fun sanitise(name: String): String = com.krishna.infodeck.core.FileNameRules.clean(name)
 

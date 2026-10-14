@@ -1,7 +1,7 @@
 package com.krishna.infodeck.core
 
 /**
- * N60 · design 1.9.D1 — a file's display name is NAME + optional .EXT.
+ * N62 · design 1.9.D1 — a file's display name is NAME + optional .EXT.
  *
  * Renaming changes the NAME only; the extension is locked. Changing it is a separate,
  * deliberate step followed by a confirmation, because a new extension never converts
@@ -22,7 +22,8 @@ object FileNameRules {
     /** Quick chips in Step 2 — the three kinds InfoDeck stores. */
     val CHIPS = listOf("pdf", "doc", "docx")
 
-    private val ILLEGAL = Regex("[\\\\/:*?\"<>|\\u0000]")
+    /** Separators, reserved characters and every control character (matches FileRenameRules.validate). */
+    private val ILLEGAL = Regex("[\\\\/:*?\"<>|\\u0000-\\u001F\\u007F]")
     private val EXT_SHAPE = Regex("^[A-Za-z0-9]{1,$MAX_EXT}$")
 
     /** [ext] is stored without the dot; "" means the name has no extension. */

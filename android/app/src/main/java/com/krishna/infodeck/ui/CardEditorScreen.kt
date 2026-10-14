@@ -458,16 +458,17 @@ fun CardEditorScreen(
         onDone = { showTagPicker = false }
     )
 
-    // N60 + B13 (design 1.9.D1): name with the extension locked; a new extension is confirmed first
+    // N62 + B13 (design 1.9.D1): name with the extension locked; a new extension is confirmed first
     val rf = renamingFile
-    if (rf != null) RenameFileSheet(file = rf, onDismiss = { renamingFile = null }) { newName ->
+    if (rf != null) RenameFileSheet(file = rf, onDismiss = { renamingFile = null }) { newName, extensionConfirmed ->
         val oldName = rf.displayName
         val fileId = rf.id
         renamingFile = null
-        vm.renameFile(fileId, newName) { ok ->
+        // Repo re-validates and refuses an extension change that was not confirmed (Design A guard kept)
+        vm.renameFile(fileId, newName, extensionConfirmed) { error ->
             vm.viewModelRefreshFiles(cardId ?: 0L) { files = it }
-            if (!ok) {
-                fileMsg = "Couldn't rename - nothing changed"
+            if (error != null) {
+                fileMsg = "Couldn't rename - nothing changed. $error"
             } else snackScope.launch {
                 // Q4: Undo after every rename, 5 s, restores the old name in one step
                 val r = kotlinx.coroutines.withTimeoutOrNull(5_000) {
@@ -478,8 +479,9 @@ fun CardEditorScreen(
                     )
                 }
                 if (r == androidx.compose.material3.SnackbarResult.ActionPerformed) {
-                    vm.renameFile(fileId, oldName) { undone ->
-                        if (!undone) fileMsg = "Couldn't undo the rename"
+                    // Undo is an explicit request to put the old name (and extension) back
+                    vm.renameFile(fileId, oldName, extensionConfirmed = true) { undoError ->
+                        if (undoError != null) fileMsg = "Couldn't undo the rename. $undoError"
                         vm.viewModelRefreshFiles(cardId ?: 0L) { files = it }
                     }
                 }

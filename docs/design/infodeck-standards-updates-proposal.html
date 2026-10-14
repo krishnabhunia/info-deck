@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>InfoDeck standards audit · Android update checker concept (not implemented)</title>
+<style>
+:root{font-family:Roboto,"Segoe UI",sans-serif;background:#e8edf5;color:#131a26}
+*{box-sizing:border-box}body{margin:0;padding:26px}main{max-width:1000px;margin:auto}
+h1{color:#1e357f;font-size:23px}p{color:#5a6675;line-height:1.5;font-size:14px}
+.wrap{display:flex;gap:22px;flex-wrap:wrap;justify-content:center;margin-top:20px}
+.phone{background:#f6f8fc;border:8px solid #222b39;border-radius:33px;width:330px;min-height:520px;overflow:hidden;box-shadow:0 10px 20px #17243b25}
+.bar{background:#fff;padding:18px 16px;color:#1e357f;font-weight:800;border-bottom:3px solid #2f4fcd}
+.content{padding:13px}.group{background:#fff;border-radius:14px;border:1px solid #e4e7f1;padding:15px;margin:10px 0}
+h2{font-size:15px;margin:0 0 7px}.muted{color:#5a6675;font-size:12px}
+.r{display:flex;justify-content:space-between;padding:13px 0;border-bottom:1px solid #edf0f5;font-size:13px;gap:12px}
+.r:last-child{border:0}.toggle{color:#257d51;font-weight:750}.off{color:#64748b}
+.btn{background:#2f4fcd;color:#fff;border-radius:10px;padding:12px;margin-top:12px;text-align:center;font-size:13px;font-weight:800}
+.warn{padding:12px;background:#fdf2dc;border-radius:10px;color:#815516;font-size:12px;line-height:1.5}
+.tag{display:inline-block;padding:5px 10px;border-radius:12px;color:#8b4b10;background:#ffedd4;font-size:11px;font-weight:bold}
+</style>
+</head><body><main>
+<h1>InfoDeck — Standards compliance &amp; update feature</h1>
+<p><span class="tag">DESIGN ONLY · NOT IMPLEMENTED · APPROVAL REQUIRED</span></p>
+<p>Current InfoDeck is fully offline. The uploaded standards require a daily Android GitHub update checker and optional beta enrollment. Below is the proposed Settings screen, intentionally separate from the version-format fix.</p>
+<div class="wrap">
+<div><h2>Current app</h2><div class="phone"><div class="bar">‹ &nbsp; Settings</div><div class="content"><div class="group"><h2>Appearance</h2><div class="r">Theme <span>System</span></div><div class="r">Text size <span>100%</span></div></div><div class="group"><h2>About Me</h2><div class="muted">InfoDeck · Version shown from BuildConfig</div></div><p class="muted">No network permission · no update checker</p></div></div></div>
+<div><h2>Proposed Settings design</h2><div class="phone"><div class="bar">‹ &nbsp; Settings</div><div class="content"><div class="group"><h2>Updates</h2><div class="r">Daily check <span class="toggle">On</span></div><div class="r">Include beta versions <span class="off">Off</span></div><div class="r">Download using Wi-Fi only <span class="toggle">On</span></div><div class="r">Current version <b>1.12.0</b></div><div class="r">Last checked <span>Not yet</span></div><div class="btn">Check for updates</div></div><div class="warn">APK is downloaded in the background, signature-checked and then offered to Android's installer. The user must confirm installation.</div></div></div></div>
+</div>
+<p>This mockup does not add INTERNET or REQUEST_INSTALL_PACKAGES, a worker, APK download, GitHub integration, or an installer. Those require an approved separate implementation PR and device tests.</p>
+</main></body></html>

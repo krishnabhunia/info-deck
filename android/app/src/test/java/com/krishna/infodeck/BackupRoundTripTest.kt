@@ -5,6 +5,8 @@ import com.krishna.infodeck.backup.BCategory
 import com.krishna.infodeck.backup.BData
 import com.krishna.infodeck.backup.BDate
 import com.krishna.infodeck.backup.BSched
+import com.krishna.infodeck.backup.BTag
+import com.krishna.infodeck.backup.BCardTag
 import com.krishna.infodeck.backup.BackupFile
 import com.krishna.infodeck.backup.BackupIo
 import org.junit.Assert.assertEquals
@@ -20,6 +22,8 @@ class BackupRoundTripTest {
             BCategory(1, "Uncategorised", 7, 100000, true),
             BCategory(2, "Insurance", 0, 0, false)
         ),
+        tags = listOf(BTag(7, "renewal")),
+        cardTags = listOf(BCardTag(10, 7)),
         cards = listOf(
             BCard(
                 id = 10, categoryId = 2, label = "Car insurance", keyDateLocalId = 100,
@@ -58,7 +62,24 @@ class BackupRoundTripTest {
     @Test fun headerCarriesAppNameAndVersion() {
         val decoded = BackupIo.decode(BackupIo.encode(sample()))!!
         assertEquals("InfoDeck", decoded.app)
-        assertEquals(1, decoded.version)
+        assertEquals(2, decoded.version)
+    }
+
+    @Test fun tagsAndLinksSurviveBackup() {
+        val restored = BackupIo.decode(BackupIo.encode(sample()))!!
+        assertEquals("renewal", restored.tags.single().name)
+        assertEquals(10L, restored.cardTags.single().cardId)
+        assertEquals(7L, restored.cardTags.single().tagId)
+    }
+
+    @Test fun oldSchemaWithoutTagsStillLoads() {
+        val old = BackupIo.encode(sample().copy(version = 1, tags = emptyList(), cardTags = emptyList()))
+            .replace(Regex(",?\\s*\\\"tags\\\"\\s*:\\s*\\[\\s*\\]"), "")
+            .replace(Regex(",?\\s*\\\"cardTags\\\"\\s*:\\s*\\[\\s*\\]"), "")
+        val decoded = BackupIo.decode(old)
+        assertNotNull(decoded)
+        assertEquals(1, decoded!!.version)
+        assertEquals(emptyList<BTag>(), decoded.tags)
     }
 
     @Test fun garbageDecodesToNullInsteadOfThrowing() {

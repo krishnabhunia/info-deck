@@ -75,10 +75,11 @@ import com.krishna.infodeck.core.FileNameRules.Decision
 import com.krishna.infodeck.core.Fmt
 import com.krishna.infodeck.core.Logger
 import com.krishna.infodeck.data.FileEntity
+import com.krishna.infodeck.data.FileRenameRules
 import com.krishna.infodeck.data.FileRules
 import kotlinx.coroutines.delay
 
-/* N60 · design 1.9.D1 — the amber family marks "the extension is being changed". */
+/* N62 · design 1.9.D1 — the amber family marks "the extension is being changed". */
 internal val ExtAmber = Color(0xFFB45309)
 internal val ExtAmberText = Color(0xFF8A5300)
 private val ExtAmberLine = Color(0xFFEBC27A)
@@ -87,12 +88,13 @@ private val OkText = Color(0xFF0B6B36)
 /**
  * Rename a file: Step 1 edits the NAME with the extension locked; "Change extension…"
  * opens Step 2 in the same sheet; a different extension then needs Step 3, a confirmation.
- * [onRename] receives the final display name and is called only for a real change —
- * directly for a name-only change, otherwise only after the confirmation.
+ * [onRename] receives the final display name and whether an extension change was confirmed;
+ * it is called only for a real change — directly for a name-only change, otherwise only after
+ * the confirmation. The repository re-validates and refuses an unconfirmed extension change.
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-fun RenameFileSheet(file: FileEntity, onDismiss: () -> Unit, onRename: (String) -> Unit) {
+fun RenameFileSheet(file: FileEntity, onDismiss: () -> Unit, onRename: (String, Boolean) -> Unit) {
     val original = remember(file.id) { FileNameRules.split(file.displayName) }
     var base by remember(file.id) {
         mutableStateOf(TextFieldValue(original.base, TextRange(0, original.base.length)))
@@ -119,6 +121,12 @@ fun RenameFileSheet(file: FileEntity, onDismiss: () -> Unit, onRename: (String) 
     val real = FileNameRules.realType(file.mime)
     val typed = if (unlocked) null else FileNameRules.typedExtension(base.text)
     val needsConfirm = decision is Decision.NeedsConfirm
+    // Same check the repository runs, shown here so Save never leads to a refusal
+    val problem = when (decision) {
+        is Decision.Direct -> FileRenameRules.validate(file.displayName, decision.name, extensionConfirmed = true)
+        is Decision.NeedsConfirm -> FileRenameRules.validate(file.displayName, decision.name, extensionConfirmed = true)
+        Decision.Invalid -> null
+    }
 
     fun setBase(text: String) { base = TextFieldValue(text, TextRange(text.length)) }
 
@@ -155,6 +163,10 @@ fun RenameFileSheet(file: FileEntity, onDismiss: () -> Unit, onRename: (String) 
                 modifier = Modifier.fillMaxWidth().focusRequester(focus)
             )
             SavedAsLine(decision)
+            if (problem != null) Text(
+                problem, fontSize = 12.sp, color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(start = 2.dp, top = 4.dp)
+            )
 
             if (typed != null) {
                 val stripped = FileNameRules.split(base.text).base
@@ -273,12 +285,12 @@ fun RenameFileSheet(file: FileEntity, onDismiss: () -> Unit, onRename: (String) 
                 onCancel = onDismiss,
                 onSave = {
                     when (val d = decision) {
-                        is Decision.Direct -> if (d.name == file.displayName) onDismiss() else onRename(d.name)
+                        is Decision.Direct -> if (d.name == file.displayName) onDismiss() else onRename(d.name, false)
                         is Decision.NeedsConfirm -> confirm = d          // nothing written yet
                         Decision.Invalid -> Unit
                     }
                 },
-                saveEnabled = decision !is Decision.Invalid,
+                saveEnabled = decision !is Decision.Invalid && problem == null,
                 saveText = if (needsConfirm) "Save…" else "Save",
                 cancelText = "Cancel",
                 dirty = false,
@@ -295,7 +307,7 @@ fun RenameFileSheet(file: FileEntity, onDismiss: () -> Unit, onRename: (String) 
         decision = c,
         realType = real,
         onKeep = { confirm = null; newExt = original.ext; unlocked = false },   // back to Step 1, name kept
-        onChange = { confirm = null; onRename(c.name) }
+        onChange = { confirm = null; onRename(c.name, true) }
     )
 }
 

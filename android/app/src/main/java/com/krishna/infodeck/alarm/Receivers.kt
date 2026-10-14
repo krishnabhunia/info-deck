@@ -77,7 +77,8 @@ class RingReceiver : BroadcastReceiver() {
             val late = at.isBefore(now.minusMinutes(5))
             val detail = repo.cardDetail(card.id)
             val categoryName = detail?.categoryName ?: ""
-            val firstData = detail?.data?.firstOrNull()?.let { "${it.name} ${it.value}" } ?: ""
+            // Never put user-entered data values (which can contain secrets) on a notification.
+            val firstData = detail?.data?.firstOrNull()?.name ?: ""
             val baseLine = view.baseDate?.let { " - ${view.dateName} ${Fmt.dateDow(it)}" } ?: ""
 
             Notifications.show(
@@ -155,11 +156,28 @@ class ActionReceiver : BroadcastReceiver() {
 
 /** Boot / package replace / time change / timezone change -> re-plan. */
 class BootReceiver : BroadcastReceiver() {
+
+    companion object {
+        private val ALLOWED_ACTIONS = setOf(
+            Intent.ACTION_BOOT_COMPLETED,
+            Intent.ACTION_LOCKED_BOOT_COMPLETED,
+            Intent.ACTION_MY_PACKAGE_REPLACED,
+            Intent.ACTION_TIME_CHANGED,
+            Intent.ACTION_TIMEZONE_CHANGED
+        )
+    }
+
     override fun onReceive(context: Context, intent: Intent?) {
+        val action = intent?.action
+        if (action !in ALLOWED_ACTIONS) {
+            Logger.e("BootReceiver", "ignoring unexpected action=$action")
+            return
+        }
+
         val pending = goAsync()
         bgScope.launch {
             try {
-                Logger.e("BootReceiver", "re-planning after ${intent?.action}")
+                Logger.e("BootReceiver", "re-planning after $action")
                 AlarmScheduler.planNext(context)
             } catch (t: Throwable) {
                 Logger.e("BootReceiver", "re-plan failed", t)

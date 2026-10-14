@@ -139,11 +139,8 @@ object Sharer {
             }
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             try {
-                if (fileUris.isNotEmpty() && target != ShareTarget.SMS) {
-                    // Safety net: some apps keep the attachment and drop the message.
-                    val cb = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
-                    cb.setPrimaryClip(android.content.ClipData.newPlainText("InfoDeck", text))
-                }
+                // Do not silently copy potentially secret card data to the system clipboard.
+                // The share sheet already warns that receiving apps may drop the text.
                 if (target == ShareTarget.CHOOSER) {
                     context.startActivity(Intent.createChooser(intent, "Share").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
                 } else {

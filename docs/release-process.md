@@ -38,20 +38,20 @@ workflow for Windows, macOS and Android.
 | 3 | prepare | next version computed from `main`'s `VERSION` + the label, written back to the PR branch |
 | 4 | windows / macos | skipped — no source in those folders |
 | 5 | android | unit tests → signed release APK named `<next>-beta.<run>` → `aapt2` version check → certificate check |
-| 6 | package | one artifact `InfoDeck_<next>-beta.<run>.zip`; GitHub **pre-release** `v<next>-beta.<run>` |
+| 6 | package | one artifact `InfoDeck_<next>-beta.<run>.zip` (where `<next>` has three parts, e.g. `1.12.0`); GitHub **pre-release** `v<next>-beta.<run>` |
 
 ## 3 · What happens on merge to `main`
 
-Same jobs, with the version taken straight from `VERSION`. If tag `v<version>` does not exist yet,
+Same jobs, with the strict three-part version taken straight from `VERSION`. If tag `v<version>` does not exist yet,
 the workflow publishes the **release** `v<version>` with `InfoDeck_<version>.zip`. A `release:none`
 merge leaves `VERSION` unchanged, the tag already exists, so nothing is published.
 
 ## 4 · The artifact
 
 ```
-InfoDeck_1.10.zip
+InfoDeck_1.12.0.zip
 └── Android/
-    └── InfoDeck_1.10.apk
+    └── InfoDeck_1.12.0.apk
 ```
 
 `portable/`, `windows-x64/` and `macOS/` appear only when those platforms have builds — per

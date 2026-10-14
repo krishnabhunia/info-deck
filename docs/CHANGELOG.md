@@ -1,12 +1,33 @@
 # Changelog
 
+## Unreleased — uploaded Markdown standards compliance (14-Oct-2026)
+- Enforce three-part `x.y.z` on future stable/beta versions and Android Gradle builds; add CI tests for required directories, single workflow and exact ZIP layout.
+- Audit all three supplied standards in `docs/compliance/2026-10-14-uploaded-md-audit.md`. Android automatic GitHub updates and optional beta enrollment remain unimplemented and are tracked for a separate approved design.
+
+## Unreleased — GitHub Actions runtime/runner compatibility (CI-only)
+- Migrate checkout, Java, Gradle and artifact actions to Node.js 24-compatible releases, avoiding the Node.js 20 deprecation warning.
+- Pin Linux build jobs to `ubuntu-24.04` so the announced `ubuntu-latest` migration to Ubuntu 26.04 does not silently change the build environment.
+- Preserve existing release labels, Android Gradle build, signing, artifacts and versioning. No application features or version bump.
+
+## Unreleased · version assigned by PR release workflow (`release:feature` → 1.13.0)
+- **N62** Design 1.9.D1 — rename keeps the extension: a bottom sheet whose name box holds the name only, with the extension locked inside it; "Change extension…" is a separate step with a does-not-convert note, and a From / To confirmation follows before anything is written. Case-only changes (.PDF → .pdf) are a plain save. Undo after every rename; file rows keep the extension visible and say "Really a PDF" while the name disagrees with the real type. **Supersedes the Design A dialog (N60)**; Design A's repository guard stays as a second check
+- **B13** File rename no longer cuts names at 24 characters (it reused the tag box), and the 80-character limit now shortens the name, never the extension
+
+## Unreleased · version assigned by PR release workflow
+- **N60** Approved Design A: file names can be edited with a protected extension; changing, adding, removing or altering its case requires a second confirmation and acknowledgement. Repository validation rejects unconfirmed changes; file contents and MIME remain unchanged. Includes unit tests and a device checklist.
+
+## Unreleased — hardening PR (after 1.9)
+- Guard CI against untrusted PR titles and branch names; reduce job permissions
+- Turn the offline APK permission assertion into a failing check
+- Disable automatic OS backup/transfer of private data; redact notification values and avoid implicit clipboard copies
+- Recover overdue reminders only when they have not already fired
+- Wrap card writes and relational JSON restoration in database transactions
+- JSON backup schema 2: preserve tags and card-tag assignments; accept older schema 1
+- Remove orphaned attachment storage on completed full reset/replace (JSON still **does not** back up files)
+
 Versions follow [versioning.md](versioning.md). Item IDs (N = feature, B = bug) match [BACKLOG.md](BACKLOG.md).
 Releases 1.1 – 1.9 were built and signed locally before this repository existed; from now on every
 release is built by GitHub Actions.
-
-## 1.10 — 15-Oct-2026 · versionCode 1010000
-- **N60** Rename keeps the extension: the name box holds the name only, with the extension locked beside it; changing the extension is a separate "Change extension…" step followed by a confirmation, because a new extension never converts the file. Undo after every rename; file rows keep the extension visible and say "Really a PDF" while the name disagrees with the real type
-- **B13** File rename no longer cuts names at 24 characters (it reused the tag box), and the 80-character limit now shortens the name, never the extension
 
 ## 1.9 — 10-Sep-2026 · versionCode 1009000
 - **B11** Search reads every field: all data names and values, every date (as shown and ISO), file names, tags, reminder rules; AND across words, partial, accent-folded, separator-blind for codes; ranked label › data › date › file › reminder

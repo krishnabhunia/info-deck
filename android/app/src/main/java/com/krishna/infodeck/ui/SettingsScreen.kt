@@ -355,7 +355,7 @@ fun SettingsScreen(
                 onToggle = { openGroup = if (openGroup == com.krishna.infodeck.core.SettingsGroup.DATA) null else com.krishna.infodeck.core.SettingsGroup.DATA }
             ) {
 
-                SettingRow("Backup to file", "JSON - categories, cards, schedulers", null) {
+                SettingRow("Backup to file", "JSON - cards, dates, tags and reminders (excludes files)", null) {
                     backupLauncher.launch("infodeck-backup-${System.currentTimeMillis()}.json")
                 }
                 Divider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -503,7 +503,7 @@ fun SettingsScreen(
     if (ru != null) AlertDialog(
         onDismissRequest = { restoreUri = null },
         title = { Text("Restore backup") },
-        text = { Text("Replace everything with the file, or merge the file into what is already here?") },
+        text = { Text("JSON backups exclude attached PDF/Word documents. Replace all permanently removes existing cards and attached files. Merge retains existing cards and files. Continue?") },
         confirmButton = {
             TextButton(onClick = {
                 restoreUri = null

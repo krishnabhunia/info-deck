@@ -266,7 +266,7 @@ fun FileRow(
         }
         Spacer(Modifier.width(10.dp))
         Column(Modifier.weight(1f)) {
-            // N60 (Q7): cut inside the NAME so the extension always stays visible
+            // N62 (Q7): cut inside the NAME so the extension always stays visible
             val parts = com.krishna.infodeck.core.FileNameRules.split(file.displayName)
             val nameSize = roleSp(13.5f, TextRole.TITLE)
             Row {
@@ -279,7 +279,7 @@ fun FileRow(
                 fontSize = roleSp(11.5f, TextRole.SECONDARY), color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1, overflow = TextOverflow.Ellipsis
             )
-            // N60 (Q3): say so while the extension disagrees with what the file really is
+            // N62 (Q3): say so while the extension disagrees with what the file really is
             val really = com.krishna.infodeck.core.FileNameRules.mismatch(file.displayName, file.mime)
             if (com.krishna.infodeck.core.FileNameRules.realType(file.mime) == null) MimeNotice.once(file.id, file.mime)
             if (really != null) Row(Modifier.padding(top = 2.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -473,6 +473,7 @@ fun ManageTagsScreen(vm: AppViewModel, onBack: () -> Unit) {
     )
 }
 
+
 @Composable
 fun NameDialog(title: String, initial: String, onDismiss: () -> Unit, onSave: (String) -> Unit) {
     var value by remember { mutableStateOf(initial) }
@@ -492,7 +493,7 @@ fun NameDialog(title: String, initial: String, onDismiss: () -> Unit, onSave: (S
     )
 }
 
-/** N60 companion 2: an unknown stored MIME is logged once per file, never on every recomposition. */
+/** N62 companion 2: an unknown stored MIME is logged once per file, never on every recomposition. */
 internal object MimeNotice {
     private val seen = java.util.Collections.synchronizedSet(HashSet<Long>())
     fun once(fileId: Long, mime: String) {

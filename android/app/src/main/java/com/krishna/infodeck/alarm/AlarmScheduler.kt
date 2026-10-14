@@ -4,6 +4,7 @@ import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import com.krishna.infodeck.core.DueRules
 import com.krishna.infodeck.core.Fmt
 import com.krishna.infodeck.core.Logger
 import com.krishna.infodeck.data.AppDatabase
@@ -29,7 +30,9 @@ object AlarmScheduler {
             if (!s.enabled) return@forEach
             if (s.status == RingStatus.DONE) return@forEach
             val at = view.ringAt ?: return@forEach
-            if (at.isBefore(now)) return@forEach
+            // Recovery: schedule a near-immediate ring for overdue items not fired before.
+            // Without this, boot/sweep/reopen only consider future dates and silently lose reminders.
+            if (at.isBefore(now) && !DueRules.needsDelivery(at, s.lastFiredAt)) return@forEach
             if (earliest == null || at.isBefore(earliest)) earliest = at
         }
 
@@ -42,7 +45,7 @@ object AlarmScheduler {
             Logger.e("Alarm.plan", "nothing to schedule (no future enabled ring)")
             return@guardUnit
         }
-        val triggerAt = Fmt.toMillis(target)
+        val triggerAt = if (!target.isAfter(now)) System.currentTimeMillis() + 1_000L else Fmt.toMillis(target)
         try {
             if (Notifications.canUseExactAlarms(context)) {
                 am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pi)
