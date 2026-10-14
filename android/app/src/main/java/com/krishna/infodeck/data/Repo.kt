@@ -396,9 +396,20 @@ class Repo(private val db: AppDatabase) {
         }
     }
 
-    suspend fun renameFile(id: Long, name: String) = Logger.guardUnit("Repo.renameFile") {
-        dao.file(id)?.let { dao.updateFile(it.copy(displayName = FileRules.sanitise(name))) }
-    }
+    suspend fun renameFile(id: Long, name: String, extensionConfirmed: Boolean = false): String? =
+        Logger.guard<String?>("Repo.renameFile", "Could not rename file") {
+            val file = dao.file(id) ?: run {
+                Logger.e("Repo.renameFile", "File not found")
+                return@guard "File no longer exists"
+            }
+            val problem = FileRenameRules.validate(file.displayName, name, extensionConfirmed)
+            if (problem != null) {
+                Logger.e("Repo.renameFile", "Rename rejected: " + problem)
+                return@guard problem
+            }
+            if (file.displayName != name) dao.updateFile(file.copy(displayName = name))
+            null
+        }
 
     suspend fun removeFile(context: android.content.Context, id: Long) = Logger.guardUnit("Repo.removeFile") {
         val f = dao.file(id) ?: return@guardUnit

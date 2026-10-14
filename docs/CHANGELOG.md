@@ -1,5 +1,8 @@
 # Changelog
 
+## Unreleased · version assigned by PR release workflow
+- **N60** Approved Design A: file names can be edited with a protected extension; changing, adding, removing or altering its case requires a second confirmation and acknowledgement. Repository validation rejects unconfirmed changes; file contents and MIME remain unchanged. Includes unit tests and a device checklist.
+
 ## Unreleased — hardening PR (after 1.9)
 - Guard CI against untrusted PR titles and branch names; reduce job permissions
 - Turn the offline APK permission assertion into a failing check

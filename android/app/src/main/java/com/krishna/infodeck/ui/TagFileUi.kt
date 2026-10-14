@@ -70,6 +70,7 @@ import androidx.compose.ui.unit.sp
 import com.krishna.infodeck.core.Fmt
 import com.krishna.infodeck.core.TextRole
 import com.krishna.infodeck.data.FileEntity
+import com.krishna.infodeck.data.FileRenameRules
 import com.krishna.infodeck.data.FileRules
 import com.krishna.infodeck.data.TagEntity
 import com.krishna.infodeck.data.TagRules
@@ -455,6 +456,157 @@ fun ManageTagsScreen(vm: AppViewModel, onBack: () -> Unit) {
         },
         dismissButton = { TextButton(onClick = { confirmDelete = null }) { Text("Cancel") } }
     )
+}
+
+
+/**
+ * Approved Design A: the extension is locked until the user deliberately
+ * unlocks it. A second dialog and a positive acknowledgement are required
+ * when it differs from the stored display name.
+ */
+@Composable
+fun ProtectedFileRenameDialog(
+    file: FileEntity,
+    onDismiss: () -> Unit,
+    onRename: (String, Boolean) -> Unit
+) {
+    val initial = remember(file.id, file.displayName) { FileRenameRules.parts(file.displayName) }
+    var stem by remember(file.id, file.displayName) { mutableStateOf(initial.stem) }
+    var extension by remember(file.id, file.displayName) { mutableStateOf(initial.extension) }
+    var extensionUnlocked by remember(file.id, file.displayName) { mutableStateOf(false) }
+    var pendingName by remember(file.id, file.displayName) { mutableStateOf<String?>(null) }
+    var acknowledged by remember(file.id, file.displayName) { mutableStateOf(false) }
+
+    val proposed = FileRenameRules.compose(
+        stem,
+        if (extensionUnlocked) extension else initial.extension
+    )
+    val error = FileRenameRules.validate(file.displayName, proposed, extensionConfirmed = true)
+    val pending = pendingName
+
+    if (pending != null) {
+        AlertDialog(
+            onDismissRequest = { pendingName = null },
+            title = { Text("Change file extension?") },
+            text = {
+                Column {
+                    Text(
+                        "Changing the extension does not convert the file. Its contents and actual format stay the same.",
+                        fontSize = 13.sp
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    Text("Current: " + file.displayName, fontSize = 13.sp)
+                    Text("New: " + pending, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                    Spacer(Modifier.height(12.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(
+                            checked = acknowledged,
+                            onCheckedChange = { acknowledged = it }
+                        )
+                        Text(
+                            "I understand the extension is just a name and the file is not converted.",
+                            fontSize = 12.sp,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    enabled = acknowledged,
+                    onClick = { onRename(pending, true) }
+                ) { Text("Confirm extension change") }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingName = null; acknowledged = false }) {
+                    Text("Back to editing")
+                }
+            }
+        )
+    } else {
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            title = { Text("Rename file") },
+            text = {
+                Column {
+                    Text(
+                        "Rename the file without changing its type.",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        OutlinedTextField(
+                            value = stem,
+                            onValueChange = { stem = it.take(FileRenameRules.MAX_FILENAME_LENGTH) },
+                            label = { Text("File name") },
+                            singleLine = true,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Box(
+                            Modifier
+                                .background(
+                                    MaterialTheme.colorScheme.primaryContainer,
+                                    RoundedCornerShape(8.dp)
+                                )
+                                .padding(horizontal = 10.dp, vertical = 12.dp)
+                        ) {
+                            Text(
+                                if (initial.extension.isBlank()) "No ext." else "." + initial.extension,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 12.sp
+                            )
+                        }
+                    }
+                    TextButton(onClick = {
+                        extensionUnlocked = !extensionUnlocked
+                        if (!extensionUnlocked) extension = initial.extension
+                    }) {
+                        Text(if (extensionUnlocked) "Keep original extension" else "Change extension")
+                    }
+                    if (extensionUnlocked) {
+                        OutlinedTextField(
+                            value = extension,
+                            onValueChange = { extension = it.take(FileRenameRules.MAX_EXTENSION_LENGTH) },
+                            label = { Text("Extension (without dot)") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Text(
+                            "Changing an extension does not convert the document.",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.padding(top = 6.dp)
+                        )
+                    }
+                    if (error != null) {
+                        Text(
+                            error,
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.padding(top = 8.dp)
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    enabled = error == null && proposed != file.displayName,
+                    onClick = {
+                        if (FileRenameRules.extensionChanged(file.displayName, proposed)) {
+                            acknowledged = false
+                            pendingName = proposed
+                        } else {
+                            onRename(proposed, false)
+                        }
+                    }
+                ) { Text("Rename") }
+            },
+            dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+        )
+    }
 }
 
 @Composable
