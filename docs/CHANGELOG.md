@@ -9,6 +9,10 @@
 - Pin Linux build jobs to `ubuntu-24.04` so the announced `ubuntu-latest` migration to Ubuntu 26.04 does not silently change the build environment.
 - Preserve existing release labels, Android Gradle build, signing, artifacts and versioning. No application features or version bump.
 
+## Unreleased · version assigned by PR release workflow (`release:feature` → 1.13.0)
+- **N62** Design 1.9.D1 — rename keeps the extension: a bottom sheet whose name box holds the name only, with the extension locked inside it; "Change extension…" is a separate step with a does-not-convert note, and a From / To confirmation follows before anything is written. Case-only changes (.PDF → .pdf) are a plain save. Undo after every rename; file rows keep the extension visible and say "Really a PDF" while the name disagrees with the real type. **Supersedes the Design A dialog (N60)**; Design A's repository guard stays as a second check
+- **B13** File rename no longer cuts names at 24 characters (it reused the tag box), and the 80-character limit now shortens the name, never the extension
+
 ## Unreleased · version assigned by PR release workflow
 - **N60** Approved Design A: file names can be edited with a protected extension; changing, adding, removing or altering its case requires a second confirmation and acknowledgement. Repository validation rejects unconfirmed changes; file contents and MIME remain unchanged. Includes unit tests and a device checklist.
 

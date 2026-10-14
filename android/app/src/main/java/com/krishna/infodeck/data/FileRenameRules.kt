@@ -23,8 +23,16 @@ object FileRenameRules {
     fun compose(stem: String, extension: String): String =
         if (extension.isEmpty()) stem else stem + "." + extension
 
+    /**
+     * N62 (design 1.9.D1, Q1): the extension is read by the same rule the rename sheet uses
+     * (FileNameRules.split — last dot, 1–8 letters/digits with at least one letter) and
+     * compared ignoring case, so ".PDF → .pdf" or "Policy v2.1 → v2.2" is not an extension change.
+     */
     fun extensionChanged(oldName: String, newName: String): Boolean =
-        parts(oldName).extension != parts(newName).extension
+        !com.krishna.infodeck.core.FileNameRules.sameExt(
+            com.krishna.infodeck.core.FileNameRules.split(oldName).ext,
+            com.krishna.infodeck.core.FileNameRules.split(newName).ext
+        )
 
     /**
      * Even callers bypassing the UI cannot change extensions without an

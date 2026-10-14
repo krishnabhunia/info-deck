@@ -77,7 +77,7 @@ import com.krishna.infodeck.alarm.Notifications
 import com.krishna.infodeck.core.Fmt
 import kotlinx.coroutines.launch
 
-const val RELEASE_DATE = "10-Sep-2026"
+const val RELEASE_DATE = "15-Oct-2026"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

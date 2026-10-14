@@ -112,7 +112,9 @@ fun EditorSheetButtons(
     onUndo: (() -> Unit)? = null,
     undoEnabled: Boolean = false,
     dirty: Boolean = saveEnabled,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    /** N62: the rename sheet paints "Save…" amber when a confirmation follows. */
+    saveBrush: androidx.compose.ui.graphics.Brush = BrandGradient
 ) {
     val h = scaledDp(50f)
     val leftLabel = cancelText ?: if (dirty) "Discard" else "Cancel"
@@ -138,7 +140,7 @@ fun EditorSheetButtons(
                 .weight(1f)
                 .height(h)
                 .clip(RoundedCornerShape(14.dp))
-                .background(if (saveEnabled) BrandGradient else androidx.compose.ui.graphics.SolidColor(Color(0xFFC7CEE4)))
+                .background(if (saveEnabled) saveBrush else androidx.compose.ui.graphics.SolidColor(Color(0xFFC7CEE4)))
                 .clickable(enabled = saveEnabled) { onSave() },
             contentAlignment = Alignment.Center
         ) {
