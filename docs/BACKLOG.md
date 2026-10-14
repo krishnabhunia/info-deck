@@ -1,5 +1,12 @@
 # InfoDeck — PIPELINE QUEUE (BACKLOG)
 
+### CI maintenance — 14-Oct-2026 · Node.js 24 and stable Ubuntu runner
+- [x] Upgrade all JavaScript-based GitHub Actions in `.github/workflows/build.yml` to verified `node24` variants.
+- [x] Pin prepare, Android and package Linux jobs to `ubuntu-24.04`; Windows and macOS stay skipped until corresponding code exists.
+- [ ] Verify in the PR workflow: Prepare, Android unit tests, APK signing/verification, and Package stages pass; confirm neither the Node.js 20 warning nor Ubuntu-latest migration notice appears.
+- [ ] Verify the sole `release:none` label keeps `VERSION` unchanged and skips publishing a release.
+- CI-only: the application runtime, error logging, data model and user interface are untouched; errors are still reported through existing GitHub Actions failure annotations.
+
 ### Unreleased · N60 — protected file extension rename (Design A, approved 14-Oct-2026)
 
 | ID | Feature | Exceptions | Error logging | Tests |

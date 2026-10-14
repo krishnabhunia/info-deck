@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased — GitHub Actions runtime/runner compatibility (CI-only)
+- Migrate checkout, Java, Gradle and artifact actions to Node.js 24-compatible releases, avoiding the Node.js 20 deprecation warning.
+- Pin Linux build jobs to `ubuntu-24.04` so the announced `ubuntu-latest` migration to Ubuntu 26.04 does not silently change the build environment.
+- Preserve existing release labels, Android Gradle build, signing, artifacts and versioning. No application features or version bump.
+
 ## Unreleased · version assigned by PR release workflow
 - **N60** Approved Design A: file names can be edited with a protected extension; changing, adding, removing or altering its case requires a second confirmation and acknowledgement. Repository validation rejects unconfirmed changes; file contents and MIME remain unchanged. Includes unit tests and a device checklist.
 
