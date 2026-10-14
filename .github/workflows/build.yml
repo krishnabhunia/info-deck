@@ -291,10 +291,14 @@ jobs:
         run: |
           set -euo pipefail
           base="${SOFTWARE_NAME}_${{ needs.prepare.outputs.display }}"
-          apk=$(ls parts/part-android/*.apk 2>/dev/null | head -1 || true)
-          exe=$(ls parts/part-windows/*x64*.exe 2>/dev/null | head -1 || true)
-          portable=$(ls parts/part-windows/*portable*.exe 2>/dev/null | head -1 || true)
-          dmg=$(ls parts/part-macos/*.dmg 2>/dev/null | head -1 || true)
+          # download-artifact@v7 may flatten a single matching artifact into
+          # parts/ instead of parts/<artifact-name>/. Accept either layout.
+          echo "Downloaded build files:"
+          find parts -maxdepth 4 -type f -print
+          apk=$(find parts -type f -name '*.apk' -print -quit)
+          exe=$(find parts -type f -name '*x64*.exe' -print -quit)
+          portable=$(find parts -type f -name '*portable*.exe' -print -quit)
+          dmg=$(find parts -type f -name '*.dmg' -print -quit)
           bash common/scripts/package.sh "$SOFTWARE_NAME" "${{ needs.prepare.outputs.display }}" "stage" "$apk" "$exe" "$portable" "$dmg"
           (cd stage && zip -qr "../$base.zip" .)
           echo "base=$base" >> "$GITHUB_OUTPUT"
