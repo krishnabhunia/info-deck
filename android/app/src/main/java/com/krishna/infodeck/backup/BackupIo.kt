@@ -3,9 +3,12 @@ package com.krishna.infodeck.backup
 import android.content.Context
 import android.net.Uri
 import com.krishna.infodeck.core.Logger
+import androidx.room.withTransaction
 import com.krishna.infodeck.data.AppDatabase
 import com.krishna.infodeck.data.CardEntity
 import com.krishna.infodeck.data.CategoryEntity
+import com.krishna.infodeck.data.TagEntity
+import com.krishna.infodeck.data.CardTagEntity
 import com.krishna.infodeck.data.DataVarEntity
 import com.krishna.infodeck.data.DateVarEntity
 import com.krishna.infodeck.data.RingDirection
@@ -16,6 +19,8 @@ import com.krishna.infodeck.data.UNCATEGORISED_ID
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.coroutines.flow.first
+import java.io.File
 
 @Serializable data class BCategory(val id: Long, val name: String, val colorIndex: Int, val sortOrder: Int, val builtIn: Boolean)
 @Serializable data class BData(val name: String, val value: String, val order: Int)
@@ -29,12 +34,16 @@ import kotlinx.serialization.json.Json
     val manualOrder: Int, val createdAt: Long, val updatedAt: Long,
     val data: List<BData>, val dates: List<BDate>, val schedulers: List<BSched>
 )
+@Serializable data class BTag(val id: Long, val name: String)
+@Serializable data class BCardTag(val cardId: Long, val tagId: Long)
 @Serializable data class BackupFile(
     val app: String = "InfoDeck",
-    val version: Int = 1,
+    val version: Int = 2,
     val exportedAt: Long,
     val categories: List<BCategory>,
-    val cards: List<BCard>
+    val cards: List<BCard>,
+    val tags: List<BTag> = emptyList(),
+    val cardTags: List<BCardTag> = emptyList()
 )
 
 /** JSON backup / restore through the system file picker. No network, ever. */
@@ -58,7 +67,11 @@ object BackupIo {
                 }
             )
         }
-        return BackupFile(exportedAt = System.currentTimeMillis(), categories = cats, cards = cards)
+        return BackupFile(
+            exportedAt = System.currentTimeMillis(), categories = cats, cards = cards,
+            tags = dao.tagsFlow().first().map { BTag(it.id, it.name) },
+            cardTags = dao.cardTagsFlow().first().map { BCardTag(it.cardId, it.tagId) }
+        )
     }
 
     fun encode(b: BackupFile): String = json.encodeToString(b)
@@ -84,6 +97,12 @@ object BackupIo {
             val text = context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
                 ?: throw IllegalStateException("no input stream")
             val parsed = decode(text) ?: return -1
+            if (parsed.app != "InfoDeck" || parsed.version !in 1..2) {
+                Logger.e("BackupIo.import", "unsupported backup app or version")
+                return -1
+            }
+            // All relational changes either succeed together or roll back together.
+            val restored = db.withTransaction {
             val dao = db.dao()
             if (replaceAll) dao.resetAll()
 
@@ -96,6 +115,7 @@ object BackupIo {
                 )
             }
 
+            val cardMap = HashMap<Long, Long>()
             var count = 0
             parsed.cards.forEach { c ->
                 val catId = catMap[c.categoryId] ?: UNCATEGORISED_ID
@@ -105,6 +125,7 @@ object BackupIo {
                         createdAt = c.createdAt, updatedAt = c.updatedAt
                     )
                 )
+                cardMap[c.id] = cardId
                 c.data.forEach { dao.insertDataVar(DataVarEntity(cardId = cardId, name = it.name, value = it.value, order = it.order)) }
                 val dateMap = HashMap<Long, Long>()
                 c.dates.forEach {
@@ -129,7 +150,32 @@ object BackupIo {
                 }
                 count++
             }
+
+            // Schema v2 restores tags and links, and remaps old card/tag IDs.
+            val tagMap = HashMap<Long, Long>()
+            val existingTags = dao.tagsFlow().first().associateBy { it.name.lowercase() }
+            parsed.tags.forEach { tag ->
+                tagMap[tag.id] = existingTags[tag.name.lowercase()]?.id
+                    ?: dao.insertTag(TagEntity(name = tag.name))
+            }
+            parsed.cardTags.forEach { link ->
+                val newCard = cardMap[link.cardId]
+                val newTag = tagMap[link.tagId]
+                if (newCard != null && newTag != null) {
+                    dao.linkTag(CardTagEntity(cardId = newCard, tagId = newTag))
+                }
+            }
             count
+            }
+            if (replaceAll) {
+                // JSON backup has no attached bytes; remove orphaned old file storage only
+                // after the database commit succeeds.
+                val oldFiles = File(context.filesDir, "cards")
+                if (oldFiles.exists() && !oldFiles.deleteRecursively()) {
+                    Logger.e("BackupIo.import", "could not clear stale attachment storage")
+                }
+            }
+            restored
         } catch (t: Throwable) {
             Logger.e("BackupIo.import", "restore failed", t); -1
         }
