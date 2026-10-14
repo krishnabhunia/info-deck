@@ -1,11 +1,20 @@
 # Changelog
 
+## Unreleased · version assigned by PR release workflow
+- **N60** Approved Design A: file names can be edited with a protected extension; changing, adding, removing or altering its case requires a second confirmation and acknowledgement. Repository validation rejects unconfirmed changes; file contents and MIME remain unchanged. Includes unit tests and a device checklist.
+
+## Unreleased — hardening PR (after 1.9)
+- Guard CI against untrusted PR titles and branch names; reduce job permissions
+- Turn the offline APK permission assertion into a failing check
+- Disable automatic OS backup/transfer of private data; redact notification values and avoid implicit clipboard copies
+- Recover overdue reminders only when they have not already fired
+- Wrap card writes and relational JSON restoration in database transactions
+- JSON backup schema 2: preserve tags and card-tag assignments; accept older schema 1
+- Remove orphaned attachment storage on completed full reset/replace (JSON still **does not** back up files)
+
 Versions follow [versioning.md](versioning.md). Item IDs (N = feature, B = bug) match [BACKLOG.md](BACKLOG.md).
 Releases 1.1 – 1.9 were built and signed locally before this repository existed; from now on every
 release is built by GitHub Actions.
-
-## Unreleased · version assigned by PR release workflow
-- **N60** Approved Design A: file names can be edited with a protected extension; changing, adding, removing or altering its case requires a second confirmation and acknowledgement. Repository validation rejects unconfirmed changes; file contents and MIME remain unchanged. Includes unit tests and a device checklist.
 
 ## 1.9 — 10-Sep-2026 · versionCode 1009000
 - **B11** Search reads every field: all data names and values, every date (as shown and ISO), file names, tags, reminder rules; AND across words, partial, accent-folded, separator-blind for codes; ranked label › data › date › file › reminder

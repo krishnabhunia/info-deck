@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <full-backup-content>
-    <include domain="database" path="." />
-    <include domain="sharedpref" path="." />
+    <!-- Personal documents and card values must never enter automatic OS backups. -->
+    <exclude domain="root" path="." />
 </full-backup-content>

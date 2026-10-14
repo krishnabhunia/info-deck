@@ -9,6 +9,17 @@
 Device checklist: (1) rename `policy.pdf` to `renewed.pdf` with extension locked, no second dialog; (2) tap Change extension, edit to `docx`, tap Rename, verify second warning and acknowledgement; (3) cancel or go back and verify original filename; (4) confirm, then verify label updates but original bytes and format do not change; (5) adding/removing extensions also requires confirmation; (6) invalid/overlength names cannot be saved; (7) reopen/share after change and verify no crash. No automatic conversion is implied.
 
 
+### Security and reliability hardening PR — 13-Oct-2026
+- [x] CI shell interpolation hardening, scoped permissions and strict offline check
+- [x] OS automatic backup disabled; notification text and implicit clipboard copying hardened
+- [x] Missed reminder recovery; unit tests for single delivery
+- [x] Transactional card saves and JSON restore; tags and card-tag relationships in backup schema 2
+- [x] Physical attachment cleanup after reset, category/card deletion and JSON replacement
+- [ ] Attachment-inclusive encrypted backup and encrypted at-rest database/files (separate migration required)
+- [ ] Fail-closed biometric fallback, app-resume re-lock and device security testing
+- [ ] Database integration, migration, device and end-to-end tests
+- [ ] Audit GitHub branch protections and Android API level compatibility
+
 ### v1.2 — versionCode 1002000 — 18-Aug-2026 — SHIPPED (mixed release: y bumps, z dropped)
 
 | SrNo. | ID | Item | Status |

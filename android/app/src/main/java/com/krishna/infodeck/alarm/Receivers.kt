@@ -77,7 +77,8 @@ class RingReceiver : BroadcastReceiver() {
             val late = at.isBefore(now.minusMinutes(5))
             val detail = repo.cardDetail(card.id)
             val categoryName = detail?.categoryName ?: ""
-            val firstData = detail?.data?.firstOrNull()?.let { "${it.name} ${it.value}" } ?: ""
+            // Never put user-entered data values (which can contain secrets) on a notification.
+            val firstData = detail?.data?.firstOrNull()?.name ?: ""
             val baseLine = view.baseDate?.let { " - ${view.dateName} ${Fmt.dateDow(it)}" } ?: ""
 
             Notifications.show(

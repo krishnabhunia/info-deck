@@ -308,7 +308,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun deleteCategory(id: Long, moveTo: Long?, done: () -> Unit = {}) = viewModelScope.launch {
-        repo.deleteCategory(id, moveTo); done(); replan()
+        repo.deleteCategory(getApplication(), id, moveTo); done(); replan()
     }
 
     fun reorderCategories(ids: List<Long>) = viewModelScope.launch { repo.reorderCategories(ids) }
@@ -335,7 +335,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun resetAll(done: () -> Unit = {}) = viewModelScope.launch {
-        repo.resetAll(); AlarmScheduler.cancelAll(getApplication()); done()
+        repo.resetAll(getApplication()); AlarmScheduler.cancelAll(getApplication()); done()
     }
 
     fun clearErrors() = viewModelScope.launch { repo.clearErrors() }

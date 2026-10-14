@@ -1,5 +1,8 @@
 package com.krishna.infodeck.data
 
+import androidx.room.withTransaction
+import java.io.File
+
 import com.krishna.infodeck.core.CardRow
 import com.krishna.infodeck.core.CategoryRow
 import com.krishna.infodeck.core.Fmt
@@ -197,13 +200,16 @@ class Repo(private val db: AppDatabase) {
     }
 
     /** moveTo == null means "delete the cards too". */
-    suspend fun deleteCategory(id: Long, moveTo: Long?) = Logger.guardUnit("Repo.delCat") {
+    suspend fun deleteCategory(context: android.content.Context, id: Long, moveTo: Long?) = Logger.guardUnit("Repo.delCat") {
         val c = dao.category(id) ?: return@guardUnit
         if (c.builtIn) return@guardUnit
         val cards = dao.cardsIn(id)
-        if (moveTo != null) dao.moveCards(cards.map { it.id }, moveTo, System.currentTimeMillis())
-        else dao.deleteCards(cards.map { it.id })
-        dao.deleteCategory(id)
+        db.withTransaction {
+            if (moveTo != null) dao.moveCards(cards.map { it.id }, moveTo, System.currentTimeMillis())
+            else dao.deleteCards(cards.map { it.id })
+            dao.deleteCategory(id)
+        }
+        if (moveTo == null) cards.forEach { FileStore.deleteAllFor(context, it.id) }
     }
 
     suspend fun countCardsIn(id: Long): Int = Logger.guard("Repo.count", 0) { dao.countCardsIn(id) }
@@ -226,6 +232,7 @@ class Repo(private val db: AppDatabase) {
         data: List<DataInput>, dates: List<DateInput>, scheds: List<SchedInput>,
         tagIds: Set<Long> = emptySet()
     ): Long = Logger.guard("Repo.saveCard", -1L) {
+        db.withTransaction {
         val now = System.currentTimeMillis()
         val id: Long
         if (cardId == null || cardId <= 0) {
@@ -279,16 +286,17 @@ class Repo(private val db: AppDatabase) {
             )
         }
         id
+        }
     }
 
     suspend fun deleteCard(context: android.content.Context, id: Long) = Logger.guardUnit("Repo.delCard") {
-        FileStore.deleteAllFor(context, id)
         dao.deleteCard(id)
+        FileStore.deleteAllFor(context, id)
     }
 
     suspend fun deleteCards(context: android.content.Context, ids: List<Long>) = Logger.guardUnit("Repo.delCards") {
-        ids.forEach { FileStore.deleteAllFor(context, it) }
         dao.deleteCards(ids)
+        ids.forEach { FileStore.deleteAllFor(context, it) }
     }
 
     suspend fun moveCards(ids: List<Long>, categoryId: Long) = Logger.guardUnit("Repo.move") {
@@ -409,7 +417,13 @@ class Repo(private val db: AppDatabase) {
         dao.deleteFile(id)
     }
 
-    suspend fun resetAll() = Logger.guardUnit("Repo.reset") { dao.resetAll() }
+    suspend fun resetAll(context: android.content.Context) = Logger.guardUnit("Repo.reset") {
+        dao.resetAll()
+        val files = File(context.filesDir, "cards")
+        if (files.exists() && !files.deleteRecursively()) {
+            Logger.e("Repo.reset", "could not remove old attachment storage")
+        }
+    }
     suspend fun clearErrors() = Logger.guardUnit("Repo.clearErr") { dao.clearErrors() }
 
     fun dao(): InfoDao = dao

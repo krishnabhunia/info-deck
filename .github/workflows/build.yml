@@ -27,10 +27,7 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
-  contents: write        # tags, releases, the VERSION bump commit on PR branches
-  actions: write         # deleting the intermediate part-* artifacts
-  pull-requests: write
-  issues: write          # creating the release:* labels
+  contents: read         # default: jobs request write permission only when needed
 
 env:
   SOFTWARE_NAME: InfoDeck
@@ -42,6 +39,10 @@ jobs:
   # ------------------------------------------------------------------ prepare
   prepare:
     name: Prepare (version, platforms, secret scan)
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.ver.outputs.version }}
@@ -133,17 +134,19 @@ jobs:
         if: >-
           github.event_name == 'pull_request' &&
           github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          HEAD_REF: ${{ github.head_ref }}
         run: |
           want="${{ steps.ver.outputs.version }}"
-          git fetch -q origin "${{ github.head_ref }}"
-          have=$(git show "origin/${{ github.head_ref }}:VERSION" | tr -d '[:space:]')
+          git fetch -q origin "$HEAD_REF"
+          have=$(git show "origin/$HEAD_REF:VERSION" | tr -d '[:space:]')
           if [ "$have" != "$want" ]; then
-            git checkout -q -B "${{ github.head_ref }}" "origin/${{ github.head_ref }}"
+            git checkout -q -B "$HEAD_REF" "origin/$HEAD_REF"
             echo "$want" > VERSION
             git config user.name  "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git commit -qam "Bump VERSION to $want"
-            git push -q origin "HEAD:${{ github.head_ref }}"
+            git push -q origin "HEAD:$HEAD_REF"
             echo "VERSION on the PR branch updated: $have -> $want" >> "$GITHUB_STEP_SUMMARY"
           fi
 
@@ -232,7 +235,11 @@ jobs:
           badging=$("$aapt2" dump badging "$apk")
           echo "$badging" | head -1
           echo "$badging" | grep -q "versionName='${{ needs.prepare.outputs.display }}'" || { echo "::error::versionName mismatch"; exit 1; }
-          echo "INTERNET permission entries: $(echo "$badging" | grep -c "android.permission.INTERNET" || true)"
+          if echo "$badging" | grep -q 'android.permission.INTERNET'; then
+            echo "::error::Unexpected INTERNET permission in offline APK"
+            exit 1
+          fi
+          echo "INTERNET permission: absent"
           if [ "${{ steps.sign.outputs.signed }}" = "true" ]; then
             bash common/scripts/check_cert.sh "$apk" "$EXPECTED_CERT_SHA1"
           fi
@@ -260,6 +267,9 @@ jobs:
   # ------------------------------------------------------------------ package
   package:
     name: Package and publish
+    permissions:
+      contents: write
+      actions: write
     needs: [prepare, windows, macos, android]
     if: >-
       !cancelled() &&
@@ -304,6 +314,7 @@ jobs:
         if: needs.prepare.outputs.publish == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
           set -euo pipefail
           if [ "${{ needs.android.outputs.signed }}" != "true" ]; then
@@ -316,7 +327,7 @@ jobs:
           [ "${{ needs.prepare.outputs.prerelease }}" = "true" ] && flags="--prerelease"
           notes="${{ env.SOFTWARE_NAME }} ${{ needs.prepare.outputs.display }}"
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            notes="$notes - beta from PR #${{ github.event.pull_request.number }}: ${{ github.event.pull_request.title }}"
+            notes="$notes - beta from PR #${{ github.event.pull_request.number }}: $PR_TITLE"
           else
             notes="$notes - see docs/CHANGELOG.md"
           fi
