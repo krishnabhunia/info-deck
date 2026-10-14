@@ -8,7 +8,7 @@ Status meanings: **Pass** = observed in the current repository; **Fixed in this 
 
 | Requirement | Status | Evidence or gap |
 |---|---|---|
-| Every version has format x.y.z | **Fixed in this PR** | Previously `VERSION=1.11` and the script/Gradle accepted x.y. Updated `common/scripts/version.py` and `android/app/build.gradle.kts` require x.y.z. PR's automatic feature bump is expected to write `1.12.0`. The one-time `next` input still accepts legacy `1.11`; strict `check` does not. |
+| Every version has format x.y.z | **Fixed in this PR** | Previously `VERSION=1.11` and the script/Gradle accepted x.y. Updated `common/scripts/version.py` and `android/app/build.gradle.kts` require x.y.z. PR's automatic feature bump wrote `1.12.0`. The one-time `next` input still accepts legacy `1.11`; strict `check` does not. |
 | x major / y minor / z fix | **Fixed in this PR** | Next-version arithmetic emits `(x+1).1.0`, `x.(y+1).0` or `x.y.(z+1)`. Existing project convention starts a major at minor 1. |
 | GitHub automatically manages version | **Pass** | `.github/workflows/build.yml` calculates based on a single release label and writes `VERSION` on the PR branch. `release:none` is excluded from publishing. |
 | Check for new version after restart | **Pending** | No release-checking code exists in `MainActivity`/`InfoDeckApp`. Current Android app deliberately has no `INTERNET` permission. |
@@ -26,7 +26,7 @@ Status meanings: **Pass** = observed in the current repository; **Fixed in this 
 | One GitHub Actions workflow for Windows, macOS, Android | **Pass** | Only `.github/workflows/build.yml`; it defines all three platform jobs, Prepare and Package. |
 | Output artifact is ZIP, named `InfoDeck_<version>.zip` | **Pass** | Workflow package job produces a ZIP named from software and computed version; GitHub artifact name is `InfoDeck_<version>` and GitHub supplies the `.zip` download. |
 | Platforms without source can be skipped | **Pass** | Detect step skips Windows and macOS when their directories only contain README placeholders. |
-| Only one final file in the Actions Artifacts box | **Pass on observed run** | Successful run 38612009074 (PR #4) exposed one non-expired artifact `InfoDeck_1.11`. Intermediate `part-android` artifact is deleted by the packaging job. This is a runtime check, not just a source claim. |
+| Only one final file in the Actions Artifacts box | **Pass on observed run** | Successful PR #5 run 38614160762 exposed one non-expired artifact `InfoDeck_1.12.0-beta.20`. Intermediate `part-android` artifact is deleted by the packaging job. This is a runtime check, not just a source claim. |
 | Internal `portable/...`.exe, `windows-x64/...`.exe, `macOS/...`.dmg and `Android/...`.apk | **Pass for current Android; other platforms conditional** | `common/scripts/package.sh` uses those exact paths when platform inputs exist. New `verify_standards.py` exercises both Android-only and all-platform fixtures. Production Windows/macOS files cannot yet be verified because apps do not exist. |
 
 ## github.md
@@ -44,7 +44,7 @@ Status meanings: **Pass** = observed in the current repository; **Fixed in this 
 - This PR changes **version parser + Gradle validation**, release documentation, and adds a CI smoke check for required paths and archive layout.
 - A release label of `release:feature` is needed for the change; **do not manually edit `VERSION`**. Main's historical `1.11` is intentionally left alone until merge, when the workflow writes the feature version.
 - **No Android networking/update installation code is added**. Adding `INTERNET` now would violate the offline permission check without delivering the updater. The feature is tracked separately in the existing update-checker specification and backlog.
-- The existing open PR #4 addresses Node.js/Ubuntu CI runtime warnings and is not part of the attached standards audit.
+- PR #4 has been merged into `main`; its Node.js 24 and Ubuntu 24.04 workflow updates are preserved in this branch. The audit also passed the PR #5 GitHub Actions run 38614160762 before this merge reconciliation. Re-run verification after the new merge commit.
 - CI validation: `python3 common/scripts/version.py selftest` and `python3 common/scripts/verify_standards.py --version <computed>`; Android release unit tests/build, certificate check, and artifact packaging remain mandatory.
 
 ## Suggested follow-up
