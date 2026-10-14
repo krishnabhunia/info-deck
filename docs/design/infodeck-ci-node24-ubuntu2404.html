@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>InfoDeck CI compatibility: Node.js 24 and Ubuntu 24.04</title>
+<style>
+:root{font-family:system-ui,Segoe UI,sans-serif;background:#f5f7fb;color:#131a26}
+body{margin:0;padding:24px}main{max-width:950px;margin:auto}h1{color:#1e357f}
+.board{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:16px}
+.card{border:1px solid #d7deeb;border-radius:14px;background:#fff;padding:19px}
+.before{border-top:5px solid #c0392f}.after{border-top:5px solid #1e8e5a}
+pre{font-size:13px;white-space:pre-wrap;line-height:1.75}
+small{color:#5a6675}
+li{margin:10px 0}
+</style></head><body><main>
+<h1>InfoDeck · Build workflow compatibility design</h1>
+<p>CI-only change: remove runtime deprecation annotations and protect Linux builds from the Ubuntu 26.04 rollout without changing application behavior.</p>
+<div class="board">
+<section class="card before"><h2>Before · warnings</h2>
+<pre>checkout@v4          → Node.js 20
+setup-java@v4        → Node.js 20
+setup-gradle@v4      → Node.js 20
+upload-artifact@v4   → Node.js 20
+download-artifact@v4 → Node.js 20
+delete-artifact@v5   → Node.js 20
+
+Linux jobs: ubuntu-latest</pre>
+<small>Runner label changes can alter the environment; deprecated JavaScript runtime is force-upgraded by GitHub.</small>
+</section>
+<section class="card after"><h2>After · stable workflow</h2>
+<pre>checkout@v5          → Node.js 24
+setup-java@v5        → Node.js 24
+setup-gradle@v5      → Node.js 24
+upload-artifact@v6   → Node.js 24
+download-artifact@v7 → Node.js 24
+delete-artifact@v6   → Node.js 24
+
+Linux jobs: ubuntu-24.04</pre>
+<small>Versions verified against published GitHub Action manifests; current GitHub-hosted runners support Node.js 24.</small>
+</section></div>
+<h2>Verification checklist</h2>
+<ul>
+<li>Workflow Prepare, Android tests and APK packaging pass.</li>
+<li>No Node.js 20 deprecation annotation appears.</li>
+<li>No Ubuntu-latest Ubuntu 26 migration notice appears.</li>
+<li>Apply exactly one `release:none` label; no release/version bump for CI-only changes.</li>
+</ul>
+<p>Only GitHub Actions dependencies, runner labels and CI documentation change. The Android Kotlin code stays intact.</p>
+</main></body></html>

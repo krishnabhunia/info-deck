@@ -43,7 +43,7 @@ jobs:
       contents: write
       issues: write
       pull-requests: write
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       version: ${{ steps.ver.outputs.version }}
       display: ${{ steps.ver.outputs.display }}
@@ -53,7 +53,7 @@ jobs:
       has_windows: ${{ steps.detect.outputs.windows }}
       has_macos: ${{ steps.detect.outputs.macos }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -157,7 +157,7 @@ jobs:
     if: needs.prepare.outputs.has_windows == 'true'
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Build
         shell: bash
         run: |
@@ -171,7 +171,7 @@ jobs:
     if: needs.prepare.outputs.has_macos == 'true'
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Build
         run: |
           echo "::error::macOS/ has source but no build is defined yet - add it here"
@@ -182,20 +182,20 @@ jobs:
     name: Android (test, build, sign)
     needs: prepare
     if: needs.prepare.outputs.has_android == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       signed: ${{ steps.sign.outputs.signed }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "21"
 
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v5
 
       - name: Use the computed version
         run: echo "${{ needs.prepare.outputs.version }}" > VERSION
@@ -258,7 +258,7 @@ jobs:
 
       # Intermediate hand-off to the package job; deleted again there so the
       # Artifacts box ends up holding only the one zip.
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: part-android
           path: out/*.apk
@@ -275,13 +275,13 @@ jobs:
       !cancelled() &&
       needs.android.result != 'failure' && needs.windows.result != 'failure' && needs.macos.result != 'failure' &&
       (needs.android.result == 'success' || needs.windows.result == 'success' || needs.macos.result == 'success')
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           pattern: part-*
           path: parts
@@ -291,22 +291,26 @@ jobs:
         run: |
           set -euo pipefail
           base="${SOFTWARE_NAME}_${{ needs.prepare.outputs.display }}"
-          apk=$(ls parts/part-android/*.apk 2>/dev/null | head -1 || true)
-          exe=$(ls parts/part-windows/*x64*.exe 2>/dev/null | head -1 || true)
-          portable=$(ls parts/part-windows/*portable*.exe 2>/dev/null | head -1 || true)
-          dmg=$(ls parts/part-macos/*.dmg 2>/dev/null | head -1 || true)
+          # download-artifact@v7 may flatten a single matching artifact into
+          # parts/ instead of parts/<artifact-name>/. Accept either layout.
+          echo "Downloaded build files:"
+          find parts -maxdepth 4 -type f -print
+          apk=$(find parts -type f -name '*.apk' -print -quit)
+          exe=$(find parts -type f -name '*x64*.exe' -print -quit)
+          portable=$(find parts -type f -name '*portable*.exe' -print -quit)
+          dmg=$(find parts -type f -name '*.dmg' -print -quit)
           bash common/scripts/package.sh "$SOFTWARE_NAME" "${{ needs.prepare.outputs.display }}" "stage" "$apk" "$exe" "$portable" "$dmg"
           (cd stage && zip -qr "../$base.zip" .)
           echo "base=$base" >> "$GITHUB_OUTPUT"
 
       # GitHub zips an artifact on download, so uploading the folders gives exactly
       # one file in the Artifacts box: <base>.zip -> Android/<base>.apk
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: ${{ steps.lay.outputs.base }}
           path: stage/
 
-      - uses: geekyeggo/delete-artifact@v5
+      - uses: geekyeggo/delete-artifact@v6
         with:
           name: part-*
 
