@@ -12,12 +12,12 @@
 
 | Label | Meaning | Version effect |
 |---|---|---|
-| `release:feature` | any new, added or changed feature (including mixed feature + fix) | y + 1, z dropped — 1.9 → 1.10 |
-| `release:fix` | bug fixes only | z + 1 — 1.10 → 1.10.1 |
-| `release:major` | major version — **applied only by Krishna** | x + 1 → x.1 — 1.10 → 2.1 |
+| `release:feature` | any new, added or changed feature (including mixed feature + fix) | y + 1, z = 0 — 1.9.0 → 1.10.0 |
+| `release:fix` | bug fixes only | z + 1 — 1.10.0 → 1.10.1 |
+| `release:major` | major version — **applied only by Krishna** | x + 1 → x.1.0 — 1.10.0 → 2.1.0 |
 | `release:none` | docs, CI or tooling only | unchanged, nothing published |
 
-The workflow fails the PR until one label is present, then writes the new number into
+All new versions use three-part `x.y.z` notation. The workflow fails the PR until one label is present, then writes the new number into
 `VERSION` on the PR branch itself. Nobody edits `VERSION` by hand.
 
 ## What a PR produces

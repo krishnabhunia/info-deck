@@ -1,54 +1,41 @@
-# Versioning
+# Versioning — strict x.y.z
 
-Source of the rules: [standards/versions_management.md](standards/versions_management.md) and the
-project-wide versioning standard. Implementation: [`common/scripts/version.py`](../common/scripts/version.py)
-— the only place the arithmetic lives; Gradle and the workflow both defer to it or to `VERSION`.
+Source: [versions_management.md](standards/versions_management.md). Implementation: [version.py](../common/scripts/version.py).
 
-## Format
+**Every new version must contain exactly three non-zero-padded integer components:** `x.y.z`, including `.0` for a feature release. These are not decimal numbers: `1.9.0` precedes `1.10.0`.
 
-`x.y.z` of plain integers — **not a decimal**. `1.9 → 1.10 → 1.11`, never `2.0` by rollover, never
-zero-padded (`1.09` is rejected).
-
-| Part | Counts | Bumped by | Resets |
+| Component | Purpose | Release label | Example (from 1.11.0) |
 |---|---|---|---|
-| x | major versions | label `release:major` — **Krishna only** | — |
-| y | feature releases within x | label `release:feature` | to 1 when x bumps |
-| z | bug-fix-only releases within y | label `release:fix` | dropped when y bumps |
+| x | Major | `release:major` (Krishna only) | 2.1.0 |
+| y | Minor feature | `release:feature` | 1.12.0 |
+| z | Bug or error fix | `release:fix` | 1.11.1 |
+| unchanged | Docs/CI only | `release:none` | 1.11.0 |
 
-* `z` is **omitted** until the first fix within a `y`: `1.10`, then `1.10.1`, `1.10.2`.
-* A release that mixes fixes with **any** feature is a feature release: `y + 1`, `z` dropped.
-* A major release starts at `x.1`, the same way a new app starts at `1.1`.
-* `release:none` (docs, CI, tooling) leaves the version alone and publishes nothing.
+Major and feature changes reset z to zero. The first minor after a major is 1, following the project's existing numbering convention. A mixed feature+fix release is a feature release.
 
-## versionCode
+## Automatic version management
 
+The single GitHub Actions workflow computes the candidate version from the current `main` version and exactly one `release:*` PR label, and writes it to the PR branch's `VERSION` file. Do not edit `VERSION` manually.
+
+- Beta PR builds use `<version>-beta.<run>` for tags, release names, APK versionName and archive names; for example `v1.12.0-beta.19` and `InfoDeck_1.12.0-beta.19.zip`.
+- A merged feature/fix PR is released on `main` as `v1.12.0` with `InfoDeck_1.12.0.zip` and `Android/InfoDeck_1.12.0.apk` when signing secrets are present.
+- `release:none` leaves the version unchanged and does not publish a new release.
+- Android `versionCode` is `x × 1,000,000 + y × 1,000 + z`; `1.12.0` → `1012000`. Gradle reads `VERSION` and uses the workflow's beta `versionNameOverride` when supplied.
+- The installed application's Settings → About Me shows `BuildConfig.VERSION_NAME`.
+
+## One-time migration from historical x.y
+
+The main branch currently has the historical two-part `1.11`. For this one-time transition, only `version.py next` can accept an old two-part *input*, producing `1.12.0` with the feature label. The `check` and `code` commands and Gradle reject two-part numbers. Historical tags are not rewritten.
+
+## Checks
+
+```bash
+python3 common/scripts/version.py selftest
+python3 common/scripts/version.py next 1.11 feature
+python3 common/scripts/version.py next 1.12.0 fix
+python3 common/scripts/version.py code 1.12.0
+python3 common/scripts/version.py check 1.12.0
+python3 common/scripts/verify_standards.py --version 1.12.0
 ```
-versionCode = x × 1,000,000 + y × 1,000 + z         1.9 → 1009000     1.10.2 → 1010002
-```
 
-Computed by Gradle from `VERSION` at build time (`android/app/build.gradle.kts`), never typed.
-
-## Where the number lives
-
-| Carrier | How it is set |
-|---|---|
-| `VERSION` (repo root) | written by the workflow on the PR branch from the PR's label |
-| `versionName` / `versionCode` | read from `VERSION` by Gradle |
-| Beta `versionName` | `<next>-beta.<run>` passed by the workflow (`-PversionNameOverride`) |
-| Git tag / GitHub release | `v<version>` on merge, `v<next>-beta.<run>` on PRs |
-| Artifact | `InfoDeck_<version>.zip` → `Android/InfoDeck_<version>.apk` |
-| About Me footer | `BuildConfig.VERSION_NAME` — automatic |
-| About Me release date | `RELEASE_DATE` in `SettingsScreen.kt` — stamped by hand in the release PR (see release-process.md) |
-
-## Worked examples
-
-| Current | Label | Next |
-|---|---|---|
-| 1.9 | release:feature | 1.10 |
-| 1.10 | release:fix | 1.10.1 |
-| 1.10.1 | release:fix | 1.10.2 |
-| 1.10.2 | release:feature | 1.11 |
-| 1.11 | release:major | 2.1 |
-| 1.11 | release:none | 1.11 (nothing published) |
-
-Run `python3 common/scripts/version.py next 1.10 fix` to check any case; `selftest` runs the table above.
+See [release-process.md](release-process.md) for signing, artifacts and release constraints.

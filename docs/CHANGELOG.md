@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased — uploaded Markdown standards compliance (14-Oct-2026)
+- Enforce three-part `x.y.z` on future stable/beta versions and Android Gradle builds; add CI tests for required directories, single workflow and exact ZIP layout.
+- Audit all three supplied standards in `docs/compliance/2026-10-14-uploaded-md-audit.md`. Android automatic GitHub updates and optional beta enrollment remain unimplemented and are tracked for a separate approved design.
+
 ## Unreleased — GitHub Actions runtime/runner compatibility (CI-only)
 - Migrate checkout, Java, Gradle and artifact actions to Node.js 24-compatible releases, avoiding the Node.js 20 deprecation warning.
 - Pin Linux build jobs to `ubuntu-24.04` so the announced `ubuntu-latest` migration to Ubuntu 26.04 does not silently change the build environment.
