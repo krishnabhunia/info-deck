@@ -5,16 +5,28 @@ Root cause: repository secret `INFODECK_KEYSTORE_B64` absent → Gradle built `a
 
 | SrNo. | Item | Status |
 |---|---|---|
-| 1 | Require all three signing secrets; on any missing, unit tests still run, then the job stops before building — no APK is produced | [x] |
+| 1 | Require all three signing secrets; on any missing, unit tests still run, then the job stops before building — no APK is produced (delivered by the entry below, `restore_signing_key.sh`, after merging `main`) | [x] |
 | 2 | Remove the unsigned-APK path from the workflow entirely | [x] |
 | 3 | Class-wide gate `apk_signature_gate.py check` in Android job (before upload) and package job (before ZIP/release) | [x] |
 | 4 | Gate self-test + workflow wiring check in Prepare | [x] |
 | 4a | Codex review P1: fork/Dependabot PRs (no secrets) pass with tests only — no APK built, uploaded or packaged | [x] |
-| 4b | Codex review P2: optional `INFODECK_KEY_ALIAS` passed to Gradle; blank value treated as unset in `build.gradle.kts` | [x] |
-| 5 | **Owner (Krishna only):** add `INFODECK_KEYSTORE_B64`, `INFODECK_STOREPASS`, `INFODECK_KEYPASS` (+ `INFODECK_KEY_ALIAS` if alias ≠ `infodeck`) — card in `docs/release-process.md` section 1 | [ ] |
+| 4b | Codex review P2: optional `INFODECK_KEY_ALIAS` passed to Gradle (now the Actions **variable** from `main`); blank value treated as unset in `build.gradle.kts` | [x] |
+| 4c | Merge conflicts with `main` (PR #13) resolved: `main`'s restore/verify scripts kept; gate, fork guard and wiring check layered on top; wiring check rewritten for the merged workflow | [x] |
+| 5 | **Owner (Krishna only):** add `INFODECK_KEYSTORE_B64`, `INFODECK_STOREPASS`, `INFODECK_KEYPASS` (+ Actions variable `INFODECK_KEY_ALIAS` if alias ≠ `infodeck`) — card in `docs/release-process.md` section 1; tracked in the entry below | [ ] |
 | 6 | After secrets: re-run `main` → release `v1.14.0` published; install over the phone's app | [ ] |
 
-Companions — (1) Exceptions: corrupt/non-ZIP/missing APK, bad APK Signing Block sizes and invalid base64 keystore all fail with a named reason, never pass. (2) Logging: CI-only, failures surface as GitHub Actions `::error::` annotations and step summary; no Android code touched, so no `Logger.e` change. (3) Tests: automated — gate self-test (unsigned, v1, v1-incomplete, v2, v2+v3, padding-only, junk, missing, empty list, mixed batch) and wiring check (negative controls: removing the fork guard, the upload guard, the alias mapping or the package guard each fails it); verified locally against the real unsigned CI APK (rejected), a jarsigner v1-signed copy (accepted) and a public v2-signed APK (accepted). Device checklist: install the APK from the first signed run over the installed app — must install without the error.
+Companions — (1) Exceptions: corrupt/non-ZIP/missing APK, bad APK Signing Block sizes and invalid base64 keystore all fail with a named reason, never pass. (2) Logging: CI-only, failures surface as GitHub Actions `::error::` annotations and step summary; no Android code touched, so no `Logger.e` change. (3) Tests: automated — gate self-test (unsigned, v1, v1-incomplete, v2, v2+v3, padding-only, junk, missing, empty list, mixed batch) and wiring check (negative controls: removing the restore-step fork guard, the upload guard, the alias mapping or the package gate each fails it); `test_release_signing.py` from `main` still passes on the merged workflow; verified locally against the real unsigned CI APK (rejected), a jarsigner v1-signed copy (accepted) and a public v2-signed APK (accepted). Device checklist: install the APK from the first signed run over the installed app — must install without the error.
+
+### CI-only — block unsigned Android downloads (15-Oct-2026)
+- [x] Fix certificate extraction for the runner's actual `V2 Signer:` output plus numbered/SDK-range labels and repeated reports; reject additional wrong signers and missing/malformed fingerprints.
+- [x] Original keystore alias and private-key passwords validated locally; certificate matches the required v1.9 SHA-1. Owner saved all three GitHub repository signing secrets.
+- [x] Require all three original-key signing secrets after Android unit tests; missing credentials fail with an Actions error and no APK upload.
+- [x] Require signature/certificate, package ID, versionName/versionCode and update permission checks before upload and final packaging; keep the one-workflow/one-ZIP platform layout.
+- [x] Add regression cases for missing credentials, malformed base64, missing/unsigned APKs, wrong signer, package identity, version and permissions.
+- [x] Document optional original key alias through `INFODECK_KEY_ALIAS` and keep signing credentials separate from the CI GitHub App credentials.
+- [ ] Owner: compare the installed v1.9 signing fingerprint with the original keystore and configure the repository signing secrets (see `docs/release-process.md`).
+- [ ] After setup: rerun this PR, verify the signed download, then test installation over v1.9 with data retained. Merge only after owner review.
+- Error handling/logging: mandatory shell checks return nonzero and Actions annotations explain configuration failures; no Android runtime or `Logger.e` changes.
 
 ### CI-only — eliminate unnecessary workflow-approval prompts (15-Oct-2026)
 - [x] Detect whether PR `VERSION` actually needs an update; skip the push otherwise.

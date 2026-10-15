@@ -1,10 +1,16 @@
 # Changelog
 
 ## Unreleased — never ship an unsigned APK (CI-only, fixes "package appears to be invalid")
-- **B15** APKs from GitHub Actions would not install ("App not installed as package appears to be invalid"): signing secrets were not set, so CI built an unsigned APK and still put it in the Actions artifact. The Android job now requires all three signing secrets, still runs the unit tests, then stops with a clear error instead of producing an APK.
-- Class-wide gate `common/scripts/apk_signature_gate.py` (pure Python): rejects any APK without a v1/v2/v3 signature, run in the Android job before upload and again in the package job before the ZIP/release; self-test and workflow-wiring check run in Prepare.
-- Fork and Dependabot PRs (no secrets) pass with unit tests only and build no APK; the optional `INFODECK_KEY_ALIAS` secret now reaches Gradle (blank = `infodeck`).
-- Release notes troubleshooting table and optional `INFODECK_KEY_ALIAS` secret documented in `docs/release-process.md`.
+- **B15** APKs from GitHub Actions would not install ("App not installed as package appears to be invalid"): signing secrets were not set, so CI built an unsigned APK and still put it in the Actions artifact. Merged onto the signing requirement below (`restore_signing_key.sh` + `verify_apk.sh`), which already stops the Android job after the unit tests when a secret is missing.
+- Class-wide gate `common/scripts/apk_signature_gate.py` (pure Python): rejects any APK without a v1/v2/v3 signature, run in the Android job before upload and again in the package job before `verify_apk.sh` and the ZIP/release; self-test and workflow-wiring check run in Prepare.
+- Fork and Dependabot PRs (no secrets) pass with unit tests only and build no APK; a blank `INFODECK_KEY_ALIAS` is treated as unset (`infodeck`) in `build.gradle.kts`.
+- Troubleshooting table for "package appears to be invalid" added as section 8 of `docs/release-process.md`.
+
+## Unreleased — require original Android signing before downloads (CI-only)
+- Parse both current and legacy apksigner certificate output correctly; reject missing or malformed fingerprints instead of mistaking the certificate label for its SHA-1.
+- Fail the Android job after unit tests when any signing credential is missing, instead of uploading an unsigned APK under the normal download name.
+- Verify APK signatures, the original certificate, package ID, version code/name and update permissions before upload and again before ZIP packaging; derive signing success from verification.
+- Add signing regression tests and document original-key secrets, optional alias and verification against the installed v1.9 APK. App code and `VERSION` are unchanged (`release:none`).
 
 ## Unreleased — GitHub App token for automated PR version updates (CI-only)
 - Use an ephemeral, repository-scoped GitHub App token instead of the workflow's `GITHUB_TOKEN` to commit version bumps to PR branches, avoiding GitHub's approval-required bot-triggered CI reruns.

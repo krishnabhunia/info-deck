@@ -182,23 +182,24 @@ def workflow() -> None:
     assert "run: python3 common/scripts/apk_signature_gate.py workflow" in src
     # Gate before the APK leaves the Android job, and again before it goes into the zip/release.
     assert src.count("python3 common/scripts/apk_signature_gate.py check") >= 2
-    assert src.count("bash common/scripts/check_cert.sh") == 1
-    # All three secrets are required; a missing one stops the job after the unit tests.
+    # apksigner + certificate pin + package/version/permissions run via verify_apk.sh at both boundaries.
+    assert src.count("bash common/scripts/verify_apk.sh") >= 2
+    # All three secrets are required; restore_signing_key.sh fails the job after the unit tests.
     for name in ("INFODECK_KEYSTORE_B64", "INFODECK_STOREPASS", "INFODECK_KEYPASS"):
         assert f"secrets.{name}" in src, name
-    assert "Stop - signing secrets missing" in src
-    android = src.split("  android:\n", 1)[1].split("\n  package:\n", 1)[0]
-    stop = android.index("Stop - signing secrets missing")
-    assert android.index("Unit tests") < stop < android.index("Build release APK"), \
-        "tests must still run, and the build must not start, when secrets are missing"
+    android = src.split("\n  android:\n", 1)[1].split("\n  package:\n", 1)[0]
+    restore = android.index("run: bash common/scripts/restore_signing_key.sh")
+    assert android.index("Unit tests") < restore < android.index("Build release APK"), \
+        "tests must still run, and the build must not start, before the signing key is required"
     assert android.index("apk_signature_gate.py check") < android.index("actions/upload-artifact"), \
         "the gate must run before the APK is uploaded"
     # Fork PRs get no secrets: they may pass with tests only, but must never build or upload.
     assert "github.event.pull_request.head.repo.full_name != github.repository" in android
-    for step in ("- name: Build release APK\n", "- name: Verify the APK\n", "- uses: actions/upload-artifact@v6\n"):
+    for step in ("- name: Require and restore the original signing key\n", "- name: Build release APK\n",
+                 "- name: Verify the APK\n", "- uses: actions/upload-artifact@v6\n"):
         after = android.split(step, 1)[1]
-        assert after.lstrip().startswith("if: steps.sign.outputs.signed == 'true'"), step
-    assert "secrets.INFODECK_KEY_ALIAS" in android, "the documented optional alias must reach Gradle"
+        assert after.lstrip().startswith("if: env.FORK_PR != 'true'"), step
+    assert "INFODECK_KEY_ALIAS: ${{ vars.INFODECK_KEY_ALIAS" in android, "the documented optional alias must reach Gradle"
     package = src.split("\n  package:\n", 1)[1]
     assert "needs.android.outputs.signed == 'true'" in package.split("runs-on:", 1)[0], \
         "package must not run on an unsigned (fork) Android result"

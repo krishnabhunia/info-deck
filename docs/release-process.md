@@ -13,7 +13,20 @@ workflow for Windows, macOS and Android. For automatic PR version commits withou
 > | `INFODECK_KEYSTORE_B64` | the release keystore, base64-encoded (commands below) |
 > | `INFODECK_STOREPASS` | the keystore password |
 > | `INFODECK_KEYPASS` | the key password |
-> | `INFODECK_KEY_ALIAS` | *only if* the key alias is not `infodeck` — find it with `keytool -list -keystore infodeck.keystore` |
+>
+> The key alias defaults to `infodeck`. If the original key has another alias, add the
+> Actions **variable** (not a secret) `INFODECK_KEY_ALIAS` with that alias — find it with
+> `keytool -list -keystore infodeck.keystore`. Do not generate a replacement key.
+>
+> Verify the original key locally (the command prompts for the password):
+> ```powershell
+> keytool -list -v -keystore "infodeck.keystore" -alias "infodeck"
+> ```
+> Substitute the original alias if different. Its SHA-1 must match the fingerprint below.
+> Also verify an exported copy of the installed v1.9 APK with
+> `apksigner verify --print-certs installed-v1.9.apk`; the fingerprint below is the repository's
+> recorded expectation, not a fresh measurement of the phone. Keep keys/passwords out of commits,
+> PR comments and chat. The GitHub App private key for version automation is a separate credential.
 >
 > **Windows PowerShell** (in the folder holding `infodeck.keystore`):
 > ```powershell
@@ -25,11 +38,13 @@ workflow for Windows, macOS and Android. For automatic PR version commits withou
 > `82:50:BD:7B:80:41:21:D7:7C:91:52:FA:3C:6F:C7:6B:19:DD:14:9A`). A different key produces an APK
 > Android refuses to install over the existing app — the workflow checks this and fails if it differs.
 >
-> Until all three exist, the unit tests still run, then the Android job **fails** on purpose and
-> **no APK is produced at all** — not in the Actions artifact, not as a release. (Before 15-Oct-2026
-> the workflow put an *unsigned* APK into the artifact; Android rejects that with
+> Unit tests run without signing secrets, then the Android job **fails** if any required signing
+> secret is missing. No intermediate APK, normal ZIP or release is uploaded. Invalid keystores,
+> passwords, aliases, signatures or certificates also fail before upload. After adding the secrets,
+> re-run this PR's checks to validate the fix; after review and merge, run the latest `main` workflow.
+> Re-running an older workflow uses its older definition and can still produce unsigned artifacts.
+> (Before 15-Oct-2026 the workflow put an *unsigned* APK into the artifact; Android rejects that with
 > *"App not installed as package appears to be invalid"* — see section 8.)
-> After adding them, re-run the latest `main` run (Actions → Build → *Run workflow*) and any open PR run.
 >
 > Fork and Dependabot PRs never receive repository secrets: their runs pass with **unit tests only** and build no APK.
 >
@@ -43,7 +58,7 @@ workflow for Windows, macOS and Android. For automatic PR version commits withou
 | 2 | prepare | **exactly one** `release:*` label required — the run fails otherwise |
 | 3 | prepare | next version computed from `main`'s `VERSION` + the label, written back to the PR branch with the dedicated GitHub App installation token; if this token is not configured and a bump is needed, Prepare fails explicitly instead of creating an approval-required `GITHUB_TOKEN` run |
 | 4 | windows / macos | skipped — no source in those folders |
-| 5 | android | unit tests → stop if any signing secret is missing → signed release APK named `<next>-beta.<run>` → `aapt2` version check → signature gate → certificate check |
+| 5 | android | unit tests → require all signing secrets (fork PRs stop here, tests only) → signed release APK named `<next>-beta.<run>` → signature gate → mandatory signature, original certificate, package ID, versionName/versionCode and permission checks → upload |
 | 6 | package | one artifact `InfoDeck_<next>-beta.<run>.zip` (where `<next>` has three parts, e.g. `1.12.0`); GitHub **pre-release** `v<next>-beta.<run>` |
 
 ## 3 · What happens on merge to `main`
@@ -64,6 +79,12 @@ InfoDeck_1.12.0.zip
 [standards/workflows.md](standards/workflows.md), code not found in the source is skipped. The Actions
 **Artifacts** box holds this one file; intermediate hand-offs between jobs are deleted.
 
+Only verified Android APKs may enter this ZIP. The package job requires the Android job's
+post-verification result and verifies the downloaded APK again before staging it. An unsigned APK
+must never be renamed to the normal `InfoDeck_<version>.apk` download name. Failed signing produces
+zero downloadable artifacts. Historical unsigned Actions artifacts remain unsuitable for installation;
+this change does not delete old runs or replace their downloads.
+
 ## 5 · Release PR checklist (human steps)
 
 | SrNo. | Step |
@@ -78,6 +99,7 @@ InfoDeck_1.12.0.zip
 
 ```bash
 export INFODECK_KEYSTORE=/path/to/infodeck.keystore INFODECK_STOREPASS=… INFODECK_KEYPASS=…
+# If needed: export INFODECK_KEY_ALIAS=the-original-alias
 cd android && ./gradlew :app:testReleaseUnitTest :app:assembleRelease
 ```
 
@@ -108,12 +130,12 @@ the APK is signed by the same certificate as the installed app.
 
 | SrNo. | Cause | How to tell | Fix |
 |---|---|---|---|
-| 1 | The APK is **unsigned** (signing secrets missing in CI) | the run summary says *No APK - signing secrets missing*; older artifacts: `apksigner verify` → *DOES NOT VERIFY* | add the secrets in section 1, re-run the workflow |
+| 1 | The APK is **unsigned** (signing secrets missing in CI) | the run fails at *Require and restore the original signing key* with *Android signing is required*; older artifacts: `apksigner verify` → *DOES NOT VERIFY* | add the secrets in section 1, re-run the workflow |
 | 2 | The ZIP was opened as if it were an APK | the downloaded file ends in `.zip` | unzip it and install `Android/InfoDeck_<version>.apk` |
 | 3 | Incomplete download | file size smaller than on GitHub | download again |
 
 Every APK is now checked twice before anyone can download it: `common/scripts/apk_signature_gate.py`
-in the Android job and again in the package job, plus `apksigner verify` and the certificate pin in
-`common/scripts/check_cert.sh`. A different message — *"package conflicts with an existing package"* —
+in the Android job and again in the package job, each followed by `common/scripts/verify_apk.sh`
+(`apksigner verify`, the certificate pin in `check_cert.sh`, package ID, version and permissions). A different message — *"package conflicts with an existing package"* —
 means the APK is signed with a different key than the installed app (the certificate pin prevents
 this for CI builds).

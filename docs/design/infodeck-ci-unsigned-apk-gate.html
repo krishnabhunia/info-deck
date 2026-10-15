@@ -49,16 +49,16 @@
   <section>
     <h2 class="after">After (this PR)</h2>
     <div class="flow">
-      <div class="box"><b>Restore signing key</b>checks all three secrets; bad base64 fails</div>
-      <div class="arrow">↓</div>
       <div class="box"><b>Unit tests</b>always run and report</div>
       <div class="arrow">↓</div>
+      <div class="box"><b>restore_signing_key.sh</b>checks all three secrets; bad base64 fails (fork PRs stop here, tests only)</div>
+      <div class="arrow">↓</div>
       <div class="branch">
-        <div class="box bad"><span class="tag">ANY SECRET MISSING</span><b>Stop</b>red run, names the missing secrets — <b>no APK produced</b></div>
-        <div class="box ok"><span class="tag">ALL SECRETS SET</span><b>Signed release APK</b>aapt2 → <b>gate #1</b> → apksigner + cert pin</div>
+        <div class="box bad"><span class="tag">ANY SECRET MISSING</span><b>Stop</b>red run, names the required secrets — <b>no APK produced</b></div>
+        <div class="box ok"><span class="tag">ALL SECRETS SET</span><b>Signed release APK</b><b>gate #1</b> → verify_apk.sh (apksigner + cert pin, package, version, permissions)</div>
       </div>
       <div class="arrow">↓</div>
-      <div class="box ok"><b>Package job</b><b>gate #2</b> before ZIP / GitHub release</div>
+      <div class="box ok"><b>Package job</b><b>gate #2</b> → verify_apk.sh again, before ZIP / GitHub release</div>
       <div class="arrow">↓</div>
       <div class="box ok"><b>Phone</b>installs over the existing app (same certificate)</div>
     </div>
@@ -67,10 +67,10 @@
 
 <table>
   <tr><th class="n">SrNo.</th><th>Check</th><th>Where</th><th>Catches</th></tr>
-  <tr><td class="n">1</td><td>All three secrets present</td><td>Android job, before build</td><td>missing keystore / password</td></tr>
+  <tr><td class="n">1</td><td><code>restore_signing_key.sh</code> — all three secrets present</td><td>Android job, after unit tests, before build</td><td>missing keystore / password</td></tr>
   <tr><td class="n">2</td><td><code>apk_signature_gate.py check</code></td><td>Android job, before upload</td><td>any APK with no v1/v2/v3 signature</td></tr>
-  <tr><td class="n">3</td><td><code>check_cert.sh</code> (apksigner + SHA-1 pin)</td><td>Android job</td><td>broken signature, wrong key (“conflicts with existing package”)</td></tr>
-  <tr><td class="n">4</td><td><code>apk_signature_gate.py check</code></td><td>Package job, before ZIP/release</td><td>anything unsigned from any producer</td></tr>
+  <tr><td class="n">3</td><td><code>verify_apk.sh</code> → <code>check_cert.sh</code> (apksigner + SHA-1 pin), package ID, version, permissions</td><td>Android job and package job</td><td>broken signature, wrong key (“conflicts with existing package”), wrong identity/version</td></tr>
+  <tr><td class="n">4</td><td><code>apk_signature_gate.py check</code></td><td>Package job, before <code>verify_apk.sh</code> and ZIP/release</td><td>anything unsigned from any producer</td></tr>
   <tr><td class="n">5</td><td>Gate self-test + workflow wiring check</td><td>Prepare job</td><td>someone removing or reordering the gates</td></tr>
 </table>
 </body>

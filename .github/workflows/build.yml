@@ -67,6 +67,9 @@ jobs:
       - name: Version rules self-test
         run: python3 common/scripts/version.py selftest
 
+      - name: Release signing regression tests
+        run: python3 common/scripts/test_release_signing.py
+
       # An unsigned APK is what Android rejects with "App not installed as
       # package appears to be invalid". The gate keeps one from ever shipping.
       - name: APK signature gate self-test
@@ -253,7 +256,11 @@ jobs:
     if: needs.prepare.outputs.has_android == 'true'
     runs-on: ubuntu-24.04
     outputs:
-      signed: ${{ steps.sign.outputs.signed }}
+      signed: ${{ steps.apk.outputs.signed }}
+    # Fork and Dependabot PRs never receive repository secrets: they run the
+    # unit tests only and build no APK. Every trusted run must be signed.
+    env:
+      FORK_PR: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -269,83 +276,44 @@ jobs:
       - name: Use the computed version
         run: echo "${{ needs.prepare.outputs.version }}" > VERSION
 
-      # All three secrets are needed: Gradle signs only when the keystore AND both
-      # passwords are present, otherwise it silently emits an unsigned APK.
-      - name: Restore the signing key from secrets
-        id: sign
-        env:
-          KEYSTORE_B64: ${{ secrets.INFODECK_KEYSTORE_B64 }}
-          STOREPASS: ${{ secrets.INFODECK_STOREPASS }}
-          KEYPASS: ${{ secrets.INFODECK_KEYPASS }}
-        run: |
-          missing=""
-          [ -n "${KEYSTORE_B64}" ] || missing="$missing INFODECK_KEYSTORE_B64"
-          [ -n "${STOREPASS}" ]    || missing="$missing INFODECK_STOREPASS"
-          [ -n "${KEYPASS}" ]      || missing="$missing INFODECK_KEYPASS"
-          if [ -z "$missing" ]; then
-            if ! echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/infodeck.keystore" || [ ! -s "$RUNNER_TEMP/infodeck.keystore" ]; then
-              echo "::error::INFODECK_KEYSTORE_B64 is not valid base64 of the keystore file - re-encode it (docs/release-process.md section 1)."
-              exit 1
-            fi
-            echo "INFODECK_KEYSTORE=$RUNNER_TEMP/infodeck.keystore" >> "$GITHUB_ENV"
-            echo "signed=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "signed=false" >> "$GITHUB_OUTPUT"
-            echo "missing=${missing# }" >> "$GITHUB_OUTPUT"
-          fi
-
       - name: Unit tests
         working-directory: android
         run: ./gradlew :app:testReleaseUnitTest --console=plain
 
-      # Tests above still give their verdict; no APK is built or handed out unsigned.
-      # Fork and Dependabot PRs never receive repository secrets: they end here
-      # with tests only and no APK. Trusted branches and releases must be signed.
-      - name: Stop - signing secrets missing
-        if: steps.sign.outputs.signed != 'true'
-        env:
-          MISSING: ${{ steps.sign.outputs.missing }}
-          FORK_PR: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
+      - name: Fork PR - tests only, no APK
+        if: env.FORK_PR == 'true'
         run: |
-          if [ "$FORK_PR" = "true" ]; then
-            echo "::notice::Fork PR: repository secrets are not available, so only the unit tests ran. No APK is built for forks."
-            echo "### Fork PR - tests only, no APK (secrets are not exposed to forks)" >> "$GITHUB_STEP_SUMMARY"
-            exit 0
-          fi
-          echo "::error::Missing repository secrets: ${MISSING}. Without them the APK is unsigned, and Android rejects an unsigned APK with 'App not installed as package appears to be invalid'. No APK is produced. Add the secrets (docs/release-process.md section 1), then re-run this workflow."
-          {
-            echo "### No APK - signing secrets missing"
-            echo "Missing: \`${MISSING}\`. An unsigned APK cannot be installed on any Android phone, so none was built."
-            echo "Add them: GitHub -> info-deck -> Settings -> Secrets and variables -> Actions (docs/release-process.md section 1)."
-          } >> "$GITHUB_STEP_SUMMARY"
-          exit 1
+          echo "::notice::Fork PR: repository secrets are not available, so only the unit tests ran. No APK is built for forks."
+          echo "### Fork PR - tests only, no APK (secrets are not exposed to forks)" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Require and restore the original signing key
+        if: env.FORK_PR != 'true'
+        env:
+          KEYSTORE_B64: ${{ secrets.INFODECK_KEYSTORE_B64 }}
+          INFODECK_STOREPASS: ${{ secrets.INFODECK_STOREPASS }}
+          INFODECK_KEYPASS: ${{ secrets.INFODECK_KEYPASS }}
+        run: bash common/scripts/restore_signing_key.sh
 
       - name: Build release APK
-        if: steps.sign.outputs.signed == 'true'
+        if: env.FORK_PR != 'true'
         working-directory: android
         env:
           INFODECK_STOREPASS: ${{ secrets.INFODECK_STOREPASS }}
           INFODECK_KEYPASS: ${{ secrets.INFODECK_KEYPASS }}
-          INFODECK_KEY_ALIAS: ${{ secrets.INFODECK_KEY_ALIAS }}   # optional; empty means "infodeck"
+          INFODECK_KEY_ALIAS: ${{ vars.INFODECK_KEY_ALIAS || 'infodeck' }}
         run: ./gradlew :app:assembleRelease -PversionNameOverride="${{ needs.prepare.outputs.display }}" --console=plain
 
       - name: Verify the APK
-        if: steps.sign.outputs.signed == 'true'
+        if: env.FORK_PR != 'true'
         id: apk
         run: |
           set -euo pipefail
           apk=android/app/build/outputs/apk/release/app-release.apk
           [ -f "$apk" ] || { echo "::error::Signed APK app-release.apk was not produced - check the signing secrets and INFODECK_KEY_ALIAS"; exit 1; }
-          aapt2=$(ls "$ANDROID_HOME"/build-tools/*/aapt2 | sort -V | tail -1)
-          badging=$("$aapt2" dump badging "$apk")
-          echo "$badging" | head -1
-          echo "$badging" | grep -q "versionName='${{ needs.prepare.outputs.display }}'" || { echo "::error::versionName mismatch"; exit 1; }
-          echo "$badging" | grep -q 'android.permission.INTERNET' || { echo "::error::Missing INTERNET permission for GitHub updates"; exit 1; }
-          echo "$badging" | grep -q 'android.permission.REQUEST_INSTALL_PACKAGES' || { echo "::error::Missing APK installer permission"; exit 1; }
-          echo "GitHub update and installer permissions: present"
           python3 common/scripts/apk_signature_gate.py check "$apk"
-          bash common/scripts/check_cert.sh "$apk" "$EXPECTED_CERT_SHA1"
+          bash common/scripts/verify_apk.sh "$apk" "${{ needs.prepare.outputs.display }}" "${{ needs.prepare.outputs.version }}"
           mkdir -p out && cp "$apk" "out/${SOFTWARE_NAME}_${{ needs.prepare.outputs.display }}.apk"
+          echo "signed=true" >> "$GITHUB_OUTPUT"
 
       - name: Test report summary
         if: always()
@@ -361,10 +329,11 @@ jobs:
       # Intermediate hand-off to the package job; deleted again there so the
       # Artifacts box ends up holding only the one zip.
       - uses: actions/upload-artifact@v6
-        if: steps.sign.outputs.signed == 'true'
+        if: env.FORK_PR != 'true'
         with:
           name: part-android
           path: out/*.apk
+          if-no-files-found: error
           retention-days: 1
 
   # ------------------------------------------------------------------ package
@@ -376,9 +345,10 @@ jobs:
     needs: [prepare, windows, macos, android]
     if: >-
       !cancelled() &&
+      needs.prepare.result == 'success' &&
       needs.android.result != 'failure' && needs.windows.result != 'failure' && needs.macos.result != 'failure' &&
-      (needs.android.result == 'success' || needs.windows.result == 'success' || needs.macos.result == 'success') &&
-      (needs.android.result != 'success' || needs.android.outputs.signed == 'true')
+      (needs.prepare.outputs.has_android != 'true' || (needs.android.result == 'success' && needs.android.outputs.signed == 'true')) &&
+      (needs.android.result == 'success' || needs.windows.result == 'success' || needs.macos.result == 'success')
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
@@ -400,11 +370,14 @@ jobs:
           echo "Downloaded build files:"
           find parts -maxdepth 4 -type f -print
           apk=$(find parts -type f -name '*.apk' -print -quit)
+          if [ "${{ needs.prepare.outputs.has_android }}" = "true" ]; then
+            # Second gate: nothing unsigned goes into the zip or a release, whatever produced it.
+            python3 common/scripts/apk_signature_gate.py check "$apk"
+            bash common/scripts/verify_apk.sh "$apk" "${{ needs.prepare.outputs.display }}" "${{ needs.prepare.outputs.version }}"
+          fi
           exe=$(find parts -type f -name '*x64*.exe' -print -quit)
           portable=$(find parts -type f -name '*portable*.exe' -print -quit)
           dmg=$(find parts -type f -name '*.dmg' -print -quit)
-          # Second gate: nothing unsigned goes into the zip or a release, whatever produced it.
-          if [ -n "$apk" ]; then python3 common/scripts/apk_signature_gate.py check "$apk"; fi
           bash common/scripts/package.sh "$SOFTWARE_NAME" "${{ needs.prepare.outputs.display }}" "stage" "$apk" "$exe" "$portable" "$dmg"
           (cd stage && zip -qr "../$base.zip" .)
           echo "base=$base" >> "$GITHUB_OUTPUT"
@@ -415,6 +388,7 @@ jobs:
         with:
           name: ${{ steps.lay.outputs.base }}
           path: stage/
+          if-no-files-found: error
 
       - uses: geekyeggo/delete-artifact@v6
         with:
@@ -427,8 +401,8 @@ jobs:
           PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
           set -euo pipefail
-          if [ "${{ needs.android.outputs.signed }}" != "true" ]; then
-            echo "::error::Refusing to publish: the Android job did not report a signed APK (docs/release-process.md section 1)."
+          if [ "${{ needs.prepare.outputs.has_android }}" = "true" ] && [ "${{ needs.android.outputs.signed }}" != "true" ]; then
+            echo "::error::Android signing was not verified; refusing to publish. See docs/release-process.md."
             exit 1
           fi
           tag="v${{ needs.prepare.outputs.display }}"
