@@ -1,5 +1,16 @@
 # InfoDeck — PIPELINE QUEUE (BACKLOG)
 
+### CI-only — block unsigned Android downloads (15-Oct-2026)
+- [x] Fix certificate extraction for the runner's actual `V2 Signer:` output plus numbered/SDK-range labels and repeated reports; reject additional wrong signers and missing/malformed fingerprints.
+- [x] Original keystore alias and private-key passwords validated locally; certificate matches the required v1.9 SHA-1. Owner saved all three GitHub repository signing secrets.
+- [x] Require all three original-key signing secrets after Android unit tests; missing credentials fail with an Actions error and no APK upload.
+- [x] Require signature/certificate, package ID, versionName/versionCode and update permission checks before upload and final packaging; keep the one-workflow/one-ZIP platform layout.
+- [x] Add regression cases for missing credentials, malformed base64, missing/unsigned APKs, wrong signer, package identity, version and permissions.
+- [x] Document optional original key alias through `INFODECK_KEY_ALIAS` and keep signing credentials separate from the CI GitHub App credentials.
+- [ ] Owner: compare the installed v1.9 signing fingerprint with the original keystore and configure the repository signing secrets (see `docs/release-process.md`).
+- [ ] After setup: rerun this PR, verify the signed download, then test installation over v1.9 with data retained. Merge only after owner review.
+- Error handling/logging: mandatory shell checks return nonzero and Actions annotations explain configuration failures; no Android runtime or `Logger.e` changes.
+
 ### CI-only — eliminate unnecessary workflow-approval prompts (15-Oct-2026)
 - [x] Detect whether PR `VERSION` actually needs an update; skip the push otherwise.
 - [x] Obtain a short-lived GitHub App token with repository-scoped Contents: Write only for same-repository PR version changes.
