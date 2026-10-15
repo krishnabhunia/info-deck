@@ -56,7 +56,7 @@ enum class SettingsGroup(val label: String) {
     TYPING("Typing"),
     DATA("Data and backup"),
     SECURITY("Security"),
-    DIAGNOSTICS("Diagnostics and About"),
+    DIAGNOSTICS("Diagnostics and updates"),
     DANGER("Danger zone")
 }
 

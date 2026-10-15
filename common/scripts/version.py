@@ -2,7 +2,7 @@
 """InfoDeck versioning: releases always use x.y.z, with no zero-padding.
 
 An existing two-part baseline is accepted ONLY by "next" for migration.
-major -> (x+1).1.0; feature -> x.(y+1).0; fix -> x.y.(z+1);
+major -> (x+1).0.0; feature -> x.(y+1).0; fix -> x.y.(z+1);
 none -> x.y.z; versionCode = x*1_000_000+y*1_000+z.
 """
 import re
@@ -31,7 +31,7 @@ def fmt(x: int, y: int, z: int) -> str:
 def next_version(current: str, kind: str) -> str:
     x, y, z = parse(current, allow_legacy=True)
     if kind == "major":
-        return fmt(x + 1, 1, 0)
+        return fmt(x + 1, 0, 0)
     if kind == "feature":
         return fmt(x, y + 1, 0)
     if kind == "fix":
@@ -57,7 +57,11 @@ def _self_test() -> None:
         ("1.10.1", "fix", "1.10.2"),
         ("1.10.2", "feature", "1.11.0"),
         ("1.11.0", "none", "1.11.0"),
-        ("1.11.0", "major", "2.1.0"),
+        ("1.11.0", "major", "2.0.0"),
+        ("1.15.0", "major", "2.0.0"),
+        ("2.3.4", "major", "3.0.0"),
+        ("2.0.0", "feature", "2.1.0"),
+        ("2.0.0", "fix", "2.0.1"),
     ]
     for cur, kind, want in cases:
         actual = next_version(cur, kind)

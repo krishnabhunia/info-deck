@@ -18,7 +18,8 @@ Approved by Krishna on 15-Oct-2026 from design `docs/design/infodeck-1.15.0.D1-d
 | 9 | Upcoming: amber header with Upcoming / History tabs, overdue banner, dated items | [x] |
 | 10 | Settings: colour tile per accordion group, theme picker with four preview tiles; Categories, Tags, Text size, Error Logs, Lock screen restyled | [x] |
 | 11 | Bottom sheets in the 2.0 style: role-tile titles, choice chips with check, tinted option rows and segmented controls — View, Sort, Filter (category-coloured chips), Move, More, Reminder (unit chips + big stepper + amber preview), Share (tick rows, masking, green live preview), Send with, QR (violet frame), Rename file (theme amber), Tags, Danger zone, Category edit (gradient swatches) | [x] |
-| 12 | Device check of all three themes on Krishna's phone (checklist below) | [ ] |
+| 12 | Defaults applied 16-Oct-2026: launcher icon redrawn (Aurora gradient deck + themed monochrome layer); "Diagnostics and About" → "Diagnostics and updates"; major release starts at x.0.0 so this ships as 2.0.0 | [x] |
+| 13 | Device check of all three themes on Krishna's phone (checklist below) | [ ] |
 
 ⚑ Behaviour changes (announced before release):
 1. ⚑ Theme picker has four choices; **Sunrise** is new. "Light" now means Aurora and "Dark" means Neon Night.
@@ -33,7 +34,7 @@ Sheet fix found during the visual check: in Neon a "tint at full opacity" turned
 
 Companions — (1) Exceptions: unknown or corrupt theme values normalise to System and never crash; unknown nav style keeps the floating New-card button; the status-bar painter is guarded. (2) Logging: every fallback above logs through `Logger.e` (`ThemeRules`, `NavStyleRules`, `GreetingRules`, `Theme`). (3) Tests: `Release20Test` (20 JUnit cases — theme resolution day/night, legacy values, aliases, unknown values, picker order, tab order, Sunrise single New button, hero-stat filter toggles, greeting hours) and the updated tab order in `NavAndSettingsTest`. Device checklist only (cannot be proven in CI): (a) switch System/Aurora/Neon/Sunrise and back — every screen recolours, no restart needed; (b) phone dark mode with System → Neon; (c) Home stats toggle filters and show their active state; (d) Sunrise centre ＋ creates a card in the open section; (e) status bar matches each header; (f) text size 70 % and 200 % — headers, hero and wallet cards still fit; (g) app lock screen in all three themes; (h) upgrade over 1.x keeps the saved theme.
 
-Open item **Q-V (Krishna only)**: the repository rule maps `release:major` to x+1 → **x.1.0**, so 1.15.0 → **2.1.0**. You asked for **2.0.0**. Either keep the rule (2.1.0) or approve changing `version.py` so a major release starts at x.0.0.
+Q-V resolved 16-Oct-2026 (Krishna: "use default and recommendations"): a major release now starts at **x.0.0** — `version.py`, its self-test, `docs/versioning.md` and `CONTRIBUTING.md` updated; this PR becomes **2.0.0** (versionCode 2000000). The uploaded standard only defines x = major, so nothing in it conflicts.
 
 
 ### N63 — Restore approved Design A file-extension confirmation · 15-Oct-2026
