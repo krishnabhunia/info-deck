@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.14.1 — 15-Oct-2026 · versionCode 1014001 (release:fix)
+- Re-release of 1.14.0 with no code changes, to publish a fresh signed build from GitHub Actions.
+
 ## Unreleased — one-click patch release PR request (CI-only, release:none)
 - Add **Build → Run workflow → main → action: patch-pr**, deriving x.y.(z+1)
   from the current main VERSION via the existing strict version rules.
