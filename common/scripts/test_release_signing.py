@@ -1,0 +1,143 @@
+#!/usr/bin/env python3
+"""Exercise missing credentials and APK rejection without using production keys."""
+import base64
+import os
+from pathlib import Path
+import shutil
+import subprocess
+import tempfile
+import unittest
+
+ROOT = Path(__file__).resolve().parents[2]
+SCRIPTS = ROOT / "common/scripts"
+CERT = "8250bd7b804121d77c9152fa3c6fc76b19dd149a"
+
+
+class SigningTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory(prefix="infodeck-signing-")
+        self.addCleanup(self.temp.cleanup)
+        self.folder = Path(self.temp.name)
+        self.env = dict(os.environ)
+        self.env.update(
+            RUNNER_TEMP=self.folder.as_posix(),
+            GITHUB_ENV=(self.folder / "env").as_posix(),
+            KEYSTORE_B64=base64.b64encode(b"test fixture only").decode(),
+            INFODECK_STOREPASS="fixture-store-password",
+            INFODECK_KEYPASS="fixture-key-password",
+            EXPECTED_CERT_SHA1=CERT,
+            ANDROID_HOME=(self.folder / "sdk").as_posix(),
+            TEST_CERT=CERT,
+            TEST_SIGNATURE="valid",
+            TEST_PACKAGE="com.krishna.infodeck",
+            TEST_CODE="1014000",
+            TEST_NAME="1.14.0-beta.1",
+            TEST_PERMISSION="android.permission.REQUEST_INSTALL_PACKAGES",
+        )
+        tools = self.folder / "sdk/build-tools/34.0.0"
+        tools.mkdir(parents=True)
+        fixtures = {
+            "apksigner": '''#!/usr/bin/env bash
+if [ "$TEST_SIGNATURE" != valid ]; then echo 'DOES NOT VERIFY' >&2; exit 1; fi
+echo "Signer #1 certificate SHA-1 digest: $TEST_CERT"
+''',
+            "aapt2": '''#!/usr/bin/env bash
+echo "package: name='$TEST_PACKAGE' versionCode='$TEST_CODE' versionName='$TEST_NAME'"
+echo "uses-permission: name='android.permission.INTERNET'"
+echo "uses-permission: name='$TEST_PERMISSION'"
+''',
+        }
+        for name, content in fixtures.items():
+            path = tools / name
+            path.write_text(content, encoding="utf-8", newline="\n")
+            path.chmod(0o755)
+        self.apk = self.folder / "renamed.apk"
+        self.apk.write_bytes(b"APK tool fixture")
+
+    def run_script(self, name, *args):
+        return subprocess.run(
+            [shutil.which("bash"), (SCRIPTS / name).as_posix(), *map(str, args)],
+            env=self.env, cwd=ROOT, capture_output=True, text=True,
+        )
+
+    def verify(self):
+        return self.run_script("verify_apk.sh", self.apk.as_posix(), "1.14.0-beta.1", "1.14.0")
+
+    def test_each_missing_credential_fails_without_exporting_a_key(self):
+        for name in ("KEYSTORE_B64", "INFODECK_STOREPASS", "INFODECK_KEYPASS"):
+            with self.subTest(name=name):
+                previous = self.env.pop(name)
+                result = self.run_script("restore_signing_key.sh")
+                self.env[name] = previous
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("::error::", result.stdout)
+                self.assertFalse((self.folder / "env").exists())
+                self.assertFalse((self.folder / "infodeck.keystore").exists())
+
+    def test_invalid_base64_fails_and_removes_partial_key(self):
+        self.env["KEYSTORE_B64"] = "not valid base64!"
+        result = self.run_script("restore_signing_key.sh")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertFalse((self.folder / "infodeck.keystore").exists())
+        self.assertFalse((self.folder / "env").exists())
+
+    def test_restore_exports_path_without_logging_secrets(self):
+        result = self.run_script("restore_signing_key.sh")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual((self.folder / "infodeck.keystore").read_bytes(), b"test fixture only")
+        self.assertIn("INFODECK_KEYSTORE=", (self.folder / "env").read_text())
+        for name in ("KEYSTORE_B64", "INFODECK_STOREPASS", "INFODECK_KEYPASS"):
+            self.assertNotIn(self.env[name], result.stdout + result.stderr)
+
+    def test_valid_signed_beta_is_accepted(self):
+        result = self.verify()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_unsigned_or_invalid_signature_is_rejected_after_rename(self):
+        self.env["TEST_SIGNATURE"] = "unsigned"
+        result = self.verify()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("DOES NOT VERIFY", result.stderr)
+
+    def test_wrong_signer_is_rejected(self):
+        self.env["TEST_CERT"] = "0" * 40
+        result = self.verify()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("expected", result.stdout)
+
+    def test_wrong_identity_versions_or_permissions_are_rejected(self):
+        for name, value in (
+            ("TEST_PACKAGE", "com.other.app"),
+            ("TEST_CODE", "1009000"),
+            ("TEST_NAME", "1.14.0"),
+            ("TEST_PERMISSION", "android.permission.POST_NOTIFICATIONS"),
+        ):
+            with self.subTest(name=name):
+                previous = self.env[name]
+                self.env[name] = value
+                result = self.verify()
+                self.env[name] = previous
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("::error::", result.stdout)
+
+    def test_missing_apk_is_rejected(self):
+        self.apk.unlink()
+        self.assertNotEqual(self.verify().returncode, 0)
+
+    def test_workflow_requires_verified_android_before_any_upload(self):
+        source = (ROOT / ".github/workflows/build.yml").read_text(encoding="utf-8")
+        android = source.split("\n  android:\n", 1)[1].split("\n  package:\n", 1)[0]
+        package = source.split("\n  package:\n", 1)[1]
+        self.assertIn("signed: ${{ steps.apk.outputs.signed }}", android)
+        self.assertNotIn("app-release-unsigned.apk", source)
+        self.assertLess(android.index("run: bash common/scripts/restore_signing_key.sh"), android.index("name: Build release APK"))
+        self.assertLess(android.index("bash common/scripts/verify_apk.sh"), android.index('echo "signed=true"'))
+        self.assertLess(android.index('echo "signed=true"'), android.index("uses: actions/upload-artifact"))
+        self.assertIn("needs.android.result == 'success' && needs.android.outputs.signed == 'true'", package)
+        self.assertLess(package.index("bash common/scripts/verify_apk.sh"), package.index("bash common/scripts/package.sh"))
+        self.assertLess(package.index("bash common/scripts/package.sh"), package.index("uses: actions/upload-artifact"))
+        self.assertIn("run: python3 common/scripts/test_release_signing.py", source)
+
+
+if __name__ == "__main__":
+    unittest.main(verbosity=2)
