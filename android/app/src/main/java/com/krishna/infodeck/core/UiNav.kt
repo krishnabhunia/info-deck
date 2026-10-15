@@ -74,6 +74,8 @@ object SettingsIndex {
         SettingsRow("Attached files", SettingsGroup.DATA, "pdf word storage size"),
         SettingsRow("App lock", SettingsGroup.SECURITY, "biometric fingerprint pin lock"),
         SettingsRow("Error Logs", SettingsGroup.DIAGNOSTICS, "log diagnostics crash"),
+        SettingsRow("Check for updates", SettingsGroup.DIAGNOSTICS, "github update version install release"),
+        SettingsRow("Include beta updates", SettingsGroup.DIAGNOSTICS, "beta prerelease early access opt in"),
         SettingsRow("About Me", SettingsGroup.DIAGNOSTICS, "version release contact krishna"),
         SettingsRow("Put settings back to normal", SettingsGroup.DANGER, "reset defaults"),
         SettingsRow("Erase everything", SettingsGroup.DANGER, "delete wipe erase reset")
