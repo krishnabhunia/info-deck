@@ -8,7 +8,7 @@ WORKFLOW = ROOT / ".github/workflows/build.yml"
 
 def check_workflow() -> None:
     source = WORKFLOW.read_text(encoding="utf-8")
-    assert source.count("name: Build") == 1
+    assert source.count("\nname: Build\n") == 1
     assert "on:\n  pull_request:" in source
     assert "pull_request_target" not in source
     assert "persist-credentials: false" in source
