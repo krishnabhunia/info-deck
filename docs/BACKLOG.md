@@ -1,7 +1,7 @@
 # InfoDeck — PIPELINE QUEUE (BACKLOG)
 
 ### CI-only — block unsigned Android downloads (15-Oct-2026)
-- [x] Fix certificate extraction for numbered and SDK-range apksigner labels, including optional colons and repeated SDK reports; reject additional wrong signers and missing/malformed fingerprints.
+- [x] Fix certificate extraction for the runner's actual `V2 Signer:` output plus numbered/SDK-range labels and repeated reports; reject additional wrong signers and missing/malformed fingerprints.
 - [x] Original keystore alias and private-key passwords validated locally; certificate matches the required v1.9 SHA-1. Owner saved all three GitHub repository signing secrets.
 - [x] Require all three original-key signing secrets after Android unit tests; missing credentials fail with an Actions error and no APK upload.
 - [x] Require signature/certificate, package ID, versionName/versionCode and update permission checks before upload and final packaging; keep the one-workflow/one-ZIP platform layout.

@@ -28,7 +28,7 @@ class SigningTests(unittest.TestCase):
             EXPECTED_CERT_SHA1=CERT,
             ANDROID_HOME=(self.folder / "sdk").as_posix(),
             TEST_CERT=CERT,
-            TEST_SIGNER_PREFIX="Signer #1",
+            TEST_SIGNER_PREFIX="V2 Signer",
             TEST_SIGNER_SEPARATOR=":",
             TEST_SIGNATURE="valid",
             TEST_PACKAGE="com.krishna.infodeck",
@@ -101,7 +101,13 @@ echo "uses-permission: name='$TEST_PERMISSION'"
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
     def test_legacy_apksigner_output_is_accepted(self):
+        self.env["TEST_SIGNER_PREFIX"] = "Signer #1"
         self.env["TEST_SIGNER_SEPARATOR"] = ""
+        result = self.verify()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_numbered_signer_with_colon_is_accepted(self):
+        self.env["TEST_SIGNER_PREFIX"] = "Signer #1"
         result = self.verify()
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
