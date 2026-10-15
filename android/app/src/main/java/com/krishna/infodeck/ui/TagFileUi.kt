@@ -121,7 +121,7 @@ fun TagPickerSheet(
     val exact = all.any { it.name.equals(clean, ignoreCase = true) }
 
     InfoSheet(onDismiss = onDismiss) {
-        Text("Tags", fontSize = roleSp(17f, TextRole.SHEET), fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 8.dp))
+        SheetTitle("Tags", com.krishna.infodeck.core.Hue.VIOLET, Icons.Filled.Sell)
         OutlinedTextField(
             value = query, onValueChange = { query = it.take(TagRules.MAX_NAME + 1) },
             placeholder = { Text("Search or create") },
@@ -200,18 +200,20 @@ fun DangerSheet(
     onDelete: () -> Unit
 ) {
     InfoSheet(onDismiss = onDismiss) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Filled.Warning, null, tint = MaterialTheme.colorScheme.error)
-            Spacer(Modifier.width(8.dp))
-            Text("Danger zone", fontSize = roleSp(17f, TextRole.SHEET), fontWeight = FontWeight.Bold)
-        }
+        SheetTitle("Danger zone", com.krishna.infodeck.core.Hue.ROSE, Icons.Filled.Warning)
         Text(
             "Nothing here can be undone from another device - InfoDeck keeps everything on this phone only.",
             fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 6.dp, bottom = 10.dp)
         )
-        Text(title, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-        Text(detail, fontSize = 11.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        val rose = deck.hue(com.krishna.infodeck.core.Hue.ROSE)
+        Column(
+            Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(rose.tint)
+                .border(1.dp, rose.glyph.copy(alpha = 0.4f), RoundedCornerShape(14.dp)).padding(12.dp)
+        ) {
+            Text(title, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            Text(detail, fontSize = 11.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
 
         Spacer(Modifier.height(14.dp))
         androidx.compose.material3.OutlinedButton(

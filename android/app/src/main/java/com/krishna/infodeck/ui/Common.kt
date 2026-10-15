@@ -142,14 +142,16 @@ fun EditorSheetButtons(
                 .weight(1f)
                 .height(h)
                 .clip(RoundedCornerShape(14.dp))
-                .background(if (saveEnabled) saveBrush else androidx.compose.ui.graphics.SolidColor(Color(0xFFC7CEE4)))
+                .background(if (saveEnabled) saveBrush else androidx.compose.ui.graphics.SolidColor(LocalDeck.current.outline))
                 .clickable(enabled = saveEnabled) { onSave() },
             contentAlignment = Alignment.Center
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Filled.Save, null, Modifier.size(16.dp), tint = Color.White)
+                // 2.0: Neon's bright fills take dark ink; Aurora and Sunrise keep white.
+                val saveInk = if (LocalDeck.current.dark) Color(0xFF0A0E1F) else Color.White
+                Icon(Icons.Filled.Save, null, Modifier.size(16.dp), tint = saveInk)
                 Spacer(Modifier.width(6.dp))
-                Text(saveText, fontWeight = FontWeight.Bold, color = Color.White, maxLines = 1)
+                Text(saveText, fontWeight = FontWeight.Bold, color = saveInk, maxLines = 1)
             }
         }
     }

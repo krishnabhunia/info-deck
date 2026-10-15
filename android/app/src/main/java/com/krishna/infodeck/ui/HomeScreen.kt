@@ -406,8 +406,7 @@ fun HomeScreen(
     )
 
     if (showMore) InfoSheet(onDismiss = { showMore = false }) {
-        Text("More - ${selection.size} cards", fontSize = 17.sp, fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 8.dp))
+        SheetTitle("More · ${selection.size} cards", com.krishna.infodeck.core.Hue.INDIGO, Icons.Filled.MoreVert)
         Row(
             Modifier.fillMaxWidth().clickable {
                 showMore = false

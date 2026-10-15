@@ -4,6 +4,7 @@
 - **Aurora Pop** is the new default light theme, **Neon Night** the dark theme and **Sunrise Wallet** a custom theme you can pick; System follows the phone (Aurora by day, Neon at night). Saved 1.x theme choices keep their meaning.
 - Every screen gets a role-coloured header (status bar matched), a colourful Home hero with search and stats, themed section and card rows (Sunrise draws each card as a gradient wallet card), a four-tab bottom bar with Tags, and a category-coloured card hero with a big countdown.
 - Settings: colour tile per group, visual theme picker; Notifications and Exact alarms moved into the Reminders group; duplicate loose Manage tags row removed.
+- Every bottom sheet restyled to match: role-tile titles, check chips, tinted option rows, segmented controls, a big reminder stepper, a green live share preview, a violet QR frame and theme-coloured rename warnings; the 25 % bottom clearance is unchanged.
 - Bundled OFL fonts (Poppins, DM Sans, Fredoka, Nunito — Latin subsets, ≈ 500 KB) with licence texts.
 - New unit tests: `Release20Test` (20 cases).
 

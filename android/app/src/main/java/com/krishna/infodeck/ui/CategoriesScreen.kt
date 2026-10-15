@@ -1,5 +1,7 @@
 package com.krishna.infodeck.ui
 
+import androidx.compose.material.icons.filled.Category
+
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Sell
 import androidx.compose.ui.draw.clip
@@ -272,7 +274,7 @@ fun CategoryEditSheet(
     var color by remember { mutableIntStateOf(initialColor.coerceIn(0, 7)) }
 
     InfoSheet(onDismiss = onDismiss) {
-        Text(title, fontSize = 17.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 12.dp))
+        SheetTitle(title, com.krishna.infodeck.core.Hue.SKY, Icons.Filled.Category)
         OutlinedTextField(
             value = name, onValueChange = { name = it.take(40) },
             label = { Text("Category name") }, singleLine = true,
