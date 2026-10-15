@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>InfoDeck CI design — one-click patch release PR</title>
+<style>
+:root{font-family:system-ui,-apple-system,sans-serif;color:#17263e;background:#f1f4f9}
+*{box-sizing:border-box}
+body{margin:0;padding:28px 16px}main{max-width:950px;margin:auto}
+h1{font-size:25px}h2{font-size:18px;color:#193567}
+small,.muted{color:#586981}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px}
+.panel{border:1px solid #d2dce9;background:#fff;border-radius:16px;padding:20px}
+.phone{border:9px solid #1b2840;border-radius:32px;max-width:330px;margin:auto;overflow:hidden;background:#fff;box-shadow:0 12px 35px #26395120}
+.screen{padding:20px 15px;min-height:360px}.top{font-size:14px;color:#54677e;margin-bottom:22px}
+label{display:block;margin:16px 0 6px;font-size:13px;font-weight:700}
+.field{border:1px solid #b6c8e2;border-radius:9px;padding:13px;background:#fafcff}
+.button{background:#1667d2;color:#fff;text-align:center;border-radius:9px;padding:12px;margin-top:22px;font-weight:700}
+.step{padding:12px;margin:10px 0;background:#f1f5fb;border-radius:10px}
+.done{border-left:4px solid #267653}
+.warning{background:#fff8e5;border:1px solid #edd89b;border-radius:10px;padding:12px}
+code{background:#e8eef8;padding:2px 5px;border-radius:4px}
+</style>
+</head>
+<body><main>
+<h1>InfoDeck — manually request a patch version</h1>
+<p class="muted">CI-only design. No Android app screens or permissions change. The current version in the mock is an example, never a workflow constant.</p>
+<div class="cards">
+<section class="panel">
+<h2>Action — mobile GitHub interface</h2>
+<div class="phone"><div class="screen">
+<div class="top">GitHub / info-deck / Actions / Build</div>
+<strong>Run workflow</strong>
+<label>Use workflow from</label><div class="field">main ▾</div>
+<label>action</label><div class="field">patch-pr ▾</div>
+<p class="muted"><small>Other choice: build (default, unchanged)</small></p>
+<div class="button">Run workflow</div>
+<p><small>Creates a pull request, not a release.</small></p>
+</div></div>
+</section>
+<section class="panel">
+<h2>Result — review before stable release</h2>
+<div class="step done">1. Fetch current <code>main:VERSION</code></div>
+<div class="step done">2. Calculate <code>x.y.(z+1)</code></div>
+<div class="step done">3. Create <code>cgpt-release-patch-vX.Y.Z</code> branch; change VERSION only</div>
+<div class="step done">4. Open <code>cgpt-</code> PR; apply <code>release:fix</code></div>
+<div class="step">5. Existing PR workflow publishes signed beta</div>
+<div class="step">6. Human review / beta verification / merge</div>
+<div class="step">7. Existing main workflow publishes stable ZIP</div>
+<div class="warning"><strong>Safety:</strong> no direct writes to main, automatic merging, tagging, or release publication. Fail on non-main selection, missing scoped App token, version conflicts, or unknown existing branches. Duplicate requests reuse an open PR.</div>
+</section>
+</div>
+</main></body></html>
