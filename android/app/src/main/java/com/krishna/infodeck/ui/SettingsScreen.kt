@@ -404,6 +404,8 @@ fun SettingsScreen(
             ) {
 
                 SettingRow("Error Logs", "Logger.e entries - view, share, clear", "$errors") { onErrorLogs() }
+                Divider(color = MaterialTheme.colorScheme.outlineVariant)
+                GitHubUpdatesSettings(s.betaUpdates) { vm.setBetaUpdates(it) }
             }
 
             SettingsGroupCard(
@@ -521,6 +523,98 @@ fun SettingsScreen(
             }) { Text("Merge") }
         }
     )
+}
+
+@Composable
+private fun GitHubUpdatesSettings(includeBeta: Boolean, onBetaChange: (Boolean) -> Unit) {
+    val context = LocalContext.current
+    val manager = remember(context) { com.krishna.infodeck.update.UpdateManager(context.applicationContext) }
+    val scope = rememberCoroutineScope()
+    var latest by remember(includeBeta) { mutableStateOf(manager.cached(includeBeta)) }
+    var checking by remember { mutableStateOf(false) }
+    var downloading by remember { mutableStateOf(false) }
+    var status by remember { mutableStateOf("") }
+
+    androidx.compose.runtime.LaunchedEffect(includeBeta) {
+        checking = true
+        try {
+            latest = manager.check(force = false, includeBeta = includeBeta)
+            status = if (latest == null) "InfoDeck is up to date" else "A newer version is available"
+        } catch (e: Exception) {
+            status = "Could not check GitHub: " + (e.message ?: "Network error")
+        } finally {
+            checking = false
+        }
+    }
+
+    SettingRow(
+        "Check for updates",
+        "Search GitHub Releases for an updated Android APK",
+        if (checking) "Checking…" else null
+    ) {
+        if (!checking) scope.launch {
+            checking = true
+            try {
+                latest = manager.check(force = true, includeBeta = includeBeta)
+                status = if (latest == null) "InfoDeck is up to date" else "A newer version is available"
+            } catch (e: Exception) {
+                status = "Could not check GitHub: " + (e.message ?: "Network error")
+            } finally {
+                checking = false
+            }
+        }
+    }
+    Divider(color = MaterialTheme.colorScheme.outlineVariant)
+    Row(
+        Modifier.fillMaxWidth().heightIn(min = 48.dp).padding(horizontal = 12.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text("Include beta updates", fontSize = 14.sp)
+            Text("Optional early releases from pull requests", fontSize = 11.5.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Switch(checked = includeBeta, onCheckedChange = onBetaChange)
+    }
+    val available = latest
+    if (available != null) {
+        Divider(color = MaterialTheme.colorScheme.outlineVariant)
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(Modifier.weight(1f)) {
+                Text("Update to v${available.version}", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                Text(if (available.beta) "Beta release" else "Stable release", fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            OutlinedButton(enabled = !downloading, onClick = {
+                scope.launch {
+                    if (!manager.canInstall()) {
+                        status = "Allow InfoDeck to install unknown apps, then tap Update again."
+                        try { manager.requestInstallPermission() }
+                        catch (e: Exception) { status = "Cannot open install permission settings" }
+                    } else {
+                        downloading = true
+                        try {
+                            val apk = manager.downloadApk(available)
+                            manager.install(apk) // Android must ask the user to confirm.
+                            status = "Confirm installation in Android"
+                        } catch (e: Exception) {
+                            status = "Update failed: " + (e.message ?: "Download error")
+                        } finally {
+                            downloading = false
+                        }
+                    }
+                }
+            }) {
+                Text(if (downloading) "Downloading…" else "Update")
+            }
+        }
+    }
+    if (status.isNotBlank()) Text(status,
+        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+        fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
 }
 
 @Composable
