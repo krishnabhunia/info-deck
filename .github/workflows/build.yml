@@ -240,11 +240,9 @@ jobs:
           badging=$("$aapt2" dump badging "$apk")
           echo "$badging" | head -1
           echo "$badging" | grep -q "versionName='${{ needs.prepare.outputs.display }}'" || { echo "::error::versionName mismatch"; exit 1; }
-          if echo "$badging" | grep -q 'android.permission.INTERNET'; then
-            echo "::error::Unexpected INTERNET permission in offline APK"
-            exit 1
-          fi
-          echo "INTERNET permission: absent"
+          echo "$badging" | grep -q 'android.permission.INTERNET' || { echo "::error::Missing INTERNET permission for GitHub updates"; exit 1; }
+          echo "$badging" | grep -q 'android.permission.REQUEST_INSTALL_PACKAGES' || { echo "::error::Missing APK installer permission"; exit 1; }
+          echo "GitHub update and installer permissions: present"
           if [ "${{ steps.sign.outputs.signed }}" = "true" ]; then
             bash common/scripts/check_cert.sh "$apk" "$EXPECTED_CERT_SHA1"
           fi
