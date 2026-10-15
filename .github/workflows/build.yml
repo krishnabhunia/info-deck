@@ -299,11 +299,19 @@ jobs:
         run: ./gradlew :app:testReleaseUnitTest --console=plain
 
       # Tests above still give their verdict; no APK is built or handed out unsigned.
+      # Fork and Dependabot PRs never receive repository secrets: they end here
+      # with tests only and no APK. Trusted branches and releases must be signed.
       - name: Stop - signing secrets missing
         if: steps.sign.outputs.signed != 'true'
         env:
           MISSING: ${{ steps.sign.outputs.missing }}
+          FORK_PR: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
         run: |
+          if [ "$FORK_PR" = "true" ]; then
+            echo "::notice::Fork PR: repository secrets are not available, so only the unit tests ran. No APK is built for forks."
+            echo "### Fork PR - tests only, no APK (secrets are not exposed to forks)" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
           echo "::error::Missing repository secrets: ${MISSING}. Without them the APK is unsigned, and Android rejects an unsigned APK with 'App not installed as package appears to be invalid'. No APK is produced. Add the secrets (docs/release-process.md section 1), then re-run this workflow."
           {
             echo "### No APK - signing secrets missing"
@@ -313,13 +321,16 @@ jobs:
           exit 1
 
       - name: Build release APK
+        if: steps.sign.outputs.signed == 'true'
         working-directory: android
         env:
           INFODECK_STOREPASS: ${{ secrets.INFODECK_STOREPASS }}
           INFODECK_KEYPASS: ${{ secrets.INFODECK_KEYPASS }}
+          INFODECK_KEY_ALIAS: ${{ secrets.INFODECK_KEY_ALIAS }}   # optional; empty means "infodeck"
         run: ./gradlew :app:assembleRelease -PversionNameOverride="${{ needs.prepare.outputs.display }}" --console=plain
 
       - name: Verify the APK
+        if: steps.sign.outputs.signed == 'true'
         id: apk
         run: |
           set -euo pipefail
@@ -350,6 +361,7 @@ jobs:
       # Intermediate hand-off to the package job; deleted again there so the
       # Artifacts box ends up holding only the one zip.
       - uses: actions/upload-artifact@v6
+        if: steps.sign.outputs.signed == 'true'
         with:
           name: part-android
           path: out/*.apk
@@ -365,7 +377,8 @@ jobs:
     if: >-
       !cancelled() &&
       needs.android.result != 'failure' && needs.windows.result != 'failure' && needs.macos.result != 'failure' &&
-      (needs.android.result == 'success' || needs.windows.result == 'success' || needs.macos.result == 'success')
+      (needs.android.result == 'success' || needs.windows.result == 'success' || needs.macos.result == 'success') &&
+      (needs.android.result != 'success' || needs.android.outputs.signed == 'true')
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5

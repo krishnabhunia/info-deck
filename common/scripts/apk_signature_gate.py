@@ -193,7 +193,15 @@ def workflow() -> None:
         "tests must still run, and the build must not start, when secrets are missing"
     assert android.index("apk_signature_gate.py check") < android.index("actions/upload-artifact"), \
         "the gate must run before the APK is uploaded"
+    # Fork PRs get no secrets: they may pass with tests only, but must never build or upload.
+    assert "github.event.pull_request.head.repo.full_name != github.repository" in android
+    for step in ("- name: Build release APK\n", "- name: Verify the APK\n", "- uses: actions/upload-artifact@v6\n"):
+        after = android.split(step, 1)[1]
+        assert after.lstrip().startswith("if: steps.sign.outputs.signed == 'true'"), step
+    assert "secrets.INFODECK_KEY_ALIAS" in android, "the documented optional alias must reach Gradle"
     package = src.split("\n  package:\n", 1)[1]
+    assert "needs.android.outputs.signed == 'true'" in package.split("runs-on:", 1)[0], \
+        "package must not run on an unsigned (fork) Android result"
     assert package.index("apk_signature_gate.py check") < package.index("bash common/scripts/package.sh")
     print("APK signing workflow wiring checks passed")
 

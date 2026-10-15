@@ -3,6 +3,7 @@
 ## Unreleased — never ship an unsigned APK (CI-only, fixes "package appears to be invalid")
 - **B15** APKs from GitHub Actions would not install ("App not installed as package appears to be invalid"): signing secrets were not set, so CI built an unsigned APK and still put it in the Actions artifact. The Android job now requires all three signing secrets, still runs the unit tests, then stops with a clear error instead of producing an APK.
 - Class-wide gate `common/scripts/apk_signature_gate.py` (pure Python): rejects any APK without a v1/v2/v3 signature, run in the Android job before upload and again in the package job before the ZIP/release; self-test and workflow-wiring check run in Prepare.
+- Fork and Dependabot PRs (no secrets) pass with unit tests only and build no APK; the optional `INFODECK_KEY_ALIAS` secret now reaches Gradle (blank = `infodeck`).
 - Release notes troubleshooting table and optional `INFODECK_KEY_ALIAS` secret documented in `docs/release-process.md`.
 
 ## Unreleased — GitHub App token for automated PR version updates (CI-only)

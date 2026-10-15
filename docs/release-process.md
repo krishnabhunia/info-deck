@@ -31,6 +31,8 @@ workflow for Windows, macOS and Android. For automatic PR version commits withou
 > *"App not installed as package appears to be invalid"* — see section 8.)
 > After adding them, re-run the latest `main` run (Actions → Build → *Run workflow*) and any open PR run.
 >
+> Fork and Dependabot PRs never receive repository secrets: their runs pass with **unit tests only** and build no APK.
+>
 > This card stays here until Krishna confirms it is done.
 
 ## 2 · What happens on a pull request

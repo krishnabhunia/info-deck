@@ -9,10 +9,12 @@ Root cause: repository secret `INFODECK_KEYSTORE_B64` absent → Gradle built `a
 | 2 | Remove the unsigned-APK path from the workflow entirely | [x] |
 | 3 | Class-wide gate `apk_signature_gate.py check` in Android job (before upload) and package job (before ZIP/release) | [x] |
 | 4 | Gate self-test + workflow wiring check in Prepare | [x] |
+| 4a | Codex review P1: fork/Dependabot PRs (no secrets) pass with tests only — no APK built, uploaded or packaged | [x] |
+| 4b | Codex review P2: optional `INFODECK_KEY_ALIAS` passed to Gradle; blank value treated as unset in `build.gradle.kts` | [x] |
 | 5 | **Owner (Krishna only):** add `INFODECK_KEYSTORE_B64`, `INFODECK_STOREPASS`, `INFODECK_KEYPASS` (+ `INFODECK_KEY_ALIAS` if alias ≠ `infodeck`) — card in `docs/release-process.md` section 1 | [ ] |
 | 6 | After secrets: re-run `main` → release `v1.14.0` published; install over the phone's app | [ ] |
 
-Companions — (1) Exceptions: corrupt/non-ZIP/missing APK, bad APK Signing Block sizes and invalid base64 keystore all fail with a named reason, never pass. (2) Logging: CI-only, failures surface as GitHub Actions `::error::` annotations and step summary; no Android code touched, so no `Logger.e` change. (3) Tests: automated — gate self-test (unsigned, v1, v1-incomplete, v2, v2+v3, padding-only, junk, missing, empty list, mixed batch) and wiring check; verified locally against the real unsigned CI APK (rejected), a jarsigner v1-signed copy (accepted) and a public v2-signed APK (accepted). Device checklist: install the APK from the first signed run over the installed app — must install without the error.
+Companions — (1) Exceptions: corrupt/non-ZIP/missing APK, bad APK Signing Block sizes and invalid base64 keystore all fail with a named reason, never pass. (2) Logging: CI-only, failures surface as GitHub Actions `::error::` annotations and step summary; no Android code touched, so no `Logger.e` change. (3) Tests: automated — gate self-test (unsigned, v1, v1-incomplete, v2, v2+v3, padding-only, junk, missing, empty list, mixed batch) and wiring check (negative controls: removing the fork guard, the upload guard, the alias mapping or the package guard each fails it); verified locally against the real unsigned CI APK (rejected), a jarsigner v1-signed copy (accepted) and a public v2-signed APK (accepted). Device checklist: install the APK from the first signed run over the installed app — must install without the error.
 
 ### CI-only — eliminate unnecessary workflow-approval prompts (15-Oct-2026)
 - [x] Detect whether PR `VERSION` actually needs an update; skip the push otherwise.
