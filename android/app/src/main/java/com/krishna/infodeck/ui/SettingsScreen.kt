@@ -405,7 +405,7 @@ fun SettingsScreen(
 
                 SettingRow("Error Logs", "Logger.e entries - view, share, clear", "$errors") { onErrorLogs() }
                 Divider(color = MaterialTheme.colorScheme.outlineVariant)
-                GitHubUpdatesSettings(s.betaUpdates, vm::setBetaUpdates)
+                GitHubUpdatesSettings(s.betaUpdates) { vm.setBetaUpdates(it) }
             }
 
             SettingsGroupCard(
