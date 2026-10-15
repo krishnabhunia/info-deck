@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased — require original Android signing before downloads (CI-only)
+- Parse both current and legacy apksigner certificate output correctly; reject missing or malformed fingerprints instead of mistaking the certificate label for its SHA-1.
 - Fail the Android job after unit tests when any signing credential is missing, instead of uploading an unsigned APK under the normal download name.
 - Verify APK signatures, the original certificate, package ID, version code/name and update permissions before upload and again before ZIP packaging; derive signing success from verification.
 - Add signing regression tests and document original-key secrets, optional alias and verification against the installed v1.9 APK. App code and `VERSION` are unchanged (`release:none`).

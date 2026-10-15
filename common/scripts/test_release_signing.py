@@ -28,6 +28,7 @@ class SigningTests(unittest.TestCase):
             EXPECTED_CERT_SHA1=CERT,
             ANDROID_HOME=(self.folder / "sdk").as_posix(),
             TEST_CERT=CERT,
+            TEST_SIGNER_SEPARATOR=":",
             TEST_SIGNATURE="valid",
             TEST_PACKAGE="com.krishna.infodeck",
             TEST_CODE="1014000",
@@ -39,7 +40,9 @@ class SigningTests(unittest.TestCase):
         fixtures = {
             "apksigner": '''#!/usr/bin/env bash
 if [ "$TEST_SIGNATURE" != valid ]; then echo 'DOES NOT VERIFY' >&2; exit 1; fi
-echo "Signer #1 certificate SHA-1 digest: $TEST_CERT"
+if [ "${TEST_NO_CERT:-false}" != true ]; then
+  echo "Signer #1${TEST_SIGNER_SEPARATOR} certificate SHA-1 digest: $TEST_CERT"
+fi
 ''',
             "aapt2": '''#!/usr/bin/env bash
 echo "package: name='$TEST_PACKAGE' versionCode='$TEST_CODE' versionName='$TEST_NAME'"
@@ -92,6 +95,19 @@ echo "uses-permission: name='$TEST_PERMISSION'"
     def test_valid_signed_beta_is_accepted(self):
         result = self.verify()
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_legacy_apksigner_output_is_accepted(self):
+        self.env["TEST_SIGNER_SEPARATOR"] = ""
+        result = self.verify()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_missing_or_malformed_fingerprint_is_rejected(self):
+        for value in ("", "certificate SHA-1 digest", CERT + "00"):
+            with self.subTest(value=value):
+                self.env["TEST_CERT"] = value
+                self.assertNotEqual(self.verify().returncode, 0)
+        self.env["TEST_NO_CERT"] = "true"
+        self.assertNotEqual(self.verify().returncode, 0)
 
     def test_unsigned_or_invalid_signature_is_rejected_after_rename(self):
         self.env["TEST_SIGNATURE"] = "unsigned"
