@@ -5,6 +5,12 @@
 - Preserve PR #8's 80-character filename limit, typed-extension suggestion, common extension choices, real file-type mismatch warning, failure handling, and 5-second Undo. Storage bytes and MIME remain unchanged.
 - Add regression tests for case-only and normal renames; the repository-level guard remains mandatory.
 
+## Unreleased — never ship an unsigned APK (CI-only, fixes "package appears to be invalid")
+- **B15** APKs from GitHub Actions would not install ("App not installed as package appears to be invalid"): signing secrets were not set, so CI built an unsigned APK and still put it in the Actions artifact. Merged onto the signing requirement below (`restore_signing_key.sh` + `verify_apk.sh`), which already stops the Android job after the unit tests when a secret is missing.
+- Class-wide gate `common/scripts/apk_signature_gate.py` (pure Python): rejects any APK without a v1/v2/v3 signature, run in the Android job before upload and again in the package job before `verify_apk.sh` and the ZIP/release; self-test and workflow-wiring check run in Prepare.
+- Fork and Dependabot PRs (no secrets) pass with unit tests only and build no APK; a blank `INFODECK_KEY_ALIAS` is treated as unset (`infodeck`) in `build.gradle.kts`.
+- Troubleshooting table for "package appears to be invalid" added as section 8 of `docs/release-process.md`.
+
 ## Unreleased — require original Android signing before downloads (CI-only)
 - Parse both current and legacy apksigner certificate output correctly; reject missing or malformed fingerprints instead of mistaking the certificate label for its SHA-1.
 - Fail the Android job after unit tests when any signing credential is missing, instead of uploading an unsigned APK under the normal download name.

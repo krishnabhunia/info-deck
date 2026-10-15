@@ -70,6 +70,14 @@ jobs:
       - name: Release signing regression tests
         run: python3 common/scripts/test_release_signing.py
 
+      # An unsigned APK is what Android rejects with "App not installed as
+      # package appears to be invalid". The gate keeps one from ever shipping.
+      - name: APK signature gate self-test
+        run: python3 common/scripts/apk_signature_gate.py selftest
+
+      - name: APK signing workflow wiring check
+        run: python3 common/scripts/apk_signature_gate.py workflow
+
       - name: Make sure the release labels exist
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         env:
@@ -249,6 +257,10 @@ jobs:
     runs-on: ubuntu-24.04
     outputs:
       signed: ${{ steps.apk.outputs.signed }}
+    # Fork and Dependabot PRs never receive repository secrets: they run the
+    # unit tests only and build no APK. Every trusted run must be signed.
+    env:
+      FORK_PR: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -268,7 +280,14 @@ jobs:
         working-directory: android
         run: ./gradlew :app:testReleaseUnitTest --console=plain
 
+      - name: Fork PR - tests only, no APK
+        if: env.FORK_PR == 'true'
+        run: |
+          echo "::notice::Fork PR: repository secrets are not available, so only the unit tests ran. No APK is built for forks."
+          echo "### Fork PR - tests only, no APK (secrets are not exposed to forks)" >> "$GITHUB_STEP_SUMMARY"
+
       - name: Require and restore the original signing key
+        if: env.FORK_PR != 'true'
         env:
           KEYSTORE_B64: ${{ secrets.INFODECK_KEYSTORE_B64 }}
           INFODECK_STOREPASS: ${{ secrets.INFODECK_STOREPASS }}
@@ -276,6 +295,7 @@ jobs:
         run: bash common/scripts/restore_signing_key.sh
 
       - name: Build release APK
+        if: env.FORK_PR != 'true'
         working-directory: android
         env:
           INFODECK_STOREPASS: ${{ secrets.INFODECK_STOREPASS }}
@@ -284,10 +304,13 @@ jobs:
         run: ./gradlew :app:assembleRelease -PversionNameOverride="${{ needs.prepare.outputs.display }}" --console=plain
 
       - name: Verify the APK
+        if: env.FORK_PR != 'true'
         id: apk
         run: |
           set -euo pipefail
           apk=android/app/build/outputs/apk/release/app-release.apk
+          [ -f "$apk" ] || { echo "::error::Signed APK app-release.apk was not produced - check the signing secrets and INFODECK_KEY_ALIAS"; exit 1; }
+          python3 common/scripts/apk_signature_gate.py check "$apk"
           bash common/scripts/verify_apk.sh "$apk" "${{ needs.prepare.outputs.display }}" "${{ needs.prepare.outputs.version }}"
           mkdir -p out && cp "$apk" "out/${SOFTWARE_NAME}_${{ needs.prepare.outputs.display }}.apk"
           echo "signed=true" >> "$GITHUB_OUTPUT"
@@ -306,6 +329,7 @@ jobs:
       # Intermediate hand-off to the package job; deleted again there so the
       # Artifacts box ends up holding only the one zip.
       - uses: actions/upload-artifact@v6
+        if: env.FORK_PR != 'true'
         with:
           name: part-android
           path: out/*.apk
@@ -347,6 +371,8 @@ jobs:
           find parts -maxdepth 4 -type f -print
           apk=$(find parts -type f -name '*.apk' -print -quit)
           if [ "${{ needs.prepare.outputs.has_android }}" = "true" ]; then
+            # Second gate: nothing unsigned goes into the zip or a release, whatever produced it.
+            python3 common/scripts/apk_signature_gate.py check "$apk"
             bash common/scripts/verify_apk.sh "$apk" "${{ needs.prepare.outputs.display }}" "${{ needs.prepare.outputs.version }}"
           fi
           exe=$(find parts -type f -name '*x64*.exe' -print -quit)

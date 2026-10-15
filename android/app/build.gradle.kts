@@ -47,7 +47,8 @@ android {
             create("infodeck") {
                 storeFile = file(keystorePath!!)
                 storePassword = System.getenv("INFODECK_STOREPASS")
-                keyAlias = System.getenv("INFODECK_KEY_ALIAS") ?: "infodeck"
+                // An unset optional GitHub secret arrives as "", not null - treat blank as unset.
+                keyAlias = System.getenv("INFODECK_KEY_ALIAS")?.takeIf { it.isNotBlank() } ?: "infodeck"
                 keyPassword = System.getenv("INFODECK_KEYPASS")
             }
         }

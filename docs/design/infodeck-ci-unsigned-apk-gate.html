@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>InfoDeck CI — unsigned APK gate (B15)</title>
+<style>
+  :root { --ink:#1A1A1A; --blue:#1A3E8C; --red:#C00000; --ok:#E8F5E9; --bad:#FDECEA; --step:#EEF2FB; --line:#000; }
+  body { font-family: Calibri, Carlito, "Segoe UI", sans-serif; color: var(--ink); background:#fff; margin: 24px; font-size: 15px; }
+  h1 { color: var(--blue); font-size: 22px; margin: 0 0 4px; }
+  p.sub { margin: 0 0 20px; color:#444; }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+  @media (max-width: 760px) { .cols { grid-template-columns: 1fr; } }
+  h2 { font-size: 17px; margin: 0 0 10px; }
+  h2.before { color: var(--red); } h2.after { color: var(--blue); }
+  .flow { display: flex; flex-direction: column; align-items: stretch; }
+  .box { border: 1px solid var(--line); border-radius: 6px; padding: 9px 12px; background: var(--step); }
+  .box.bad { background: var(--bad); } .box.ok { background: var(--ok); }
+  .box b { display:block; }
+  .arrow { text-align: center; font-size: 18px; line-height: 22px; }
+  .branch { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .tag { font-size: 12px; font-weight: bold; }
+  table { border-collapse: collapse; width: 100%; margin-top: 26px; }
+  th, td { border: 1px solid #000; padding: 6px 8px; text-align: left; vertical-align: top; }
+  th { background: #EEF2FB; color: var(--blue); }
+  td.n, th.n { width: 1%; white-space: nowrap; text-align: center; }
+</style>
+</head>
+<body>
+<h1>B15 — "App not installed as package appears to be invalid"</h1>
+<p class="sub">CI-only change · nothing on screen changes · PR <code>cld-fix-unsigned-apk-invalid-package</code> · label <code>release:none</code></p>
+
+<div class="cols">
+  <section>
+    <h2 class="before">Before (the bug)</h2>
+    <div class="flow">
+      <div class="box"><b>Restore signing key</b>INFODECK_KEYSTORE_B64 not set → only a warning</div>
+      <div class="arrow">↓</div>
+      <div class="box"><b>Unit tests</b>pass</div>
+      <div class="arrow">↓</div>
+      <div class="box bad"><b>Gradle assembleRelease</b>app-release-<u>unsigned</u>.apk</div>
+      <div class="arrow">↓</div>
+      <div class="box bad"><b>Copied into the Actions artifact</b>InfoDeck_1.14.0.zip → Android/InfoDeck_1.14.0.apk</div>
+      <div class="arrow">↓</div>
+      <div class="box bad"><b>Phone</b>“App not installed as package appears to be invalid”</div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="after">After (this PR)</h2>
+    <div class="flow">
+      <div class="box"><b>Unit tests</b>always run and report</div>
+      <div class="arrow">↓</div>
+      <div class="box"><b>restore_signing_key.sh</b>checks all three secrets; bad base64 fails (fork PRs stop here, tests only)</div>
+      <div class="arrow">↓</div>
+      <div class="branch">
+        <div class="box bad"><span class="tag">ANY SECRET MISSING</span><b>Stop</b>red run, names the required secrets — <b>no APK produced</b></div>
+        <div class="box ok"><span class="tag">ALL SECRETS SET</span><b>Signed release APK</b><b>gate #1</b> → verify_apk.sh (apksigner + cert pin, package, version, permissions)</div>
+      </div>
+      <div class="arrow">↓</div>
+      <div class="box ok"><b>Package job</b><b>gate #2</b> → verify_apk.sh again, before ZIP / GitHub release</div>
+      <div class="arrow">↓</div>
+      <div class="box ok"><b>Phone</b>installs over the existing app (same certificate)</div>
+    </div>
+  </section>
+</div>
+
+<table>
+  <tr><th class="n">SrNo.</th><th>Check</th><th>Where</th><th>Catches</th></tr>
+  <tr><td class="n">1</td><td><code>restore_signing_key.sh</code> — all three secrets present</td><td>Android job, after unit tests, before build</td><td>missing keystore / password</td></tr>
+  <tr><td class="n">2</td><td><code>apk_signature_gate.py check</code></td><td>Android job, before upload</td><td>any APK with no v1/v2/v3 signature</td></tr>
+  <tr><td class="n">3</td><td><code>verify_apk.sh</code> → <code>check_cert.sh</code> (apksigner + SHA-1 pin), package ID, version, permissions</td><td>Android job and package job</td><td>broken signature, wrong key (“conflicts with existing package”), wrong identity/version</td></tr>
+  <tr><td class="n">4</td><td><code>apk_signature_gate.py check</code></td><td>Package job, before <code>verify_apk.sh</code> and ZIP/release</td><td>anything unsigned from any producer</td></tr>
+  <tr><td class="n">5</td><td>Gate self-test + workflow wiring check</td><td>Prepare job</td><td>someone removing or reordering the gates</td></tr>
+</table>
+</body>
+</html>
