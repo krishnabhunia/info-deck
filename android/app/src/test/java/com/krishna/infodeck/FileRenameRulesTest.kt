@@ -37,11 +37,14 @@ class FileRenameRulesTest {
         assertNull(FileRenameRules.validate("policy.pdf", "policy", true))
     }
 
-    // N62 / design 1.9.D1 Q1 (accepted 15-Oct-2026) supersedes Design A here:
-    // a case-only change is a plain save, not an extension change.
-    @Test fun caseOnlyChangeIsNotAnExtensionChange() {
-        assertFalse(FileRenameRules.extensionChanged("policy.pdf", "policy.PDF"))
-        assertNull(FileRenameRules.validate("policy.pdf", "policy.PDF", false))
+    // Restored Design A: case changes cannot bypass the second confirmation.
+    @Test fun caseOnlyChangeRequiresConfirmation() {
+        assertTrue(FileRenameRules.extensionChanged("policy.pdf", "policy.PDF"))
+        assertEquals(
+            "Confirm the extension change before saving",
+            FileRenameRules.validate("policy.pdf", "policy.PDF", false)
+        )
+        assertNull(FileRenameRules.validate("policy.pdf", "policy.PDF", true))
     }
 
     @Test fun versionNumbersAreNotExtensions() {

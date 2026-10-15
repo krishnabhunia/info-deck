@@ -460,7 +460,7 @@ fun CardEditorScreen(
 
     // N62 + B13 (design 1.9.D1): name with the extension locked; a new extension is confirmed first
     val rf = renamingFile
-    if (rf != null) RenameFileSheet(file = rf, onDismiss = { renamingFile = null }) { newName, extensionConfirmed ->
+    if (rf != null) ProtectedFileRenameDialog(file = rf, onDismiss = { renamingFile = null }) { newName, extensionConfirmed ->
         val oldName = rf.displayName
         val fileId = rf.id
         renamingFile = null
