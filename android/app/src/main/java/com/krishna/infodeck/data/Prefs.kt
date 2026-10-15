@@ -46,7 +46,8 @@ data class AppSettings(
     val ui: UiScale = UiScale(),
     val followSystemText: Boolean = true,
     val autoCaps: Boolean = true,
-    val autoCapsValues: Boolean = true
+    val autoCapsValues: Boolean = true,
+    val betaUpdates: Boolean = false
 )
 
 class Prefs(private val context: Context) {
@@ -80,6 +81,7 @@ class Prefs(private val context: Context) {
         val followSys = booleanPreferencesKey("follow_system_text")
         val caps = booleanPreferencesKey("auto_caps")
         val capsValues = booleanPreferencesKey("auto_caps_values")
+        val betaUpdates = booleanPreferencesKey("beta_updates")
         val offsets = TextRole.values().associateWith { floatPreferencesKey("off_" + it.name) }
     }
 
@@ -132,7 +134,8 @@ class Prefs(private val context: Context) {
                 ui = readScale(p),
                 followSystemText = p[K.followSys] ?: true,
                 autoCaps = p[K.caps] ?: true,
-                autoCapsValues = p[K.capsValues] ?: true
+                autoCapsValues = p[K.capsValues] ?: true,
+                betaUpdates = p[K.betaUpdates] ?: false
             )
         }
 
@@ -175,4 +178,5 @@ class Prefs(private val context: Context) {
     suspend fun setFollowSystem(v: Boolean) = edit { it[K.followSys] = v }
     suspend fun setAutoCaps(v: Boolean) = edit { it[K.caps] = v }
     suspend fun setAutoCapsValues(v: Boolean) = edit { it[K.capsValues] = v }
+    suspend fun setBetaUpdates(v: Boolean) = edit { it[K.betaUpdates] = v }
 }

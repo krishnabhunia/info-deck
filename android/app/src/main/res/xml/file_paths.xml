@@ -2,4 +2,5 @@
 <paths>
     <files-path name="card_files" path="cards/" />
     <cache-path name="share_copies" path="share/" />
+    <cache-path name="update_apks" path="updates/" />
 </paths>
