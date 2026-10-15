@@ -382,7 +382,7 @@ private fun savedAs(name: String, changed: Boolean): AnnotatedString {
         append("Saved as ")
         withStyle(SpanStyle(fontWeight = FontWeight.SemiBold, color = Color.Unspecified)) { append(p.base) }
         if (p.hasExt) {
-            val style = if (changed) SpanStyle(fontWeight = FontWeight.ExtraBold, color = ExtAmberText, background = AmberContainer)
+            val style = if (changed) SpanStyle(fontWeight = FontWeight.ExtraBold, color = ExtAmberText, background = Color(0xFFFDF0DA))
             else SpanStyle(fontWeight = FontWeight.ExtraBold)
             withStyle(style) { append(".${p.ext}") }
         } else if (changed) {

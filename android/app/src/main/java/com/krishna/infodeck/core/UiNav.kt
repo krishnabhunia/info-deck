@@ -14,9 +14,18 @@ object ChipRules {
     }
 }
 
-/** Where the slim bottom bar shows (design 1.3.D1 C3). */
+/** 2.0 — a Home hero stat toggles exactly the filter its 1.3 chip did (design 1.15.0.D1 frame 02). */
+object HomeStatRules {
+    fun toggle(f: FilterState, chip: HomeChip): FilterState = when (chip) {
+        HomeChip.OVERDUE -> f.copy(expiry = if (f.expiry == ExpiryFilter.OVERDUE) ExpiryFilter.ANY else ExpiryFilter.OVERDUE)
+        HomeChip.MONTH -> f.copy(expiry = if (f.expiry == ExpiryFilter.D30) ExpiryFilter.ANY else ExpiryFilter.D30)
+        HomeChip.NO_ALARM -> f.copy(reminder = if (f.reminder == ReminderFilter.NONE) ReminderFilter.ANY else ReminderFilter.NONE)
+    }
+}
+
+/** Where the bottom bar shows (design 1.3.D1 C3; 2.0 adds the Tags tab — design 1.15.0.D1). */
 object NavRules {
-    val TOP_LEVEL = listOf("home", "upcoming", "settings")
+    val TOP_LEVEL = listOf("home", "upcoming", "tags", "settings")
 
     /** Visible on every top-level and Settings sub-screen; hidden where an action bar owns the bottom. */
     fun barVisible(route: String?): Boolean {
@@ -33,7 +42,8 @@ object NavRules {
 
     fun tabIndex(route: String?): Int = when (route?.substringBefore('?')?.substringBefore('/')) {
         "upcoming" -> 1
-        "settings", "categories", "tags", "textsize", "finetune", "errors" -> 2
+        "tags" -> 2
+        "settings", "categories", "textsize", "finetune", "errors" -> 3
         else -> 0
     }
 }

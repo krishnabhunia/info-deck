@@ -26,6 +26,8 @@ import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.IconButton
 import androidx.compose.foundation.clickable
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.foundation.border
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Save
@@ -163,7 +165,10 @@ fun EditorSheetButtons(
     }
 }
 
-/** N53 — white 48 dp bar with a 3 dp gradient hairline. The colour lives in the icons now. */
+/**
+ * 2.0 — the top bar is now the themed role header (design 1.15.0.D1). Searching keeps the
+ * same band and puts the focused search pill in it.
+ */
 @Composable
 fun SlimTopBar(
     title: String,
@@ -174,48 +179,21 @@ fun SlimTopBar(
     onSearchOpen: (() -> Unit)? = null,
     onSearchClose: () -> Unit = {},
     onBack: (() -> Unit)? = null,
+    role: Hue = Hue.INDIGO,
     actions: @Composable () -> Unit = {}
 ) {
-    Column(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface)) {
-        Row(
-            Modifier.fillMaxWidth().height(scaledDp(48f)).padding(start = 6.dp, end = 6.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            if (searching) {
-                IconButton(onClick = onSearchClose) {
-                    Icon(Icons.Filled.ArrowBack, "Close search", tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                SearchPill(query, onQuery, Modifier.weight(1f))
-                Spacer(Modifier.width(6.dp))
-            } else {
-                if (onBack != null) IconButton(onClick = onBack) {
-                    Icon(Icons.Filled.ArrowBack, "Back", tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                } else Spacer(Modifier.width(10.dp))
-                Column(Modifier.weight(1f)) {
-                    Text(
-                        title, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold,
-                        color = MaterialTheme.colorScheme.onSurface, maxLines = 1,
-                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                    )
-                    if (subtitle != null) Text(
-                        subtitle, fontSize = 10.5.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1,
-                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                    )
-                }
+    if (searching) {
+        DeckHeader(
+            title = "", role = role, onBack = onSearchClose, backLabel = "Close search",
+            actions = { SearchPill(query, onQuery, Modifier.weight(10f)); Spacer(Modifier.width(4.dp)) }
+        )
+    } else {
+        DeckHeader(
+            title = title, role = role, subtitle = subtitle, onBack = onBack,
+            actions = {
                 if (onSearchOpen != null) HueIconButton(Icons.Filled.Search, "Search", Hue.INDIGO, onSearchOpen)
                 actions()
             }
-        }
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .height(3.dp)
-                .background(
-                    androidx.compose.ui.graphics.Brush.horizontalGradient(
-                        listOf(hue(Hue.INDIGO), hue(Hue.VIOLET), hue(Hue.TEAL))
-                    )
-                )
         )
     }
 }
@@ -229,15 +207,24 @@ fun HueIconButton(
     onClick: () -> Unit,
     badge: Boolean = false
 ) {
+    val onHeader = LocalOnHeader.current
+    val p = LocalDeck.current
     Box(
         Modifier
+            .padding(horizontal = 2.dp)
             .size(38.dp)
             .clip(RoundedCornerShape(13.dp))
-            .background(tint(h))
+            .background(
+                when {
+                    onHeader && p.dark -> tint(h)
+                    onHeader -> Color.White.copy(alpha = 0.2f)
+                    else -> tint(h)
+                }
+            )
             .clickable { onClick() },
         contentAlignment = Alignment.Center
     ) {
-        Icon(icon, label, Modifier.size(18.dp), tint = onTint(h))
+        Icon(icon, label, Modifier.size(18.dp), tint = if (onHeader && !p.dark) Color.White else onTint(h))
         if (badge) Box(
             Modifier
                 .align(Alignment.TopEnd)
@@ -249,18 +236,15 @@ fun HueIconButton(
     }
 }
 
-/** Hue lookups that follow the theme, so dark mode never needs a second table. */
+/** Hue lookups that follow the active theme (2.0: Aurora, Neon Night or Sunrise Wallet). */
 @Composable
-fun hue(h: Hue): Color =
-    if (androidx.compose.foundation.isSystemInDarkTheme()) Color(h.darkGlyph) else Color(h.argb)
+fun hue(h: Hue): Color = LocalDeck.current.hue(h).glyph
 
 @Composable
-fun tint(h: Hue): Color =
-    if (androidx.compose.foundation.isSystemInDarkTheme()) Color(h.darkTint) else Color(h.tint)
+fun tint(h: Hue): Color = LocalDeck.current.hue(h).tint
 
 @Composable
-fun onTint(h: Hue): Color =
-    if (androidx.compose.foundation.isSystemInDarkTheme()) Color(h.darkGlyph) else Color(h.onTint)
+fun onTint(h: Hue): Color = LocalDeck.current.hue(h).onTint
 
 /** N55 — the gradient tile that leads every card and section row. */
 @Composable
@@ -271,20 +255,25 @@ fun HueTile(
     flat: Boolean = false,
     modifier: Modifier = Modifier
 ) {
-    val base = hue(h)
+    val p = LocalDeck.current
+    val s = p.hue(h)
+    val shape = RoundedCornerShape((size / 2.9f).dp)
+    val neon = p.dark && !flat
     Box(
         modifier
             .size(scaledDp(size.toFloat()))
-            .clip(RoundedCornerShape((size / 2.9f).dp))
+            .then(if (neon) Modifier.androidxShadow(8.dp, shape, s.glyph) else Modifier)
+            .clip(shape)
             .then(
-                if (flat) Modifier.background(tint(h))
-                else Modifier.background(
-                    androidx.compose.ui.graphics.Brush.linearGradient(listOf(base.copy(alpha = 0.86f), base))
-                )
-            ),
+                when {
+                    flat || neon -> Modifier.background(s.tint)
+                    else -> Modifier.background(androidx.compose.ui.graphics.Brush.linearGradient(listOf(s.glyph, s.glyph2)))
+                }
+            )
+            .then(if (neon) Modifier.border(1.dp, s.glyph.copy(alpha = 0.5f), shape) else Modifier),
         contentAlignment = Alignment.Center
     ) {
-        Icon(icon, null, Modifier.size((size * 0.46f).dp), tint = if (flat) onTint(h) else Color.White)
+        Icon(icon, null, Modifier.size((size * 0.48f).dp), tint = if (flat || neon) s.onTint else Color.White)
     }
 }
 
@@ -372,61 +361,20 @@ fun FilterStrip(
     }
 }
 
-/** The slim 50 dp bottom bar — icons only, the selected tab shows its word. */
+/**
+ * 2.0 bottom bar — Home · Upcoming · Tags · Settings (tab indexes 0–3, see NavRules.tabIndex),
+ * drawn in the active theme's style. Sunrise adds the raised centre New-card button.
+ */
 @Composable
-fun InfoBottomBar(selected: Int, overdue: Int, onHome: () -> Unit, onUpcoming: () -> Unit, onSettings: () -> Unit) {
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .height(scaledDp(58f))
-            .background(MaterialTheme.colorScheme.surface),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        BarItem(Icons.Filled.Home, "Home", selected == 0, overdue, onHome)
-        BarItem(Icons.Filled.DateRange, "Upcoming", selected == 1, 0, onUpcoming)
-        BarItem(Icons.Filled.Settings, "Settings", selected == 2, 0, onSettings)
-    }
-}
-
-@Composable
-private fun BarItem(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    label: String, on: Boolean, badge: Int, onClick: () -> Unit
-) {
-    val h = when (label) {
-        "Home" -> Hue.INDIGO
-        "Upcoming" -> Hue.AMBER
-        else -> Hue.TEAL
-    }
-    Column(
-        Modifier.clip(RoundedCornerShape(16.dp)).clickable { onClick() }.padding(horizontal = 6.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Box(
-            Modifier
-                .size(width = 56.dp, height = 28.dp)
-                .clip(RoundedCornerShape(14.dp))
-                .then(if (on) Modifier.background(tint(h)) else Modifier),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(icon, label, Modifier.size(19.dp), tint = if (on) onTint(h) else hue(h))
-            if (badge > 0) Box(
-                Modifier
-                    .align(Alignment.TopEnd)
-                    .offset(x = (-8).dp, y = (-2).dp)
-                    .clip(RoundedCornerShape(7.dp))
-                    .background(hue(Hue.ROSE))
-                    .padding(horizontal = 4.dp)
-            ) { Text("$badge", fontSize = 8.5.sp, fontWeight = FontWeight.ExtraBold, color = Color.White) }
-        }
-        Spacer(Modifier.height(2.dp))
-        Text(
-            label, fontSize = 10.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1,
-            color = if (on) onTint(h) else Hint
-        )
-    }
-}
+fun InfoBottomBar(
+    selected: Int,
+    overdue: Int,
+    onHome: () -> Unit,
+    onUpcoming: () -> Unit,
+    onSettings: () -> Unit,
+    onTags: () -> Unit = {},
+    onNew: () -> Unit = {}
+) = DeckBottomBar(selected, overdue, onHome, onUpcoming, onTags, onSettings, onNew)
 
 // ---- scaling helpers (restored: the 1.2 set, unchanged) ----
 
@@ -519,7 +467,7 @@ fun ColorDot(color: Color, size: Int, modifier: Modifier = Modifier) {
 
 /** Countdown ring on every card — green, amber, rose as the date closes. */
 @Composable
-fun CountdownRing(daysLeft: Long?, modifier: Modifier = Modifier, compact: Boolean = false, sizeDp: Float = 44f) {
+fun CountdownRing(daysLeft: Long?, modifier: Modifier = Modifier, compact: Boolean = false, sizeDp: Float = 44f, onColour: Boolean = false) {
     val band = com.krishna.infodeck.core.RingMath.band(daysLeft)
     val h = when (band) {
         com.krishna.infodeck.core.RingMath.Band.OVERDUE -> Hue.ROSE
@@ -527,21 +475,31 @@ fun CountdownRing(daysLeft: Long?, modifier: Modifier = Modifier, compact: Boole
         com.krishna.infodeck.core.RingMath.Band.OK -> Hue.GREEN
         com.krishna.infodeck.core.RingMath.Band.NONE -> Hue.SLATE
     }
-    val colour = hue(h)
+    val colour = if (onColour) Color.White else hue(h)
     val fraction = com.krishna.infodeck.core.RingMath.fraction(daysLeft)
     val size = scaledDp(sizeDp)
     Box(modifier.size(size), contentAlignment = Alignment.Center) {
         androidx.compose.foundation.Canvas(Modifier.size(size)) {
             val stroke = androidx.compose.ui.graphics.drawscope.Stroke(width = 4.5.dp.toPx())
-            drawArc(color = colour.copy(alpha = 0.16f), startAngle = 0f, sweepAngle = 360f, useCenter = false, style = stroke)
+            drawArc(color = colour.copy(alpha = if (onColour) 0.3f else 0.16f), startAngle = 0f, sweepAngle = 360f, useCenter = false, style = stroke)
             drawArc(color = colour, startAngle = -90f, sweepAngle = 360f * fraction, useCenter = false, style = stroke)
         }
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             val n = com.krishna.infodeck.core.RingMath.number(daysLeft)
-            if (n.isNotBlank()) Text(n, fontSize = if (compact) 9.5.sp else 12.5.sp, fontWeight = FontWeight.ExtraBold, color = colour, maxLines = 1)
+            // 2.0: tight line boxes — the bundled fonts carry taller ascenders than Roboto.
+            val tight = androidx.compose.ui.text.TextStyle(
+                platformStyle = androidx.compose.ui.text.PlatformTextStyle(includeFontPadding = false),
+                lineHeightStyle = androidx.compose.ui.text.style.LineHeightStyle(
+                    alignment = androidx.compose.ui.text.style.LineHeightStyle.Alignment.Center,
+                    trim = androidx.compose.ui.text.style.LineHeightStyle.Trim.Both
+                )
+            )
+            if (n.isNotBlank()) Text(n, style = tight, fontSize = if (compact) 9.5.sp else 12.5.sp, lineHeight = if (compact) 10.sp else 13.sp,
+                fontWeight = FontWeight.ExtraBold, color = colour, maxLines = 1)
             if (!compact) Text(
-                com.krishna.infodeck.core.RingMath.caption(daysLeft),
-                fontSize = 7.5.sp, fontWeight = FontWeight.Bold, color = Ink2, maxLines = 1
+                com.krishna.infodeck.core.RingMath.caption(daysLeft), style = tight,
+                fontSize = 6.5.sp, lineHeight = 7.sp, letterSpacing = 0.3.sp,
+                fontWeight = FontWeight.Bold, color = if (onColour) Color.White.copy(alpha = 0.85f) else Ink2, maxLines = 1
             )
         }
     }
@@ -583,14 +541,14 @@ fun SearchPill(query: String, onQuery: (String) -> Unit, modifier: Modifier = Mo
         modifier
             .height(38.dp)
             .clip(RoundedCornerShape(19.dp))
-            .background(tint(Hue.INDIGO))
+            .background(if (LocalOnHeader.current && !LocalDeck.current.dark) MaterialTheme.colorScheme.surface else tint(Hue.INDIGO))
             .padding(start = 12.dp, end = 6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(Icons.Filled.Search, null, Modifier.size(17.dp), tint = hue(Hue.INDIGO))
         Spacer(Modifier.width(8.dp))
         Box(Modifier.weight(1f)) {
-            if (query.isEmpty()) Text("Search everything on your cards", fontSize = 13.5.sp, color = Hint, maxLines = 1)
+            if (query.isEmpty()) Text("Search every field…", fontSize = 13.5.sp, color = Hint, maxLines = 1)
             androidx.compose.foundation.text.BasicTextField(
                 value = query,
                 onValueChange = { onQuery(it.take(com.krishna.infodeck.core.SearchRules.MAX_QUERY)) },
@@ -609,3 +567,7 @@ fun SearchPill(query: String, onQuery: (String) -> Unit, modifier: Modifier = Mo
         ) { Icon(Icons.Filled.Close, "Clear", Modifier.size(14.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant) }
     }
 }
+
+/** Coloured soft shadow (used for Neon glows and Aurora lifts). */
+fun Modifier.androidxShadow(elevation: androidx.compose.ui.unit.Dp, shape: androidx.compose.ui.graphics.Shape, colour: Color): Modifier =
+    this.shadow(elevation, shape, ambientColor = colour, spotColor = colour)

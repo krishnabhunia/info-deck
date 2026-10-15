@@ -1,5 +1,39 @@
 # InfoDeck — PIPELINE QUEUE (BACKLOG)
 
+### N64 — 2.0 complete redesign: three themes · 15-Oct-2026 (PR `cld-redesign-three-themes`)
+
+Approved by Krishna on 15-Oct-2026 from design `docs/design/infodeck-1.15.0.D1-design.html`:
+**Option 1 Aurora Pop = default theme**, **Option 3 Neon Night = dark theme**, **Option 4 Sunrise Wallet = custom theme**, Option 2 discarded. Target version **2.0.0** (see open item Q-V below).
+
+| SrNo. | Item | Status |
+|---|---|---|
+| 1 | Theme engine: `DeckPalette` per theme (surfaces, ink, brand gradient, nine role hues, fonts, nav style) provided through `LocalDeck`; Material colour scheme and typography derived from it | [x] |
+| 2 | `ThemeRules`: System (Aurora by day, Neon at night) · Aurora · Neon Night · Sunrise; old stored SYSTEM/LIGHT/DARK keep their meaning — no migration; unknown values follow the phone | [x] |
+| 3 | Bundled OFL fonts, Latin subsets (≈ 500 KB): Poppins (Aurora), DM Sans (Neon), Fredoka + Nunito (Sunrise); licence texts kept in `res/raw` | [x] |
+| 4 | Role-coloured header on every screen (gradient band in Aurora/Sunrise, glowing dark band with gradient title in Neon); status bar continues the band | [x] |
+| 5 | Home hero with search pill and Overdue / This month / No reminder stats; "Grouped by · View · Filter" toolbar; themed section cards and card rows; Sunrise wallet cards with OVERDUE stamp | [x] |
+| 6 | Bottom bar Home · Upcoming · Tags · Settings in three styles (Aurora floating pill, Neon glass, Sunrise curved bar with centre ＋) | [x] |
+| 7 | Card view hero in the category colour with big countdown; Edit · Copy · QR · Share role tiles; Data / Dates / Reminders / Files role blocks | [x] |
+| 8 | Card editor role section headings with coloured Add pills | [x] |
+| 9 | Upcoming: amber header with Upcoming / History tabs, overdue banner, dated items | [x] |
+| 10 | Settings: colour tile per accordion group, theme picker with four preview tiles; Categories, Tags, Text size, Error Logs, Lock screen restyled | [x] |
+| 11 | Remaining sheets/dialogs follow the theme through the Material scheme; their bespoke 2.0 layouts (View/Filter chips, Reminder stepper, Share targets, QR, Rename) are a follow-up round | [ ] |
+| 12 | Device check of all three themes on Krishna's phone (checklist below) | [ ] |
+
+⚑ Behaviour changes (announced before release):
+1. ⚑ Theme picker has four choices; **Sunrise** is new. "Light" now means Aurora and "Dark" means Neon Night.
+2. ⚑ The bottom bar gains a **Tags** tab (Home · Upcoming · Tags · Settings); the Tags screen now shows the bar.
+3. ⚑ Home: the gradient hero replaces the slim top bar and the chip strip. The stats toggle exactly the filters the chips did (zero counts stay hidden); Filter is now one tap away from the toolbar.
+4. ⚑ Sunrise only: the floating New-card button moves into the centre of the bottom bar.
+5. ⚑ Settings standard fix: "Notifications" and "Exact alarms" sat outside every group and now live in **Reminders**; a second loose "Manage tags" row duplicated Organise → Tags and is removed.
+6. ⚑ Upcoming: Upcoming / History tabs move into the header; an overdue banner opens the first overdue card.
+7. ⚑ The status bar takes the colour of each screen's header.
+
+Companions — (1) Exceptions: unknown or corrupt theme values normalise to System and never crash; unknown nav style keeps the floating New-card button; the status-bar painter is guarded. (2) Logging: every fallback above logs through `Logger.e` (`ThemeRules`, `NavStyleRules`, `GreetingRules`, `Theme`). (3) Tests: `Release20Test` (20 JUnit cases — theme resolution day/night, legacy values, aliases, unknown values, picker order, tab order, Sunrise single New button, hero-stat filter toggles, greeting hours) and the updated tab order in `NavAndSettingsTest`. Device checklist only (cannot be proven in CI): (a) switch System/Aurora/Neon/Sunrise and back — every screen recolours, no restart needed; (b) phone dark mode with System → Neon; (c) Home stats toggle filters and show their active state; (d) Sunrise centre ＋ creates a card in the open section; (e) status bar matches each header; (f) text size 70 % and 200 % — headers, hero and wallet cards still fit; (g) app lock screen in all three themes; (h) upgrade over 1.x keeps the saved theme.
+
+Open item **Q-V (Krishna only)**: the repository rule maps `release:major` to x+1 → **x.1.0**, so 1.15.0 → **2.1.0**. You asked for **2.0.0**. Either keep the rule (2.1.0) or approve changing `version.py` so a major release starts at x.0.0.
+
+
 ### N63 — Restore approved Design A file-extension confirmation · 15-Oct-2026
 
 - [x] Reintroduce the approved file rename dialog from PR #3: locked extension, explicit unlock, and mandatory second dialog with an acknowledgement checkbox.

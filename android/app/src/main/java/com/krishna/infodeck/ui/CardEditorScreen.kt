@@ -1,5 +1,15 @@
 package com.krishna.infodeck.ui
 
+import androidx.compose.ui.draw.clip
+
+import androidx.compose.material.icons.filled.AttachFile
+
+import androidx.compose.material.icons.filled.Event
+
+import androidx.compose.material.icons.filled.DataObject
+
+import androidx.compose.material.icons.filled.Sell
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -171,14 +181,13 @@ fun CardEditorScreen(
     Scaffold(
         snackbarHost = { androidx.compose.material3.SnackbarHost(snackbar) },
         topBar = {
-            TopAppBar(
-                title = { Text(if (cardId != null && cardId > 0) "Edit card" else "New card") },
-                navigationIcon = { IconButton(onClick = { leave() }) { Icon(Icons.Filled.Close, "Close") } },
+            DeckHeader(
+                title = if (cardId != null && cardId > 0) "Edit card" else "New card",
+                role = com.krishna.infodeck.core.Hue.INDIGO,
+                onBack = { leave() }, backIcon = Icons.Filled.Close, backLabel = "Close",
                 actions = {
                     if (cardId != null && cardId > 0) Box {
-                        IconButton(onClick = { editorMenu = true }) {
-                            Icon(Icons.Filled.MoreVert, "More", tint = Color.White)
-                        }
+                        HeaderIcon(Icons.Filled.MoreVert, "More") { editorMenu = true }
                         androidx.compose.material3.DropdownMenu(
                             expanded = editorMenu, onDismissRequest = { editorMenu = false }
                         ) {
@@ -188,11 +197,7 @@ fun CardEditorScreen(
                             )
                         }
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Primary, titleContentColor = Color.White,
-                    navigationIconContentColor = Color.White
-                )
+                }
             )
         },
         bottomBar = {
@@ -613,26 +618,37 @@ fun CardEditorScreen(
     }
 }
 
+/** 2.0 section heading — role tile + coloured "Add" pill (design 1.15.0.D1 frame 08). */
 @Composable
 private fun EditorHeader(title: String, enabled: Boolean = true, onAdd: () -> Unit) {
+    val (h, icon, shown) = when (title) {
+        "Tags" -> Triple(com.krishna.infodeck.core.Hue.VIOLET, Icons.Filled.Sell, "Tags")
+        "Data" -> Triple(com.krishna.infodeck.core.Hue.SKY, Icons.Filled.DataObject, "Data")
+        "Dates" -> Triple(com.krishna.infodeck.core.Hue.GREEN, Icons.Filled.Event, "Dates")
+        "Schedulers" -> Triple(com.krishna.infodeck.core.Hue.AMBER, Icons.Filled.Alarm, "Reminders")
+        "Files" -> Triple(com.krishna.infodeck.core.Hue.PURPLE, Icons.Filled.AttachFile, "Files")
+        else -> Triple(com.krishna.infodeck.core.Hue.INDIGO, Icons.Filled.Add, title)
+    }
+    val p = deck
+    val s = p.hue(h)
     Row(
-        Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 4.dp),
+        Modifier.fillMaxWidth().padding(top = 14.dp, bottom = 6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        SectionLabel(title, Modifier.weight(1f))
+        HueTile(icon, h, size = 26)
+        Spacer(Modifier.width(8.dp))
+        Text(shown, fontSize = 13.5.sp, fontWeight = FontWeight.ExtraBold,
+            color = if (p.dark) s.glyph else s.onTint, modifier = Modifier.weight(1f))
         Row(
-            Modifier.clickable(enabled = enabled) { onAdd() }.padding(6.dp),
+            Modifier.clip(RoundedCornerShape(14.dp))
+                .background(if (enabled) s.tint else p.surface2)
+                .clickable(enabled = enabled) { onAdd() }.padding(horizontal = 10.dp, vertical = 5.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(2.dp)
+            horizontalArrangement = Arrangement.spacedBy(3.dp)
         ) {
-            Icon(
-                Icons.Filled.Add, null, Modifier.size(16.dp),
-                tint = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
-            )
-            Text(
-                "Add", fontSize = 12.5.sp, fontWeight = FontWeight.ExtraBold,
-                color = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
-            )
+            val c = if (!enabled) p.hint else if (p.dark) s.glyph else s.onTint
+            Icon(Icons.Filled.Add, null, Modifier.size(15.dp), tint = c)
+            Text("Add", fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = c)
         }
     }
 }

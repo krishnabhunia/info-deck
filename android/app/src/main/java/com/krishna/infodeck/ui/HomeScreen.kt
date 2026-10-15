@@ -88,6 +88,8 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -111,7 +113,8 @@ fun HomeScreen(
     onShareCard: (Long) -> Unit = {},
     onUpcoming: () -> Unit,
     onSettings: () -> Unit,
-    onCategories: () -> Unit
+    onCategories: () -> Unit,
+    onTags: () -> Unit = {}
 ) {
     val state by vm.home.collectAsState()
     val settings = state.settings
@@ -146,18 +149,10 @@ fun HomeScreen(
         snackbarHost = { SnackbarHost(snackbar) },
         topBar = {
             if (selectionMode) {
-                TopAppBar(
-                    title = { Text("${selection.size} selected") },
-                    navigationIcon = {
-                        IconButton(onClick = { vm.clearSelection() }) { Icon(Icons.Filled.Close, "Close") }
-                    },
-                    actions = {
-                        IconButton(onClick = { vm.selectAllVisible() }) { Icon(Icons.Filled.DoneAll, "Select all") }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = PrimaryDark, titleContentColor = Color.White,
-                        navigationIconContentColor = Color.White, actionIconContentColor = Color.White
-                    )
+                DeckHeader(
+                    title = "${selection.size} selected",
+                    onBack = { vm.clearSelection() }, backIcon = Icons.Filled.Close, backLabel = "Close",
+                    actions = { HeaderIcon(Icons.Filled.DoneAll, "Select all") { vm.selectAllVisible() } }
                 )
             } else if (searching) {
                 SlimTopBar(
@@ -166,16 +161,24 @@ fun HomeScreen(
                     onSearchClose = { searching = false; vm.search.value = "" }
                 )
             } else {
-                SlimTopBar(
-                    title = "InfoDeck",
-                    subtitle = if (overdueCount > 0) "${state.allRows.size} cards - $overdueCount need attention"
-                    else "${state.allRows.size} cards - all on track",
-                    onSearchOpen = { searching = true },
+                val counts = mapOf(
+                    com.krishna.infodeck.core.HomeChip.OVERDUE to overdueCount,
+                    com.krishna.infodeck.core.HomeChip.MONTH to state.allRows.count {
+                        it.keyDate != null && !it.keyDate.isBefore(today) &&
+                            java.time.temporal.ChronoUnit.DAYS.between(today, it.keyDate) <= 31
+                    },
+                    com.krishna.infodeck.core.HomeChip.NO_ALARM to state.allRows.count { !it.hasReminder }
+                )
+                val shown = com.krishna.infodeck.core.ChipRules.visible(counts)
+                DeckHomeHero(
+                    total = state.allRows.size,
+                    overdue = overdueCount,
+                    onSearch = { searching = true },
+                    onFilters = { showGroup = true },
                     actions = {
+                        HeroAction(Icons.Filled.Notifications, "Upcoming", onUpcoming)
                         Box {
-                            IconButton(onClick = { overflow = true }) {
-                                Icon(Icons.Filled.MoreVert, "More", tint = Color.White)
-                            }
+                            HeroAction(Icons.Filled.MoreVert, "More") { overflow = true }
                             DropdownMenu(expanded = overflow, onDismissRequest = { overflow = false }) {
                                 DropdownMenuItem(text = { Text("Select cards") }, onClick = {
                                     overflow = false
@@ -183,7 +186,23 @@ fun HomeScreen(
                                 })
                                 DropdownMenuItem(text = { Text("Collapse all") },
                                     onClick = { overflow = false; vm.setOpenSection("") })
+                                DropdownMenuItem(text = { Text("Manage categories") }, onClick = { overflow = false; onCategories() })
                                 DropdownMenuItem(text = { Text("Settings") }, onClick = { overflow = false; onSettings() })
+                            }
+                        }
+                    },
+                    stats = {
+                        shown.forEach { chip ->
+                            val (label, h, on) = when (chip) {
+                                com.krishna.infodeck.core.HomeChip.OVERDUE -> Triple("Overdue", com.krishna.infodeck.core.Hue.ROSE,
+                                    settings.filter.expiry == ExpiryFilter.OVERDUE)
+                                com.krishna.infodeck.core.HomeChip.MONTH -> Triple("This month", com.krishna.infodeck.core.Hue.AMBER,
+                                    settings.filter.expiry == ExpiryFilter.D30)
+                                com.krishna.infodeck.core.HomeChip.NO_ALARM -> Triple("No reminder", com.krishna.infodeck.core.Hue.SLATE,
+                                    settings.filter.reminder == ReminderFilter.NONE)
+                            }
+                            HeroStat(counts[chip] ?: 0, label, h, on, Modifier.weight(1f)) {
+                                vm.setFilter(com.krishna.infodeck.core.HomeStatRules.toggle(settings.filter, chip))
                             }
                         }
                     }
@@ -191,24 +210,19 @@ fun HomeScreen(
             }
         },
         floatingActionButton = {
-            if (!selectionMode) {
-                Box(
-                    Modifier
-                        .size(52.dp)
-                        .clip(RoundedCornerShape(26.dp))
-                        .background(BrandGradient)
-                        .clickable {
-                            val open = state.sections.firstOrNull { it.key == settings.openSection }
-                            onNewCard(open?.categoryId)
-                        },
-                    contentAlignment = Alignment.Center
-                ) { Icon(Icons.Filled.Add, "New card", Modifier.size(26.dp), tint = Color.White) }
+            if (!selectionMode) DeckFab {
+                val open = state.sections.firstOrNull { it.key == settings.openSection }
+                onNewCard(open?.categoryId)
             }
         },
         bottomBar = {
             if (!selectionMode) InfoBottomBar(
                 selected = 0, overdue = state.allRows.count { it.isOverdue(today) },
-                onHome = {}, onUpcoming = onUpcoming, onSettings = onSettings
+                onHome = {}, onUpcoming = onUpcoming, onSettings = onSettings, onTags = onTags,
+                onNew = {
+                    val open = state.sections.firstOrNull { it.key == settings.openSection }
+                    onNewCard(open?.categoryId)
+                }
             )
             else SelectionBar(
                 enabled = selection.isNotEmpty(),
@@ -238,48 +252,11 @@ fun HomeScreen(
         ) {
 
             if (!selectionMode && !searching) {
-                val counts = mapOf(
-                    com.krishna.infodeck.core.HomeChip.OVERDUE to overdueCount,
-                    com.krishna.infodeck.core.HomeChip.MONTH to state.allRows.count {
-                        it.keyDate != null && !it.keyDate.isBefore(today) &&
-                            java.time.temporal.ChronoUnit.DAYS.between(today, it.keyDate) <= 31
-                    },
-                    com.krishna.infodeck.core.HomeChip.NO_ALARM to state.allRows.count { !it.hasReminder }
-                )
-                val shown = com.krishna.infodeck.core.ChipRules.visible(counts)
-                FilterStrip(
-                    chips = shown.map { chip ->
-                        Triple(
-                            chip.label, counts[chip] ?: 0,
-                            when (chip) {
-                                com.krishna.infodeck.core.HomeChip.OVERDUE -> settings.filter.expiry == ExpiryFilter.OVERDUE
-                                com.krishna.infodeck.core.HomeChip.MONTH -> settings.filter.expiry == ExpiryFilter.D30
-                                com.krishna.infodeck.core.HomeChip.NO_ALARM -> settings.filter.reminder == ReminderFilter.NONE
-                            }
-                        )
-                    },
-                    onChip = { i ->
-                        when (shown[i]) {
-                            com.krishna.infodeck.core.HomeChip.OVERDUE -> vm.setFilter(
-                                settings.filter.copy(
-                                    expiry = if (settings.filter.expiry == ExpiryFilter.OVERDUE) ExpiryFilter.ANY else ExpiryFilter.OVERDUE
-                                )
-                            )
-                            com.krishna.infodeck.core.HomeChip.MONTH -> vm.setFilter(
-                                settings.filter.copy(
-                                    expiry = if (settings.filter.expiry == ExpiryFilter.D30) ExpiryFilter.ANY else ExpiryFilter.D30
-                                )
-                            )
-                            com.krishna.infodeck.core.HomeChip.NO_ALARM -> vm.setFilter(
-                                settings.filter.copy(
-                                    reminder = if (settings.filter.reminder == ReminderFilter.NONE) ReminderFilter.ANY else ReminderFilter.NONE
-                                )
-                            )
-                        }
-                    },
-                    trailingLabel = "View",
-                    trailingBadge = settings.filter.activeGroups,
-                    onTrailing = { showGroup = true }
+                HomeToolbar(
+                    groupLabel = settings.groupBy.label,
+                    activeFilters = settings.filter.activeGroups,
+                    onView = { showGroup = true },
+                    onFilter = { showFilter = true }
                 )
             }
 
@@ -644,48 +621,55 @@ private fun SectionCard(
     onEdit: (CardRow) -> Unit = {},
     onShare: (CardRow) -> Unit = {}
 ) {
+    val p = deck
     val rotation by animateFloatAsState(if (open) 180f else 0f, label = "chev")
-    Card(
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    val h = section.colorIndex?.let { com.krishna.infodeck.core.Hues.forCategory(it) } ?: com.krishna.infodeck.core.Hue.INDIGO
+    val hs = p.hue(h)
+    val shape = RoundedCornerShape(16.dp)
+    // Sunrise: an open section is a heading on the page with its wallet cards below.
+    val openOnPage = p.walletRows && open
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .then(
+                if (openOnPage) Modifier
+                else Modifier
+                    .clip(shape)
+                    .background(p.surface)
+                    .border(
+                        if (open) 1.5.dp else 1.dp,
+                        if (open) hs.glyph.copy(alpha = if (p.dark) 0.7f else 0.45f) else p.line,
+                        shape
+                    )
+            )
     ) {
         Row(
             Modifier
                 .fillMaxWidth()
-                .background(if (open) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f) else Color.Transparent)
+                .background(if (open && !openOnPage) (if (p.dark) hs.tint else hs.tint.copy(alpha = 0.55f)) else Color.Transparent)
                 .clickable { onToggle() }
-                .heightIn(min = 52.dp)
-                .padding(end = 10.dp),
+                .heightIn(min = 50.dp)
+                .padding(start = 8.dp, end = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(
-                Modifier
-                    .width(5.dp)
-                    .height(46.dp)
-                    .background(
-                        section.colorIndex?.let { categoryColor(it) } ?: MaterialTheme.colorScheme.primary,
-                        RoundedCornerShape(topEnd = 3.dp, bottomEnd = 3.dp)
-                    )
-            )
+            HueTile(glyphIcon(com.krishna.infodeck.core.Hues.glyphFor(section.title)), h, size = 30)
             Spacer(Modifier.width(9.dp))
-            Column(Modifier.weight(1f).padding(vertical = 8.dp)) {
-                Text(section.title, fontSize = 14.5.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(section.subtitle, fontSize = 11.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Column(Modifier.weight(1f).padding(vertical = 7.dp)) {
+                Text(section.title, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                if (!open) Text(section.subtitle, fontSize = 11.sp, color = p.ink2, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             Pill(
                 if (filterActive && section.totalCount != section.cards.size)
                     "${section.cards.size} of ${section.totalCount}" else "${section.cards.size}",
-                MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.onSurfaceVariant
+                p.surface2, p.ink2
             )
-            Spacer(Modifier.width(4.dp))
+            Spacer(Modifier.width(2.dp))
             Icon(Icons.Filled.ExpandMore, if (open) "Collapse" else "Expand",
-                Modifier.size(22.dp).rotate(rotation), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                Modifier.size(22.dp).rotate(rotation), tint = p.ink2)
         }
 
         AnimatedVisibility(visible = open) {
-            Column(Modifier.padding(horizontal = 10.dp, vertical = 8.dp)) {
+            Column(Modifier.padding(horizontal = if (openOnPage) 0.dp else 8.dp, vertical = 6.dp)) {
                 section.cards.forEach { row ->
                     MiniCard(
                         row = row,
@@ -702,18 +686,18 @@ private fun SectionCard(
                         onEdit = { onEdit(row) },
                         onShare = { onShare(row) }
                     )
-                    Spacer(Modifier.height(density.gapDp.dp))
+                    Spacer(Modifier.height(density.gapDp.dp + if (p.walletRows) 2.dp else 0.dp))
                 }
                 if (section.categoryId != null && !selectionMode) {
                     Row(
-                        Modifier.fillMaxWidth().clickable { onAddHere() }.padding(vertical = 8.dp),
+                        Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable { onAddHere() }.padding(vertical = 8.dp),
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(Icons.Filled.Add, null, Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
+                        Icon(Icons.Filled.Add, null, Modifier.size(16.dp), tint = if (p.dark) hs.glyph else hs.onTint)
                         Spacer(Modifier.width(5.dp))
                         Text("Add card to ${section.title}", fontSize = 12.5.sp,
-                            fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, maxLines = 1)
+                            fontWeight = FontWeight.Bold, color = if (p.dark) hs.glyph else hs.onTint, maxLines = 1)
                     }
                 }
             }
@@ -735,50 +719,96 @@ private fun MiniCard(
     onShare: () -> Unit = {},
     hit: com.krishna.infodeck.core.SearchHit? = null
 ) {
+    val p = deck
     val overdue = row.isOverdue(today)
     val d = density
     val showChips = d.showChips || expanded
     val showMeta = d.showMeta || expanded
     val rowTap: () -> Unit = if (expandable && !selectionMode) onExpand else onClick
+    val catHue = com.krishna.infodeck.core.Hues.forCategory(row.colorIndex)
+    val ch = p.hue(catHue)
+    val rose = p.hue(com.krishna.infodeck.core.Hue.ROSE)
+    // Sunrise: every card is a gradient wallet card; overdue ones turn rose-red.
+    val wallet = p.walletRows
+    val onCard = if (wallet) Color.White else MaterialTheme.colorScheme.onSurface
+    val sub = if (wallet) Color.White.copy(alpha = 0.88f) else p.ink2
+    val shape = RoundedCornerShape(if (wallet) 18.dp else 14.dp)
     Column(
         Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
+            .then(if (wallet) Modifier.androidxShadow(if (expanded) 10.dp else 6.dp, shape, if (overdue) rose.glyph else ch.glyph)
+                  else if (!p.dark && flat) Modifier.androidxShadow(3.dp, shape, p.brand.first()) else Modifier)
+            .clip(shape)
             .background(
                 when {
-                    selected -> MaterialTheme.colorScheme.primaryContainer
-                    overdue -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.45f)
-                    flat -> MaterialTheme.colorScheme.surface
-                    else -> Color.Transparent
+                    wallet && overdue -> Brush.linearGradient(listOf(rose.glyph, Color(0xFFFF8A65)))
+                    wallet -> Brush.linearGradient(listOf(ch.glyph, ch.glyph2))
+                    selected -> androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.primaryContainer)
+                    overdue -> androidx.compose.ui.graphics.SolidColor(rose.tint)
+                    else -> androidx.compose.ui.graphics.SolidColor(p.surface)
                 }
             )
-            .border(
-                if (expanded) 1.5.dp else 1.dp,
-                when {
-                    selected -> MaterialTheme.colorScheme.primary
-                    expanded -> hue(com.krishna.infodeck.core.Hue.INDIGO)
-                    else -> MaterialTheme.colorScheme.outlineVariant
-                },
-                RoundedCornerShape(14.dp)
+            .then(
+                if (wallet) Modifier.border(if (selected) 3.dp else 0.dp, if (selected) p.ink else Color.Transparent, shape)
+                else Modifier.border(
+                    if (expanded || selected) 1.5.dp else 1.dp,
+                    when {
+                        selected -> MaterialTheme.colorScheme.primary
+                        expanded -> ch.glyph
+                        overdue -> rose.glyph.copy(alpha = 0.35f)
+                        else -> p.line
+                    },
+                    shape
+                )
             )
+            .then(if (p.dark && !wallet) Modifier.drawBehind {
+                drawRect(if (overdue) rose.glyph else ch.glyph, size = androidx.compose.ui.geometry.Size(3.dp.toPx(), size.height))
+            } else Modifier)
+            .then(if (wallet) Modifier.drawBehind {
+                drawCircle(Color.White.copy(alpha = 0.12f), radius = size.height * 0.9f,
+                    center = androidx.compose.ui.geometry.Offset(size.width - size.height * 0.2f, -size.height * 0.15f))
+            } else Modifier)
             .combinedClickable(onClick = rowTap, onLongClick = onLong)
-            .padding(horizontal = 10.dp, vertical = if (d == com.krishna.infodeck.core.Density.COMPACT) 5.dp else 8.dp)
+            .padding(
+                horizontal = 10.dp,
+                vertical = when {
+                    d == com.krishna.infodeck.core.Density.COMPACT -> 5.dp
+                    wallet -> 11.dp
+                    else -> 8.dp
+                }
+            )
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             if (!selectionMode) {
-                HueTile(
+                if (wallet) Box(
+                    Modifier.size(scaledDp(d.tileDp)).clip(RoundedCornerShape((d.tileDp / 2.9f).dp))
+                        .background(Color.White.copy(alpha = 0.22f)).border(1.dp, Color.White.copy(alpha = 0.35f), RoundedCornerShape((d.tileDp / 2.9f).dp))
+                        .clickable(onClick = onClick),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(glyphIcon(com.krishna.infodeck.core.Hues.glyphFor(row.categoryName)), null,
+                        Modifier.size((d.tileDp * 0.48f).dp), tint = Color.White)
+                }
+                else HueTile(
                     glyphIcon(com.krishna.infodeck.core.Hues.glyphFor(row.categoryName)),
-                    com.krishna.infodeck.core.Hues.forCategory(row.colorIndex),
+                    catHue,
                     size = d.tileDp.toInt(),
                     modifier = Modifier.clickable(onClick = onClick)
                 )
                 Spacer(Modifier.width(if (d == com.krishna.infodeck.core.Density.COMPACT) 8.dp else 10.dp))
             }
             Column(Modifier.weight(1f)) {
-                Text(
-                    row.label, fontSize = d.titleSp.sp, fontWeight = FontWeight.Bold, maxLines = 1,
-                    overflow = TextOverflow.Ellipsis, modifier = Modifier.clickable(onClick = onClick)
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        row.label, fontSize = d.titleSp.sp, fontWeight = FontWeight.Bold, maxLines = 1, color = onCard,
+                        overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false).clickable(onClick = onClick)
+                    )
+                    if (wallet && overdue) {
+                        Spacer(Modifier.width(6.dp))
+                        Text("OVERDUE", fontSize = 8.5.sp, fontWeight = FontWeight.ExtraBold, color = rose.glyph,
+                            modifier = Modifier.clip(RoundedCornerShape(5.dp)).background(Color.White).padding(horizontal = 5.dp, vertical = 1.dp))
+                    }
+                }
                 if (hit != null) {
                     HitLine(hit)
                 } else if (showMeta) {
@@ -787,39 +817,44 @@ private fun MiniCard(
                         row.firstDataName != null -> "${row.firstDataName} ${row.firstDataValue}"
                         else -> "No date"
                     }
-                    Text(line, fontSize = 11.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    Text(line, fontSize = 11.5.sp, color = if (overdue && !wallet) rose.onTint else sub,
+                        fontWeight = if (overdue) FontWeight.Bold else FontWeight.Normal,
                         maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
                 if (showChips) Row(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    if (showCategoryChip) Pill(
-                        row.categoryName,
-                        MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer
-                    )
+                    val wc = Color.White.copy(alpha = 0.22f)
+                    if (showCategoryChip) Pill(row.categoryName, if (wallet) wc else ch.tint, if (wallet) Color.White else ch.onTint)
                     row.tagNames.take(2).forEach { t ->
-                        Pill("#" + t, MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.onSurfaceVariant)
+                        val tg = p.hue(com.krishna.infodeck.core.Hue.VIOLET)
+                        Pill("#" + t, if (wallet) wc else tg.tint, if (wallet) Color.White else tg.onTint)
                     }
-                    if (row.fileCount > 0) Pill(
-                        if (row.fileCount == 1) "1 file" else "${row.fileCount} files",
-                        MaterialTheme.colorScheme.tertiaryContainer, MaterialTheme.colorScheme.onTertiaryContainer
-                    )
+                    if (row.fileCount > 0) {
+                        val fl = p.hue(com.krishna.infodeck.core.Hue.PURPLE)
+                        Pill(if (row.fileCount == 1) "1 file" else "${row.fileCount} files",
+                            if (wallet) wc else fl.tint, if (wallet) Color.White else fl.onTint)
+                    }
+                    val am = p.hue(com.krishna.infodeck.core.Hue.AMBER)
                     if (row.nextRingAt != null) Pill(
                         "Rings ${Fmt.short(row.nextRingAt.toLocalDate())} - ${Fmt.relativeShort(row.nextRingAt.toLocalDate(), today)}",
-                        MaterialTheme.colorScheme.secondaryContainer, MaterialTheme.colorScheme.onSecondaryContainer
-                    ) else Pill(
-                        "No reminder",
-                        MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                        if (wallet) wc else am.tint, if (wallet) Color.White else am.onTint
+                    ) else Pill("No reminder", if (wallet) wc else p.surface2, if (wallet) Color.White else p.ink2)
                 }
             }
             if (selectionMode) {
-                Checkbox(checked = selected, onCheckedChange = { onClick() })
+                Checkbox(
+                    checked = selected, onCheckedChange = { onClick() },
+                    colors = if (wallet) androidx.compose.material3.CheckboxDefaults.colors(
+                        checkedColor = Color.White, uncheckedColor = Color.White, checkmarkColor = ch.glyph
+                    ) else androidx.compose.material3.CheckboxDefaults.colors()
+                )
             } else {
                 Spacer(Modifier.width(6.dp))
                 Box(Modifier.clickable(onClick = onClick)) {
                     CountdownRing(
                         row.keyDate?.let { java.time.temporal.ChronoUnit.DAYS.between(today, it) },
                         compact = d == com.krishna.infodeck.core.Density.COMPACT,
-                        sizeDp = d.ringDp
+                        sizeDp = d.ringDp,
+                        onColour = wallet
                     )
                 }
                 if (expandable) {
@@ -827,24 +862,28 @@ private fun MiniCard(
                     Icon(
                         if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
                         if (expanded) "Collapse" else "Expand", Modifier.size(18.dp),
-                        tint = if (expanded) hue(com.krishna.infodeck.core.Hue.INDIGO) else Hint
+                        tint = when {
+                            wallet -> Color.White
+                            expanded -> ch.glyph
+                            else -> p.hint
+                        }
                     )
                 }
             }
         }
         if (expanded && !selectionMode) {
-            Divider(Modifier.padding(top = 8.dp, bottom = 6.dp), color = MaterialTheme.colorScheme.outlineVariant)
+            Divider(Modifier.padding(top = 8.dp, bottom = 6.dp), color = if (wallet) Color.White.copy(alpha = 0.35f) else p.line)
             com.krishna.infodeck.core.ExpandRules.visibleValues(row.dataPreview).forEach { (k, v) ->
                 Row(Modifier.fillMaxWidth().padding(vertical = 3.dp)) {
-                    Text(k, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(k, fontSize = 12.sp, color = sub)
                     Spacer(Modifier.weight(1f))
-                    Text(v, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(v, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = onCard, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
             }
             Row(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-                ExpandAction(Icons.Filled.OpenInNew, "Open", false, onClick)
-                ExpandAction(Icons.Filled.Edit, "Edit", false, onEdit)
-                ExpandAction(Icons.Filled.Share, "Share", true, onShare)
+                ExpandAction(Icons.Filled.OpenInNew, "Open", false, wallet, ch.glyph, onClick)
+                ExpandAction(Icons.Filled.Edit, "Edit", false, wallet, ch.glyph, onEdit)
+                ExpandAction(Icons.Filled.Share, "Share", true, wallet, ch.glyph, onShare)
             }
         }
     }
@@ -852,21 +891,36 @@ private fun MiniCard(
 
 @Composable
 private fun androidx.compose.foundation.layout.RowScope.ExpandAction(
-    icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, primary: Boolean, onClick: () -> Unit
+    icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, primary: Boolean,
+    wallet: Boolean, cardColour: Color, onClick: () -> Unit
 ) {
+    val p = deck
+    val g = p.hue(com.krishna.infodeck.core.Hue.GREEN)
+    val pri = p.hue(com.krishna.infodeck.core.Hue.INDIGO)
+    val bg: Brush = when {
+        wallet && primary -> androidx.compose.ui.graphics.SolidColor(Color.White)
+        wallet -> androidx.compose.ui.graphics.SolidColor(Color.White.copy(alpha = 0.22f))
+        primary -> Brush.linearGradient(listOf(g.glyph, g.glyph2))
+        else -> androidx.compose.ui.graphics.SolidColor(pri.tint)
+    }
+    val fg = when {
+        wallet && primary -> cardColour
+        wallet -> Color.White
+        primary -> if (p.dark) Color(0xFF0A0E1F) else Color.White
+        else -> if (p.dark) pri.glyph else pri.onTint
+    }
     Row(
         Modifier
             .weight(1f)
             .height(34.dp)
-            .clip(RoundedCornerShape(11.dp))
-            .background(if (primary) tint(com.krishna.infodeck.core.Hue.GREEN) else MaterialTheme.colorScheme.surfaceVariant)
+            .clip(RoundedCornerShape(17.dp))
+            .background(bg)
             .clickable(onClick = onClick),
         horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(icon, null, Modifier.size(14.dp), tint = if (primary) onTint(com.krishna.infodeck.core.Hue.GREEN) else MaterialTheme.colorScheme.onSurfaceVariant)
+        Icon(icon, null, Modifier.size(14.dp), tint = fg)
         Spacer(Modifier.width(5.dp))
-        Text(label, fontSize = 11.sp, fontWeight = FontWeight.ExtraBold,
-            color = if (primary) onTint(com.krishna.infodeck.core.Hue.GREEN) else MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(label, fontSize = 11.sp, fontWeight = FontWeight.ExtraBold, color = fg)
     }
 }
 
@@ -875,8 +929,11 @@ private fun SelectionBar(
     enabled: Boolean, onMove: () -> Unit, onReminders: () -> Unit,
     onDuplicate: () -> Unit, onMore: () -> Unit
 ) {
+    val p = deck
     Row(
-        Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).padding(8.dp),
+        Modifier.fillMaxWidth()
+            .background(if (p.dark) androidx.compose.ui.graphics.SolidColor(p.surface) else Brush.linearGradient(p.brand))
+            .padding(8.dp),
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
         SelAction(Icons.Filled.DriveFileMove, "Move", enabled, onMove)
@@ -891,10 +948,12 @@ private fun SelAction(
     icon: androidx.compose.ui.graphics.vector.ImageVector, label: String,
     enabled: Boolean, onClick: () -> Unit, danger: Boolean = false
 ) {
+    val p = deck
+    val base = if (p.dark) p.hue(com.krishna.infodeck.core.Hue.INDIGO).glyph else Color.White
     val tint = when {
-        !enabled -> MaterialTheme.colorScheme.outline
+        !enabled -> base.copy(alpha = 0.45f)
         danger -> MaterialTheme.colorScheme.error
-        else -> MaterialTheme.colorScheme.primary
+        else -> base
     }
     Column(
         Modifier.clickable(enabled = enabled) { onClick() }.padding(horizontal = 12.dp, vertical = 4.dp),
@@ -902,6 +961,61 @@ private fun SelAction(
     ) {
         Icon(icon, label, Modifier.size(20.dp), tint = tint)
         Text(label, fontSize = 11.5.sp, fontWeight = FontWeight.Bold, color = tint)
+    }
+}
+
+/** Header action on the Home hero — white on colour, ink on the Sunrise page. */
+@Composable
+private fun HeroAction(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, onClick: () -> Unit) {
+    val p = deck
+    if (p.heroOnColour) IconButton(onClick = onClick) {
+        Icon(icon, label, tint = if (p.dark) p.ink else Color.White)
+    } else Box(
+        Modifier.padding(horizontal = 3.dp).size(36.dp).androidxShadow(4.dp, RoundedCornerShape(18.dp), p.brand.first())
+            .clip(RoundedCornerShape(18.dp)).background(p.surface).clickable { onClick() },
+        contentAlignment = Alignment.Center
+    ) { Icon(icon, label, Modifier.size(19.dp), tint = p.ink) }
+}
+
+/** "Grouped by Category · View · Filter" under the hero (design 1.15.0.D1 frame 02). */
+@Composable
+private fun HomeToolbar(groupLabel: String, activeFilters: Int, onView: () -> Unit, onFilter: () -> Unit) {
+    val p = deck
+    Row(
+        Modifier.fillMaxWidth().padding(start = 14.dp, end = 12.dp, top = 10.dp, bottom = 6.dp),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Text(
+            androidx.compose.ui.text.buildAnnotatedString {
+                append("Grouped by ")
+                withStyle(androidx.compose.ui.text.SpanStyle(fontWeight = FontWeight.Bold, color = p.ink)) { append(groupLabel) }
+            },
+            fontSize = 11.5.sp, color = p.ink2, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f)
+        )
+        ToolbarChip(Icons.Filled.ViewAgenda, "View", 0, onView)
+        ToolbarChip(Icons.Filled.FilterList, "Filter", activeFilters, onFilter)
+    }
+}
+
+@Composable
+private fun ToolbarChip(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, badge: Int, onClick: () -> Unit) {
+    val p = deck
+    val pri = p.hue(com.krishna.infodeck.core.Hue.INDIGO)
+    val c = if (p.dark) pri.glyph else pri.onTint
+    Row(
+        Modifier.height(30.dp).clip(RoundedCornerShape(15.dp)).background(p.surface)
+            .border(1.dp, if (badge > 0) pri.glyph else p.line, RoundedCornerShape(15.dp))
+            .clickable { onClick() }.padding(horizontal = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(icon, null, Modifier.size(15.dp), tint = c)
+        Spacer(Modifier.width(4.dp))
+        Text(label, fontSize = 11.5.sp, fontWeight = FontWeight.Bold, color = c)
+        if (badge > 0) {
+            Spacer(Modifier.width(4.dp))
+            Text("$badge", fontSize = 9.5.sp, fontWeight = FontWeight.ExtraBold, color = if (p.dark) Color(0xFF0A0E1F) else Color.White,
+                modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(pri.glyph).padding(horizontal = 5.dp))
+        }
     }
 }
 
@@ -937,146 +1051,6 @@ private fun EmptyState(hasAnyCard: Boolean, filterActive: Boolean, onClear: () -
     }
 }
 
-/** Gradient hero with the three stat pills and the floating search pill (design 1.2.D1 S1). */
-@Composable
-private fun HomeHero(
-    overdue: Int, thisMonth: Int, noReminder: Int, total: Int,
-    filter: com.krishna.infodeck.core.FilterState,
-    onSearch: () -> Unit,
-    onUpcoming: () -> Unit,
-    onOverflow: () -> Unit,
-    overflowOpen: Boolean,
-    onOverflowDismiss: () -> Unit,
-    onCategories: () -> Unit,
-    onSettings: () -> Unit,
-    onSelect: () -> Unit,
-    onCollapse: () -> Unit,
-    onStat: (com.krishna.infodeck.core.FilterState) -> Unit
-) {
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(bottomStart = 26.dp, bottomEnd = 26.dp))
-            .background(BrandGradient)
-            .padding(start = 16.dp, end = 8.dp, top = 34.dp, bottom = 14.dp)
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text("Your cards", fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, color = Color.White)
-                Text(
-                    if (overdue > 0) "$total cards - $overdue need attention" else "$total cards - all on track",
-                    fontSize = 12.sp, color = Color.White.copy(alpha = 0.92f)
-                )
-            }
-            IconButton(onClick = onUpcoming) { Icon(Icons.Filled.Notifications, "Upcoming", tint = Color.White) }
-            Box {
-                IconButton(onClick = onOverflow) { Icon(Icons.Filled.MoreVert, "More", tint = Color.White) }
-                DropdownMenu(expanded = overflowOpen, onDismissRequest = onOverflowDismiss) {
-                    DropdownMenuItem(text = { Text("Manage categories") }, onClick = { onOverflowDismiss(); onCategories() })
-                    DropdownMenuItem(text = { Text("Select cards") }, onClick = { onOverflowDismiss(); onSelect() })
-                    DropdownMenuItem(text = { Text("Collapse all") }, onClick = { onOverflowDismiss(); onCollapse() })
-                    DropdownMenuItem(text = { Text("Settings") }, onClick = { onOverflowDismiss(); onSettings() })
-                }
-            }
-        }
-
-        Row(Modifier.padding(top = 12.dp, end = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            StatPill("Overdue", overdue, alert = overdue > 0, modifier = Modifier.weight(1f)) {
-                onStat(filter.copy(expiry = com.krishna.infodeck.core.ExpiryFilter.OVERDUE))
-            }
-            StatPill("This month", thisMonth, alert = false, modifier = Modifier.weight(1f)) {
-                onStat(filter.copy(expiry = com.krishna.infodeck.core.ExpiryFilter.D30))
-            }
-            StatPill("No reminder", noReminder, alert = false, modifier = Modifier.weight(1f)) {
-                onStat(filter.copy(reminder = ReminderFilter.NONE))
-            }
-        }
-
-        Row(
-            Modifier
-                .padding(top = 14.dp, end = 8.dp)
-                .fillMaxWidth()
-                .height(42.dp)
-                .clip(RoundedCornerShape(21.dp))
-                .background(MaterialTheme.colorScheme.surface)
-                .clickable { onSearch() }
-                .padding(horizontal = 14.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(Icons.Filled.Search, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
-            Spacer(Modifier.width(8.dp))
-            Text("Search cards, tags, files", fontSize = 13.5.sp, color = Hint)
-        }
-    }
-}
-
-@Composable
-private fun StatPill(label: String, value: Int, alert: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit) {
-    Column(
-        modifier
-            .clip(RoundedCornerShape(14.dp))
-            .background(if (alert) Color.White else Color.White.copy(alpha = 0.16f))
-            .clickable { onClick() }
-            .padding(horizontal = 9.dp, vertical = 8.dp)
-    ) {
-        Text(
-            "$value", fontSize = 19.sp, fontWeight = FontWeight.ExtraBold,
-            color = if (alert) MaterialTheme.colorScheme.error else Color.White
-        )
-        Text(
-            label, fontSize = 10.5.sp, maxLines = 1, overflow = TextOverflow.Ellipsis,
-            color = if (alert) MaterialTheme.colorScheme.error else Color.White.copy(alpha = 0.92f)
-        )
-    }
-}
-
-/** Home - Upcoming - Tags - Settings, always one tap away. */
-@Composable
-private fun HomeBottomBar(onUpcoming: () -> Unit, onTags: () -> Unit, onSettings: () -> Unit) {
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface)
-            .padding(vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        NavItem(Icons.Filled.Home, "Home", true) {}
-        NavItem(Icons.Filled.DateRange, "Upcoming", false, onUpcoming)
-        NavItem(Icons.Filled.Sell, "Tags", false, onTags)
-        NavItem(Icons.Filled.Settings, "Settings", false, onSettings)
-    }
-}
-
-@Composable
-private fun NavItem(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    label: String, selected: Boolean, onClick: () -> Unit
-) {
-    Column(
-        Modifier.clickable { onClick() }.padding(horizontal = 10.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Box(
-            Modifier
-                .size(width = 52.dp, height = 28.dp)
-                .clip(RoundedCornerShape(14.dp))
-                .background(if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                icon, label, Modifier.size(20.dp),
-                tint = if (selected) MaterialTheme.colorScheme.primary else Hint
-            )
-        }
-        Text(
-            label, fontSize = 10.5.sp, fontWeight = FontWeight.Bold,
-            color = if (selected) MaterialTheme.colorScheme.primary else Hint
-        )
-    }
-}
-
-
 /** B12 — the meta line becomes the matching field: name, value with the hit highlighted, and a kind badge. */
 @Composable
 private fun HitLine(hit: com.krishna.infodeck.core.SearchHit) {
@@ -1086,7 +1060,7 @@ private fun HitLine(hit: com.krishna.infodeck.core.SearchHit) {
         withStyle(androidx.compose.ui.text.SpanStyle(color = Ink2)) { append(f.name); append(' ') }
         if (hit.start >= 0 && hit.end <= shown.length) {
             withStyle(androidx.compose.ui.text.SpanStyle(fontWeight = FontWeight.Bold)) { append(shown.substring(0, hit.start)) }
-            withStyle(androidx.compose.ui.text.SpanStyle(fontWeight = FontWeight.Bold, background = Color(0xFFFFE9A8))) { append(shown.substring(hit.start, hit.end)) }
+            withStyle(androidx.compose.ui.text.SpanStyle(fontWeight = FontWeight.Bold, background = deck.hue(com.krishna.infodeck.core.Hue.AMBER).tint, color = deck.hue(com.krishna.infodeck.core.Hue.AMBER).onTint)) { append(shown.substring(hit.start, hit.end)) }
             withStyle(androidx.compose.ui.text.SpanStyle(fontWeight = FontWeight.Bold)) { append(shown.substring(hit.end)) }
         } else withStyle(androidx.compose.ui.text.SpanStyle(fontWeight = FontWeight.Bold)) { append(shown) }
     }

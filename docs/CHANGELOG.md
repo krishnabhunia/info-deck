@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased — 2.0 complete redesign: three themes (N64, design 1.15.0.D1)
+- **Aurora Pop** is the new default light theme, **Neon Night** the dark theme and **Sunrise Wallet** a custom theme you can pick; System follows the phone (Aurora by day, Neon at night). Saved 1.x theme choices keep their meaning.
+- Every screen gets a role-coloured header (status bar matched), a colourful Home hero with search and stats, themed section and card rows (Sunrise draws each card as a gradient wallet card), a four-tab bottom bar with Tags, and a category-coloured card hero with a big countdown.
+- Settings: colour tile per group, visual theme picker; Notifications and Exact alarms moved into the Reminders group; duplicate loose Manage tags row removed.
+- Bundled OFL fonts (Poppins, DM Sans, Fredoka, Nunito — Latin subsets, ≈ 500 KB) with licence texts.
+- New unit tests: `Release20Test` (20 cases).
+
 
 ## Unreleased — N63 · Restore protected-extension Design A (15-Oct-2026)
 - Restore PR #3's approved two-dialog file rename with a locked extension, a separate extension editor, and a mandatory unchecked acknowledgement box before any extension change (including case-only changes).
