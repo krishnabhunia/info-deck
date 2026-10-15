@@ -231,6 +231,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         prefs.setFollowSystem(true)
         prefs.setAutoCaps(true)
         prefs.setAutoCapsValues(true)
+        prefs.setBetaUpdates(false)
         prefs.setRingMinute(9 * 60)
         prefs.setVibrate(true)
         prefs.setSnooze(60)
