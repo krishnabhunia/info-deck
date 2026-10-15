@@ -1,7 +1,7 @@
 # Release process
 
 Everything below happens in [`.github/workflows/build.yml`](../.github/workflows/build.yml) — the one
-workflow for Windows, macOS and Android.
+workflow for Windows, macOS and Android. For automatic PR version commits without GitHub's bot-triggered approval prompts, configure the separate [repository-scoped GitHub App](ci-app-token.md). Its credentials are **not** APK signing keys.
 
 ## 1 · One-time setup — only Krishna can do this
 
@@ -35,7 +35,7 @@ workflow for Windows, macOS and Android.
 |---|---|---|
 | 1 | prepare | secret scan; release labels created if missing; platforms detected |
 | 2 | prepare | **exactly one** `release:*` label required — the run fails otherwise |
-| 3 | prepare | next version computed from `main`'s `VERSION` + the label, written back to the PR branch |
+| 3 | prepare | next version computed from `main`'s `VERSION` + the label, written back to the PR branch with the dedicated GitHub App installation token; if this token is not configured and a bump is needed, Prepare fails explicitly instead of creating an approval-required `GITHUB_TOKEN` run |
 | 4 | windows / macos | skipped — no source in those folders |
 | 5 | android | unit tests → signed release APK named `<next>-beta.<run>` → `aapt2` version check → certificate check |
 | 6 | package | one artifact `InfoDeck_<next>-beta.<run>.zip` (where `<next>` has three parts, e.g. `1.12.0`); GitHub **pre-release** `v<next>-beta.<run>` |

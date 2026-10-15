@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased — GitHub App token for automated PR version updates (CI-only)
+- Use an ephemeral, repository-scoped GitHub App token instead of the workflow's `GITHUB_TOKEN` to commit version bumps to PR branches, avoiding GitHub's approval-required bot-triggered CI reruns.
+- Fail explicitly if version changes require an unconfigured App; no automatic approval of untrusted PR workflows and no change to signing/release rules.
+- Add a pure CI wiring regression check and GitHub App setup guide (`docs/ci-app-token.md`).
+
 ## Unreleased — uploaded Markdown standards compliance (14-Oct-2026)
 - Enforce three-part `x.y.z` on future stable/beta versions and Android Gradle builds; add CI tests for required directories, single workflow and exact ZIP layout.
 - Audit all three supplied standards in `docs/compliance/2026-10-14-uploaded-md-audit.md`. Android automatic GitHub updates and optional beta enrollment remain unimplemented and are tracked for a separate approved design.

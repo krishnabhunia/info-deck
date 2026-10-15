@@ -18,7 +18,7 @@
 | `release:none` | docs, CI or tooling only | unchanged, nothing published |
 
 All new versions use three-part `x.y.z` notation. The workflow fails the PR until one label is present, then writes the new number into
-`VERSION` on the PR branch itself. Nobody edits `VERSION` by hand.
+`VERSION` on the PR branch itself using the dedicated GitHub App described in [docs/ci-app-token.md](docs/ci-app-token.md). If the App has not been configured and a bump is needed, the workflow fails; it does not use the default `GITHUB_TOKEN` for this push. Nobody edits `VERSION` by hand.
 
 ## What a PR produces
 

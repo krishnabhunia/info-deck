@@ -40,7 +40,7 @@ jobs:
   prepare:
     name: Prepare (version, platforms, secret scan)
     permissions:
-      contents: write
+      contents: read
       issues: write
       pull-requests: write
     runs-on: ubuntu-24.04
@@ -57,6 +57,9 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          # The PR branch must never be pushed with GITHUB_TOKEN: GitHub
+          # creates approval-required synchronize runs for those updates.
+          persist-credentials: false
 
       - name: Secret scan
         run: bash common/scripts/secret_scan.sh
@@ -135,25 +138,78 @@ jobs:
           CANDIDATE_VERSION: ${{ steps.ver.outputs.version }}
         run: python3 common/scripts/verify_standards.py --version "$CANDIDATE_VERSION"
 
-      - name: Write the bumped VERSION back to the PR branch
+      # Github's GITHUB_TOKEN creates approval-required pull_request/synchronize
+      # runs when it pushes the VERSION commit. Use a repository-scoped GitHub
+      # App installation token instead; never auto-approve outside PR workflows.
+      - name: Check GitHub App approval-safe automation wiring
+        run: python3 common/scripts/check_ci_token_workflow.py
+
+      - name: Check whether PR VERSION needs updating
+        id: version-update
         if: >-
           github.event_name == 'pull_request' &&
           github.event.pull_request.head.repo.full_name == github.repository
         env:
           HEAD_REF: ${{ github.head_ref }}
+          TARGET_VERSION: ${{ steps.ver.outputs.version }}
         run: |
-          want="${{ steps.ver.outputs.version }}"
+          set -euo pipefail
           git fetch -q origin "$HEAD_REF"
           have=$(git show "origin/$HEAD_REF:VERSION" | tr -d '[:space:]')
-          if [ "$have" != "$want" ]; then
-            git checkout -q -B "$HEAD_REF" "origin/$HEAD_REF"
-            echo "$want" > VERSION
-            git config user.name  "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git commit -qam "Bump VERSION to $want"
-            git push -q origin "HEAD:$HEAD_REF"
-            echo "VERSION on the PR branch updated: $have -> $want" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$have" = "$TARGET_VERSION" ]; then
+            echo "needed=false" >> "$GITHUB_OUTPUT"
+            echo "VERSION already matches $TARGET_VERSION; no bot update needed." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "needed=true" >> "$GITHUB_OUTPUT"
+            echo "VERSION needs to change from $have to $TARGET_VERSION." >> "$GITHUB_STEP_SUMMARY"
           fi
+
+      - name: Require GitHub App configuration for automatic VERSION updates
+        if: >-
+          steps.version-update.outputs.needed == 'true' &&
+          vars.INFODECK_CI_APP_CLIENT_ID == ''
+        run: |
+          echo "::error::Set INFODECK_CI_APP_CLIENT_ID (Actions variable) and INFODECK_CI_APP_PRIVATE_KEY (Actions secret), and install the GitHub App for this repository with Contents: Read and write. See docs/ci-app-token.md. GITHUB_TOKEN fallback is intentionally disabled to prevent approval-required bot runs."
+          exit 1
+
+      - name: Create repository-scoped GitHub App token
+        id: ci-app
+        if: >-
+          steps.version-update.outputs.needed == 'true' &&
+          vars.INFODECK_CI_APP_CLIENT_ID != ''
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.INFODECK_CI_APP_CLIENT_ID }}
+          private-key: ${{ secrets.INFODECK_CI_APP_PRIVATE_KEY }}
+          permission-contents: write
+
+      - name: Write the bumped VERSION back to the PR branch
+        if: >-
+          steps.version-update.outputs.needed == 'true' &&
+          steps.ci-app.outputs.token != ''
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+          TARGET_VERSION: ${{ steps.ver.outputs.version }}
+          GH_TOKEN: ${{ steps.ci-app.outputs.token }}
+          APP_SLUG: ${{ steps.ci-app.outputs.app-slug }}
+        run: |
+          set -euo pipefail
+          # The trusted app token is ephemeral (about one hour) and scoped to
+          # this repository. It is never placed in source, commit text or logs.
+          gh auth setup-git
+          git fetch -q origin "$HEAD_REF"
+          have=$(git show "origin/$HEAD_REF:VERSION" | tr -d '[:space:]')
+          if [ "$have" = "$TARGET_VERSION" ]; then
+            echo "VERSION was already updated by another run." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          git checkout -q -B "$HEAD_REF" "origin/$HEAD_REF"
+          printf '%s\n' "$TARGET_VERSION" > VERSION
+          git config user.name "${APP_SLUG}[bot]"
+          git config user.email "${APP_SLUG}[bot]@users.noreply.github.com"
+          git commit -qam "Bump VERSION to $TARGET_VERSION"
+          git push -q origin "HEAD:$HEAD_REF"
+          echo "VERSION on the PR branch updated: $have -> $TARGET_VERSION (GitHub App)." >> "$GITHUB_STEP_SUMMARY"
 
   # ------------------------------------------------------------------ windows
   windows:
