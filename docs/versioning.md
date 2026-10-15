@@ -27,6 +27,16 @@ The single GitHub Actions workflow computes the candidate version from the curre
 
 The main branch currently has the historical two-part `1.11`. For this one-time transition, only `version.py next` can accept an old two-part *input*, producing `1.12.0` with the feature label. The `check` and `code` commands and Gradle reject two-part numbers. Historical tags are not rewritten.
 
+## Request a patch PR from GitHub Actions
+
+The single `Build` workflow supports **Run workflow → main → action:
+patch-pr**. It reads `main:VERSION` at dispatch time, calculates
+`x.y.(z+1)`, and opens an unmerged, labelled `release:fix` PR changing
+only `VERSION`. A separate `build` choice keeps existing manual build
+behaviour. It requires the scoped App's Pull requests permission; see
+[ci-app-token.md](ci-app-token.md). It does not manually release or
+circumvent signing, beta checks, or branch protections.
+
 ## Checks
 
 ```bash

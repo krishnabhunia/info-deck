@@ -12,7 +12,11 @@ def check_workflow() -> None:
     assert "on:\n  pull_request:" in source
     assert "pull_request_target" not in source
     assert "persist-credentials: false" in source
-    assert source.count("actions/create-github-app-token@v3") == 1
+    # Existing PR-version bot plus the manual release-request job.
+    assert source.count("actions/create-github-app-token@v3") == 2
+    assert "permission-pull-requests: write" in source
+    assert "github.event_name == 'workflow_dispatch' && inputs.action == 'patch-pr'" in source
+    assert "run: python3 common/scripts/test_patch_release.py" in source
     assert "permission-contents: write" in source
     assert "vars.INFODECK_CI_APP_CLIENT_ID" in source
     assert "secrets.INFODECK_CI_APP_PRIVATE_KEY" in source

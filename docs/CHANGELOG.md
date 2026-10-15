@@ -1,9 +1,18 @@
 # Changelog
 
+
 ## Unreleased — N63 · Restore protected-extension Design A (15-Oct-2026)
 - Restore PR #3's approved two-dialog file rename with a locked extension, a separate extension editor, and a mandatory unchecked acknowledgement box before any extension change (including case-only changes).
 - Preserve PR #8's 80-character filename limit, typed-extension suggestion, common extension choices, real file-type mismatch warning, failure handling, and 5-second Undo. Storage bytes and MIME remain unchanged.
 - Add regression tests for case-only and normal renames; the repository-level guard remains mandatory.
+
+## Unreleased — one-click patch release PR request (CI-only, release:none)
+- Add **Build → Run workflow → main → action: patch-pr**, deriving x.y.(z+1)
+  from the current main VERSION via the existing strict version rules.
+- Open a labelled `cgpt-` patch release PR; never directly merge, publish,
+  change main, or bypass the existing beta/signed-APK gates.
+- Add safe duplicate/stale-base handling, regression tests, design and
+  GitHub App least-privilege setup documentation.
 
 ## Unreleased — never ship an unsigned APK (CI-only, fixes "package appears to be invalid")
 - **B15** APKs from GitHub Actions would not install ("App not installed as package appears to be invalid"): signing secrets were not set, so CI built an unsigned APK and still put it in the Actions artifact. Merged onto the signing requirement below (`restore_signing_key.sh` + `verify_apk.sh`), which already stops the Android job after the unit tests when a secret is missing.

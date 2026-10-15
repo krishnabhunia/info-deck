@@ -12,12 +12,17 @@ Create a **dedicated GitHub App** (not a PAT; not the Android signing keystore):
 1. Open [GitHub App settings](https://github.com/settings/apps/new).
    Name the app (for example, `InfoDeck Version Bot`) and disable webhooks
    unless you actually need them.
-2. Under **Repository permissions**, give **Contents: Read and write**.
-   Do not grant Actions, Administration, Secrets, or other privileged
-   permissions. GitHub automatically supplies Metadata: Read.
+2. Under **Repository permissions**, give **Contents: Read and write** and
+   **Pull requests: Read and write**. The latter permission is needed only by
+   the new manual **patch-pr** action, which opens and labels a PR; the
+   existing automatic VERSION commit uses Contents only. Do not grant Actions,
+   Administration, Secrets, Issues, or other privileged permissions. GitHub
+   automatically supplies Metadata: Read.
 3. Generate a **GitHub App private key** (PEM). Keep it offline and private.
 4. Install the App on the account that owns InfoDeck and grant access to
-   **only** `krishnabhunia/info-deck`. If repository rules prevent that
+   **only** `krishnabhunia/info-deck`. If the App was already installed,
+   approve the added **Pull requests: Read and write** permission before using
+   the manual action. If repository rules prevent that
    App from updating PR branches, the owner must adjust the applicable
    rules explicitly without bypassing `main` branch protections.
 5. Go to [Actions variables](https://github.com/krishnabhunia/info-deck/settings/variables/actions).
@@ -30,6 +35,21 @@ Create a **dedicated GitHub App** (not a PAT; not the Android signing keystore):
 **Do not use `infodeck.keystore`, the APK signing key, or any Android
 password here.** The GitHub App PEM only authorizes automated version
 commits; the APK signing credentials are unrelated and remain separate.
+
+## Manually requesting a patch release PR
+
+In **Actions → Build → Run workflow**, select **Branch: main** and
+**action: patch-pr**. The job uses the GitHub App installation token with
+Contents: Write and Pull requests: Write, calculates the next patch version
+from the current `main:VERSION`, creates a `cgpt-release-patch-vX.Y.Z`
+branch changing only `VERSION`, opens a `cgpt-` PR, and adds exactly
+`release:fix`. It does **not** tag, merge, publish, or bypass PR checks.
+
+Select **action: build** for the previous manual build behaviour (default).
+The existing PR beta and merged-main stable release flows stay unchanged.
+Re-running `patch-pr` for the same version reuses an open matching PR, and
+refuses to overwrite an existing branch without an open PR. A run from any
+branch other than `main` fails. Signing keys are not used for PR creation.
 
 ## What changes after setup
 
