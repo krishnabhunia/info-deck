@@ -55,7 +55,7 @@ object FileNameRules {
     fun cleanExt(raw: String?): String =
         (raw ?: "").trimStart('.').filter { it in 'a'..'z' || it in 'A'..'Z' || it in '0'..'9' }.take(MAX_EXT)
 
-    /** Extensions compared ignoring case: .PDF → .pdf is not a change (Q1). */
+    /** Case-insensitive equality is used ONLY to compare filename types against MIME. */
     fun sameExt(a: String, b: String): Boolean = a.equals(b, ignoreCase = true)
 
     /** Longest NAME the box accepts so the whole name still fits in [MAX_TOTAL] (B13). */
@@ -85,7 +85,7 @@ object FileNameRules {
     // ------------------------------------------------------------------ the confirm gate
 
     sealed interface Decision {
-        /** Name-only (or case-only) change: saved straight away. */
+        /** Name-only change: saved straight away; extension case still needs confirmation. */
         data class Direct(val name: String) : Decision
         /** The extension changes, is added or removed: nothing is written until confirmed. */
         data class NeedsConfirm(val name: String, val oldExt: String, val newExt: String) : Decision
@@ -103,7 +103,7 @@ object FileNameRules {
         val ext = cleanExt(newExt)
         if (ext.isNotEmpty() && !isExtShape(ext)) return Decision.Invalid
         val name = fit(newBase, ext)
-        return if (sameExt(old.ext, ext)) Decision.Direct(name)
+        return if (old.ext == ext) Decision.Direct(name)
         else Decision.NeedsConfirm(name, old.ext, ext)
     }
 

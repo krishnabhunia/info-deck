@@ -67,8 +67,11 @@ class FileNameRulesTest {
     @Test fun nameOnlyChangeSavesDirectly() =
         assertEquals(Decision.Direct("Car Policy.pdf"), FileNameRules.decide("Old.pdf", "Car Policy", "pdf"))
 
-    @Test fun caseOnlyExtensionChangeSavesDirectlyWithTheNewCase() =
-        assertEquals(Decision.Direct("Old.pdf"), FileNameRules.decide("Old.PDF", "Old", "pdf"))
+    @Test fun caseOnlyExtensionChangeNeedsConfirm() =
+        assertEquals(
+            Decision.NeedsConfirm("Old.pdf", "PDF", "pdf"),
+            FileNameRules.decide("Old.PDF", "Old", "pdf")
+        )
 
     @Test fun newExtensionNeedsConfirm() =
         assertEquals(

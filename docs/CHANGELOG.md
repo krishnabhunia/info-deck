@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased — N63 · Restore protected-extension Design A (15-Oct-2026)
+- Restore PR #3's approved two-dialog file rename with a locked extension, a separate extension editor, and a mandatory unchecked acknowledgement box before any extension change (including case-only changes).
+- Preserve PR #8's 80-character filename limit, typed-extension suggestion, common extension choices, real file-type mismatch warning, failure handling, and 5-second Undo. Storage bytes and MIME remain unchanged.
+- Add regression tests for case-only and normal renames; the repository-level guard remains mandatory.
+
 ## Unreleased — uploaded Markdown standards compliance (14-Oct-2026)
 - Enforce three-part `x.y.z` on future stable/beta versions and Android Gradle builds; add CI tests for required directories, single workflow and exact ZIP layout.
 - Audit all three supplied standards in `docs/compliance/2026-10-14-uploaded-md-audit.md`. Android automatic GitHub updates and optional beta enrollment remain unimplemented and are tracked for a separate approved design.

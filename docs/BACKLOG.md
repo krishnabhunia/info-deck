@@ -1,5 +1,16 @@
 # InfoDeck — PIPELINE QUEUE (BACKLOG)
 
+### N63 — Restore approved Design A file-extension confirmation · 15-Oct-2026
+
+- [x] Reintroduce the approved file rename dialog from PR #3: locked extension, explicit unlock, and mandatory second dialog with an acknowledgement checkbox.
+- [x] Confirm all extension changes, including changes of letter case (.PDF to .pdf), removal and addition; normal stem renames need no second confirmation.
+- [x] Preserve PR #8's 80-character filename protection, typed-extension hint, extension choices, real MIME warning, and 5-second Undo snackbar.
+- [x] Keep the repository-level confirmation gate; rejected updates are logged through Logger.e.
+- [x] Add unit regression tests for confirmation decisions, case-only changes and normal filename changes.
+- [ ] Device test: rename a normal PDF (no confirmation), then change extension, verify the confirmation button is disabled until acknowledgement; Back/cancel leave the filename untouched.
+- [ ] Device test: check Undo and file-type warning still work; confirm attachment opens/shares and remains accessible after changing the display extension.
+- Design reference: docs/design/infodeck-protected-file-extension-design.html (original approved PR #3 Design A).
+
 ### N61 — standards compliance audit and three-part versioning · 14-Oct-2026
 - [x] Implement strict `x.y.z` release version parsing and Gradle validation; accept historical two-part input only during one-time `next` migration.
 - [x] Verify required folders, single build workflow and exact ZIP internal paths with runnable tests in CI.
