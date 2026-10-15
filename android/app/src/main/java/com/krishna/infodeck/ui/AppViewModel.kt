@@ -246,6 +246,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     fun setFollowSystem(v: Boolean) = viewModelScope.launch { prefs.setFollowSystem(v) }
     fun setAutoCaps(v: Boolean) = viewModelScope.launch { prefs.setAutoCaps(v) }
     fun setAutoCapsValues(v: Boolean) = viewModelScope.launch { prefs.setAutoCapsValues(v) }
+    fun setBetaUpdates(v: Boolean) = viewModelScope.launch { prefs.setBetaUpdates(v) }
 
     // ---------------- tags (N35) ----------------
     fun addTag(name: String, done: (Long) -> Unit = {}) = viewModelScope.launch { done(repo.addTag(name)) }
