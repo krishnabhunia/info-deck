@@ -21,6 +21,15 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      action:
+        description: 'Build current version or open a patch-version PR (no merge)'
+        type: choice
+        required: true
+        default: build
+        options:
+          - build
+          - patch-pr
 
 concurrency:
   group: build-${{ github.event.pull_request.number || github.ref }}
@@ -36,9 +45,58 @@ env:
   EXPECTED_CERT_SHA1: "82:50:BD:7B:80:41:21:D7:7C:91:52:FA:3C:6F:C7:6B:19:DD:14:9A"
 
 jobs:
+  # --------------------------------------------------------- manual patch PR
+  # This option proposes a VERSION-only patch bump for review. It must NEVER
+  # tag, merge, or publish a stable release directly.
+  patch_pr:
+    name: Request patch release PR (manual)
+    if: github.event_name == 'workflow_dispatch' && inputs.action == 'patch-pr'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Require selection of main
+        env:
+          SELECTED_REF: ${{ github.ref }}
+        run: |
+          if [ "$SELECTED_REF" != 'refs/heads/main' ]; then
+            echo '::error::Select the main branch for patch release requests.'
+            exit 1
+          fi
+
+      - name: Patch release regression tests
+        run: python3 common/scripts/test_patch_release.py
+
+      - name: Require configured release-request GitHub App
+        if: vars.INFODECK_CI_APP_CLIENT_ID == ''
+        run: |
+          echo '::error::Configure INFODECK_CI_APP_CLIENT_ID and INFODECK_CI_APP_PRIVATE_KEY, and give the repository-scoped App Contents and Pull requests: Read and write. See docs/ci-app-token.md.'
+          exit 1
+
+      - name: Create scoped release-request token
+        id: patch-app
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.INFODECK_CI_APP_CLIENT_ID }}
+          private-key: ${{ secrets.INFODECK_CI_APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+
+      - name: Open patch PR (never merge automatically)
+        env:
+          GH_TOKEN: ${{ steps.patch-app.outputs.token }}
+        run: python3 common/scripts/request_patch_release.py
+
   # ------------------------------------------------------------------ prepare
   prepare:
     name: Prepare (version, platforms, secret scan)
+    if: github.event_name != 'workflow_dispatch' || inputs.action != 'patch-pr'
     permissions:
       contents: read
       issues: write
@@ -66,6 +124,9 @@ jobs:
 
       - name: Version rules self-test
         run: python3 common/scripts/version.py selftest
+
+      - name: Patch release regression tests
+        run: python3 common/scripts/test_patch_release.py
 
       - name: Release signing regression tests
         run: python3 common/scripts/test_release_signing.py

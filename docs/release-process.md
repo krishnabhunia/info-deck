@@ -67,6 +67,25 @@ Same jobs, with the strict three-part version taken straight from `VERSION`. If 
 the workflow publishes the **release** `v<version>` with `InfoDeck_<version>.zip`. A `release:none`
 merge leaves `VERSION` unchanged, the tag already exists, so nothing is published.
 
+## 3a · One-click patch version request (review required)
+
+1. Open **GitHub → Actions → Build → Run workflow**. Select **main** and
+   choose **patch-pr** in the `action` dropdown (the default `build`
+   preserves the original manually triggered build).
+2. The dedicated GitHub App reads the latest `VERSION` from `main`,
+   computes `x.y.(z+1)` using `common/scripts/version.py`, and creates
+   a `cgpt-` patch PR with **release:fix**. It never directly pushes to
+   `main`, merges, tags, or publishes a release.
+3. Review the patch PR and beta build; complete section 5's human release
+   checklist. **Only after merging** does the unchanged main branch flow
+   publish the stable ZIP / signed APK.
+
+The GitHub App must have Contents and Pull requests: Read and write
+(on this repository only); see [ci-app-token.md](ci-app-token.md).
+Requests fail on non-`main` dispatches, missing App setup, stale main,
+or existing conflicting release branches. Repeated dispatches for a version
+with an open PR reuse that PR instead of making a duplicate.
+
 ## 4 · The artifact
 
 ```

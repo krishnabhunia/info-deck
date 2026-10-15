@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased — one-click patch release PR request (CI-only, release:none)
+- Add **Build → Run workflow → main → action: patch-pr**, deriving x.y.(z+1)
+  from the current main VERSION via the existing strict version rules.
+- Open a labelled `cgpt-` patch release PR; never directly merge, publish,
+  change main, or bypass the existing beta/signed-APK gates.
+- Add safe duplicate/stale-base handling, regression tests, design and
+  GitHub App least-privilege setup documentation.
+
+
 ## Unreleased — never ship an unsigned APK (CI-only, fixes "package appears to be invalid")
 - **B15** APKs from GitHub Actions would not install ("App not installed as package appears to be invalid"): signing secrets were not set, so CI built an unsigned APK and still put it in the Actions artifact. Merged onto the signing requirement below (`restore_signing_key.sh` + `verify_apk.sh`), which already stops the Android job after the unit tests when a secret is missing.
 - Class-wide gate `common/scripts/apk_signature_gate.py` (pure Python): rejects any APK without a v1/v2/v3 signature, run in the Android job before upload and again in the package job before `verify_apk.sh` and the ZIP/release; self-test and workflow-wiring check run in Prepare.
