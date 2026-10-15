@@ -1,7 +1,7 @@
 # Changelog
 
-## 1.16.1 — 15-Oct-2026 · versionCode 1014001 (release:fix)
-- Re-release of 1.16.0 with no code changes, to publish a fresh signed build from GitHub Actions.
+## 1.17.1 — 15-Oct-2026 · versionCode 1017001
+- Release set by Krishna directly from `main` (1.14.0 → 1.17.1); no code changes since 1.14.0.
 
 ## Unreleased — one-click patch release PR request (CI-only, release:none)
 - Add **Build → Run workflow → main → action: patch-pr**, deriving x.y.(z+1)
