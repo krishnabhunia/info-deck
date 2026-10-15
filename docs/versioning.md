@@ -15,7 +15,7 @@ Major and feature changes reset z to zero. The first minor after a major is 1, f
 
 ## Automatic version management
 
-The single GitHub Actions workflow computes the candidate version from the current `main` version and exactly one `release:*` PR label, and writes it to the PR branch's `VERSION` file. Do not edit `VERSION` manually.
+The single GitHub Actions workflow computes the candidate version from the current `main` version and exactly one `release:*` PR label, and writes it to the PR branch's `VERSION` file using a dedicated GitHub App token. The app must be configured once by the repository owner; if a bump is needed and it is missing, CI fails instead of pushing with `GITHUB_TOKEN` and causing an approval-required workflow. See [ci-app-token.md](ci-app-token.md). Do not edit `VERSION` manually.
 
 - Beta PR builds use `<version>-beta.<run>` for tags, release names, APK versionName and archive names; for example `v1.12.0-beta.19` and `InfoDeck_1.12.0-beta.19.zip`.
 - A merged feature/fix PR is released on `main` as `v1.12.0` with `InfoDeck_1.12.0.zip` and `Android/InfoDeck_1.12.0.apk` when signing secrets are present.

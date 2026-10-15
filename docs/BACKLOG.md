@@ -1,5 +1,15 @@
 # InfoDeck — PIPELINE QUEUE (BACKLOG)
 
+### CI-only — eliminate unnecessary workflow-approval prompts (15-Oct-2026)
+- [x] Detect whether PR `VERSION` actually needs an update; skip the push otherwise.
+- [x] Obtain a short-lived GitHub App token with repository-scoped Contents: Write only for same-repository PR version changes.
+- [x] Remove default `GITHUB_TOKEN` credentials from the Prepare checkout; fail explicitly if an App is needed but not configured.
+- [x] Document one-time owner-only App setup in `docs/ci-app-token.md` and add `common/scripts/check_ci_token_workflow.py` to CI.
+- [ ] Owner: register/install the GitHub App and configure `INFODECK_CI_APP_CLIENT_ID` (variable) + `INFODECK_CI_APP_PRIVATE_KEY` (secret).
+- [ ] Integration test after App setup: new feature PR gets automatic version commit and follow-up workflow without `Approve workflows to run`.
+- [ ] Review resulting beta signing/release and ensure fork PRs remain protected.
+- Logging/failure behavior: errors are emitted as GitHub Actions annotations; no Android code or `Logger.e` integration is touched.
+
 ### N61 — standards compliance audit and three-part versioning · 14-Oct-2026
 - [x] Implement strict `x.y.z` release version parsing and Gradle validation; accept historical two-part input only during one-time `next` migration.
 - [x] Verify required folders, single build workflow and exact ZIP internal paths with runnable tests in CI.

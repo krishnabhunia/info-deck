@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>InfoDeck CI-only design — approval-free automatic VERSION commits</title>
+<style>
+body{font:14px system-ui,sans-serif;background:#f4f6fa;color:#192238;margin:0;padding:24px}
+main{max-width:1050px;margin:auto}h1{font-size:24px;color:#1e357f}h2{font-size:17px;color:#1e357f}
+section{background:white;border:1px solid #dae1ec;border-radius:14px;padding:17px;margin:16px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.card{background:#fff;border:1px solid #cbd5e1;border-radius:12px;padding:16px;min-height:160px}
+.bad{border-top:4px solid #ce6040}.good{border-top:4px solid #258455}
+.small{font-size:12px;color:#57677e}code{font-size:12px;background:#edf1f7;padding:3px 5px;border-radius:5px}
+.step{background:#eaf0fd;border-radius:12px;padding:12px;margin:9px 0}
+.warn{background:#fff4e3;border:1px solid #eed7b8;border-radius:10px;padding:12px}
+ol li{padding:5px 0}strong{font-weight:700}
+</style></head><body><main>
+<h1>InfoDeck · Automatic PR versioning without workflow approval prompts</h1>
+<p class="small">CI design, 15-Oct-2026. No Android UI or app data changes.</p>
+<div class="grid">
+<div class="card bad"><h2>Before</h2>
+<div class="step">PR opened by owner</div>
+<div class="step">Prepare builds and uses <code>GITHUB_TOKEN</code> to push <code>VERSION</code></div>
+<div class="warn">Next PR workflow requires manual approval under GitHub's bot-triggered approval policy.</div>
+</div>
+<div class="card good"><h2>After</h2>
+<div class="step">PR opened by owner</div>
+<div class="step">Prepare compares computed version with branch VERSION</div>
+<div class="step">If different, create repository-scoped GitHub App token; push VERSION</div>
+<div class="step">New PR workflow runs normally; no GITHUB_TOKEN-initiated approval banner</div>
+</div>
+</div>
+<section><h2>Security boundaries</h2>
+<ol>
+<li>Fork PR: never receive the GitHub App token or automated version push.</li>
+<li>Unchanged VERSION: no App token and no push.</li>
+<li>Missing App configuration: clear CI error; do not silently fall back to GITHUB_TOKEN.</li>
+<li>The App has <strong>Contents: Write on InfoDeck only</strong>, stored as encrypted repository secret and a public Client ID variable.</li>
+<li>Approval policies for outside contributors remain enabled. This does not auto-approve any untrusted workflow.</li>
+</ol>
+</section>
+<section><h2>Review checklist</h2>
+<p class="small">1. CI-only <code>release:none</code> PR passes without credentials when VERSION is unchanged. 2. Owner installs the dedicated GitHub App. 3. Next feature PR automatically receives a VERSION commit and an unblocked PR workflow. 4. Signed APK and artifact checks remain unchanged.</p>
+</section>
+</main></body></html>
