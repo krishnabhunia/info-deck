@@ -77,3 +77,23 @@ cd android && ./gradlew :app:testReleaseUnitTest :app:assembleRelease
 
 The keystore and passwords stay outside the repository. `.gitignore` blocks keystore files and
 `common/scripts/secret_scan.sh` fails CI if one is ever committed.
+
+## 7 · Updates inside Android InfoDeck
+
+Settings → **Diagnostics and About** → **Check for updates** queries the
+[GitHub Releases](https://github.com/krishnabhunia/info-deck/releases) API.
+Only stable releases are shown by default. **Include beta updates** is disabled
+by default and opts in to signed PR pre-releases.
+
+The app checks on startup when its last successful check is at least 24 hours
+old and schedules network-constrained checks every 24 hours through WorkManager.
+The Settings button forces an immediate recheck. Available updates are shown
+as **Update to vX.Y.Z** or **Update to vX.Y.Z-beta.N**.
+
+The release workflow still publishes a single ZIP archive.
+The app downloads InfoDeck_<version>.zip and extracts only the APK from
+Android/InfoDeck_<version>.apk into private cache. It then starts Android's
+package installer. Android requires the user's explicit approval and may
+request permission to install apps from InfoDeck. Silent installation is
+not possible for a normal Android application. The platform verifies that
+the APK is signed by the same certificate as the installed app.
