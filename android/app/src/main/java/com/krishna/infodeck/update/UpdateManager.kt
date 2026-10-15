@@ -67,9 +67,15 @@ class UpdateManager(private val context: Context) {
             try {
                 if (conn.responseCode != 200) error("GitHub HTTP ${conn.responseCode}")
                 conn.inputStream.bufferedReader().use { reader ->
-                    val text = reader.readText(MAX_JSON + 1)
-                    require(text.length <= MAX_JSON) { "GitHub response too large" }
-                    text
+                    val buffer = CharArray(MAX_JSON + 1)
+                    val content = StringBuilder()
+                    while (content.length < buffer.size) {
+                        val count = reader.read(buffer, 0, buffer.size - content.length)
+                        if (count < 0) break
+                        content.append(buffer, 0, count)
+                    }
+                    require(content.length <= MAX_JSON) { "GitHub response too large" }
+                    content.toString()
                 }
             } finally { conn.disconnect() }
         }
