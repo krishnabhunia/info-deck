@@ -28,6 +28,7 @@ class SigningTests(unittest.TestCase):
             EXPECTED_CERT_SHA1=CERT,
             ANDROID_HOME=(self.folder / "sdk").as_posix(),
             TEST_CERT=CERT,
+            TEST_SIGNER_PREFIX="Signer #1",
             TEST_SIGNER_SEPARATOR=":",
             TEST_SIGNATURE="valid",
             TEST_PACKAGE="com.krishna.infodeck",
@@ -41,7 +42,10 @@ class SigningTests(unittest.TestCase):
             "apksigner": '''#!/usr/bin/env bash
 if [ "$TEST_SIGNATURE" != valid ]; then echo 'DOES NOT VERIFY' >&2; exit 1; fi
 if [ "${TEST_NO_CERT:-false}" != true ]; then
-  echo "Signer #1${TEST_SIGNER_SEPARATOR} certificate SHA-1 digest: $TEST_CERT"
+  echo "${TEST_SIGNER_PREFIX}${TEST_SIGNER_SEPARATOR} certificate SHA-1 digest: $TEST_CERT"
+  if [ -n "${TEST_EXTRA_CERT:-}" ]; then
+    echo "Signer (minSdkVersion=33, maxSdkVersion=2147483647) certificate SHA-1 digest: $TEST_EXTRA_CERT"
+  fi
 fi
 ''',
             "aapt2": '''#!/usr/bin/env bash
@@ -100,6 +104,21 @@ echo "uses-permission: name='$TEST_PERMISSION'"
         self.env["TEST_SIGNER_SEPARATOR"] = ""
         result = self.verify()
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_sdk_range_signer_labels_are_accepted(self):
+        self.env["TEST_SIGNER_PREFIX"] = "Signer (minSdkVersion=26, maxSdkVersion=32)"
+        for separator in ("", ":"):
+            with self.subTest(separator=separator):
+                self.env["TEST_SIGNER_SEPARATOR"] = separator
+                result = self.verify()
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_every_distinct_signer_must_match(self):
+        self.env["TEST_EXTRA_CERT"] = CERT
+        result = self.verify()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.env["TEST_EXTRA_CERT"] = "0" * 40
+        self.assertNotEqual(self.verify().returncode, 0)
 
     def test_missing_or_malformed_fingerprint_is_rejected(self):
         for value in ("", "certificate SHA-1 digest", CERT + "00"):
