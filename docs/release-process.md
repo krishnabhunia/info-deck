@@ -13,6 +13,7 @@ workflow for Windows, macOS and Android. For automatic PR version commits withou
 > | `INFODECK_KEYSTORE_B64` | the release keystore, base64-encoded (commands below) |
 > | `INFODECK_STOREPASS` | the keystore password |
 > | `INFODECK_KEYPASS` | the key password |
+> | `INFODECK_KEY_ALIAS` | *only if* the key alias is not `infodeck` — find it with `keytool -list -keystore infodeck.keystore` |
 >
 > **Windows PowerShell** (in the folder holding `infodeck.keystore`):
 > ```powershell
@@ -24,8 +25,11 @@ workflow for Windows, macOS and Android. For automatic PR version commits withou
 > `82:50:BD:7B:80:41:21:D7:7C:91:52:FA:3C:6F:C7:6B:19:DD:14:9A`). A different key produces an APK
 > Android refuses to install over the existing app — the workflow checks this and fails if it differs.
 >
-> Until all three exist, builds and tests still run, but the APK is **unsigned** and **nothing is
-> published**. After adding them, re-run the latest `main` run (Actions → Build → *Run workflow*).
+> Until all three exist, the unit tests still run, then the Android job **fails** on purpose and
+> **no APK is produced at all** — not in the Actions artifact, not as a release. (Before 15-Oct-2026
+> the workflow put an *unsigned* APK into the artifact; Android rejects that with
+> *"App not installed as package appears to be invalid"* — see section 8.)
+> After adding them, re-run the latest `main` run (Actions → Build → *Run workflow*) and any open PR run.
 >
 > This card stays here until Krishna confirms it is done.
 
@@ -37,7 +41,7 @@ workflow for Windows, macOS and Android. For automatic PR version commits withou
 | 2 | prepare | **exactly one** `release:*` label required — the run fails otherwise |
 | 3 | prepare | next version computed from `main`'s `VERSION` + the label, written back to the PR branch with the dedicated GitHub App installation token; if this token is not configured and a bump is needed, Prepare fails explicitly instead of creating an approval-required `GITHUB_TOKEN` run |
 | 4 | windows / macos | skipped — no source in those folders |
-| 5 | android | unit tests → signed release APK named `<next>-beta.<run>` → `aapt2` version check → certificate check |
+| 5 | android | unit tests → stop if any signing secret is missing → signed release APK named `<next>-beta.<run>` → `aapt2` version check → signature gate → certificate check |
 | 6 | package | one artifact `InfoDeck_<next>-beta.<run>.zip` (where `<next>` has three parts, e.g. `1.12.0`); GitHub **pre-release** `v<next>-beta.<run>` |
 
 ## 3 · What happens on merge to `main`
@@ -97,3 +101,17 @@ package installer. Android requires the user's explicit approval and may
 request permission to install apps from InfoDeck. Silent installation is
 not possible for a normal Android application. The platform verifies that
 the APK is signed by the same certificate as the installed app.
+
+## 8 · "App not installed as package appears to be invalid"
+
+| SrNo. | Cause | How to tell | Fix |
+|---|---|---|---|
+| 1 | The APK is **unsigned** (signing secrets missing in CI) | the run summary says *No APK - signing secrets missing*; older artifacts: `apksigner verify` → *DOES NOT VERIFY* | add the secrets in section 1, re-run the workflow |
+| 2 | The ZIP was opened as if it were an APK | the downloaded file ends in `.zip` | unzip it and install `Android/InfoDeck_<version>.apk` |
+| 3 | Incomplete download | file size smaller than on GitHub | download again |
+
+Every APK is now checked twice before anyone can download it: `common/scripts/apk_signature_gate.py`
+in the Android job and again in the package job, plus `apksigner verify` and the certificate pin in
+`common/scripts/check_cert.sh`. A different message — *"package conflicts with an existing package"* —
+means the APK is signed with a different key than the installed app (the certificate pin prevents
+this for CI builds).

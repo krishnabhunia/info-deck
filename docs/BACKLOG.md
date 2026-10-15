@@ -1,5 +1,19 @@
 # InfoDeck — PIPELINE QUEUE (BACKLOG)
 
+### B15 — CI APK "App not installed as package appears to be invalid" (15-Oct-2026, PR `cld-fix-unsigned-apk-invalid-package`, `release:none`)
+Root cause: repository secret `INFODECK_KEYSTORE_B64` absent → Gradle built `app-release-unsigned.apk` → workflow copied it into the Actions artifact as `InfoDeck_<version>.apk` → Android refuses unsigned APKs. Verified on run 38692452310: artifact APK has no `META-INF` signature and no APK Signing Block; 0 releases and 0 tags exist.
+
+| SrNo. | Item | Status |
+|---|---|---|
+| 1 | Require all three signing secrets; on any missing, unit tests still run, then the job stops before building — no APK is produced | [x] |
+| 2 | Remove the unsigned-APK path from the workflow entirely | [x] |
+| 3 | Class-wide gate `apk_signature_gate.py check` in Android job (before upload) and package job (before ZIP/release) | [x] |
+| 4 | Gate self-test + workflow wiring check in Prepare | [x] |
+| 5 | **Owner (Krishna only):** add `INFODECK_KEYSTORE_B64`, `INFODECK_STOREPASS`, `INFODECK_KEYPASS` (+ `INFODECK_KEY_ALIAS` if alias ≠ `infodeck`) — card in `docs/release-process.md` section 1 | [ ] |
+| 6 | After secrets: re-run `main` → release `v1.14.0` published; install over the phone's app | [ ] |
+
+Companions — (1) Exceptions: corrupt/non-ZIP/missing APK, bad APK Signing Block sizes and invalid base64 keystore all fail with a named reason, never pass. (2) Logging: CI-only, failures surface as GitHub Actions `::error::` annotations and step summary; no Android code touched, so no `Logger.e` change. (3) Tests: automated — gate self-test (unsigned, v1, v1-incomplete, v2, v2+v3, padding-only, junk, missing, empty list, mixed batch) and wiring check; verified locally against the real unsigned CI APK (rejected), a jarsigner v1-signed copy (accepted) and a public v2-signed APK (accepted). Device checklist: install the APK from the first signed run over the installed app — must install without the error.
+
 ### CI-only — eliminate unnecessary workflow-approval prompts (15-Oct-2026)
 - [x] Detect whether PR `VERSION` actually needs an update; skip the push otherwise.
 - [x] Obtain a short-lived GitHub App token with repository-scoped Contents: Write only for same-repository PR version changes.
