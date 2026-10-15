@@ -5,6 +5,17 @@
 - Preserve PR #8's 80-character filename limit, typed-extension suggestion, common extension choices, real file-type mismatch warning, failure handling, and 5-second Undo. Storage bytes and MIME remain unchanged.
 - Add regression tests for case-only and normal renames; the repository-level guard remains mandatory.
 
+## Unreleased — require original Android signing before downloads (CI-only)
+- Parse both current and legacy apksigner certificate output correctly; reject missing or malformed fingerprints instead of mistaking the certificate label for its SHA-1.
+- Fail the Android job after unit tests when any signing credential is missing, instead of uploading an unsigned APK under the normal download name.
+- Verify APK signatures, the original certificate, package ID, version code/name and update permissions before upload and again before ZIP packaging; derive signing success from verification.
+- Add signing regression tests and document original-key secrets, optional alias and verification against the installed v1.9 APK. App code and `VERSION` are unchanged (`release:none`).
+
+## Unreleased — GitHub App token for automated PR version updates (CI-only)
+- Use an ephemeral, repository-scoped GitHub App token instead of the workflow's `GITHUB_TOKEN` to commit version bumps to PR branches, avoiding GitHub's approval-required bot-triggered CI reruns.
+- Fail explicitly if version changes require an unconfigured App; no automatic approval of untrusted PR workflows and no change to signing/release rules.
+- Add a pure CI wiring regression check and GitHub App setup guide (`docs/ci-app-token.md`).
+
 ## Unreleased — uploaded Markdown standards compliance (14-Oct-2026)
 - Enforce three-part `x.y.z` on future stable/beta versions and Android Gradle builds; add CI tests for required directories, single workflow and exact ZIP layout.
 - Audit all three supplied standards in `docs/compliance/2026-10-14-uploaded-md-audit.md`. Android automatic GitHub updates and optional beta enrollment remain unimplemented and are tracked for a separate approved design.
