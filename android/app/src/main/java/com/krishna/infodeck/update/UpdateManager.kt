@@ -2,11 +2,14 @@ package com.krishna.infodeck.update
 
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import androidx.core.content.FileProvider
+import androidx.core.content.pm.PackageInfoCompat
 import com.krishna.infodeck.BuildConfig
+import com.krishna.infodeck.core.Logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -24,11 +27,17 @@ class UpdateManager(private val context: Context) {
     private val store = context.getSharedPreferences("infodeck_updates", Context.MODE_PRIVATE)
 
     companion object {
-        private const val API = "https://api.github.com/repos/krishnabhunia/info-deck/releases?per_page=50"
+        private const val API = "https://api.github.com/repos/krishnabhunia/info-deck/releases?per_page=100"
         private const val DAY_MS = 24L * 60 * 60 * 1000
         private const val MAX_JSON = 2 * 1024 * 1024
         private const val MAX_ZIP = 120L * 1024 * 1024
         private const val MAX_APK = 150L * 1024 * 1024
+        /** Manifest meta-data carrying the Room schema version (see AndroidManifest.xml). */
+        const val DB_SCHEMA_KEY = "com.krishna.infodeck.DB_SCHEMA"
+        /** Manifest meta-data: this build can restore a full-backup ZIP. */
+        const val FULL_BACKUP_KEY = "com.krishna.infodeck.FULL_BACKUP_RESTORE"
+        /** Every PR run publishes a beta, so stables can sit beyond the first page. */
+        private const val MAX_PAGES = 3
 
         private fun connection(url: String): HttpURLConnection {
             require(url.startsWith("https://")) { "Only HTTPS downloads are allowed" }
@@ -63,22 +72,7 @@ class UpdateManager(private val context: Context) {
             return@withContext cached(includeBeta)
         }
 
-        val json = connection(API).let { conn ->
-            try {
-                if (conn.responseCode != 200) error("GitHub HTTP ${conn.responseCode}")
-                conn.inputStream.bufferedReader().use { reader ->
-                    val buffer = CharArray(MAX_JSON + 1)
-                    val content = StringBuilder()
-                    while (content.length < buffer.size) {
-                        val count = reader.read(buffer, 0, buffer.size - content.length)
-                        if (count < 0) break
-                        content.append(buffer, 0, count)
-                    }
-                    require(content.length <= MAX_JSON) { "GitHub response too large" }
-                    content.toString()
-                }
-            } finally { conn.disconnect() }
-        }
+        val json = fetchReleasesJson()
         val result = ReleaseChooser.newest(json, BuildConfig.VERSION_NAME, includeBeta)
         store.edit().apply {
             putLong("checked_at", System.currentTimeMillis())
@@ -94,11 +88,49 @@ class UpdateManager(private val context: Context) {
         result
     }
 
+    /** Official stable releases, newest first. Always a fresh GitHub call (the user asked). */
+    suspend fun stableReleases(): List<ReleaseUpdate> = withContext(Dispatchers.IO) {
+        ReleaseChooser.stables(fetchReleasesJson())
+    }
+
+    /** Up to [MAX_PAGES] pages of releases merged into one JSON array (newest first). */
+    private fun fetchReleasesJson(): String {
+        val all = mutableListOf<kotlinx.serialization.json.JsonElement>()
+        for (page in 1..MAX_PAGES) {
+            val text = fetchPage("$API&page=$page")
+            val items = kotlinx.serialization.json.Json.parseToJsonElement(text) as? kotlinx.serialization.json.JsonArray
+                ?: error("GitHub returned an unexpected response")
+            all.addAll(items)
+            if (items.size < 100) break
+        }
+        return kotlinx.serialization.json.JsonArray(all).toString()
+    }
+
+    private fun fetchPage(url: String): String = connection(url).let { conn ->
+        try {
+            if (conn.responseCode != 200) error("GitHub HTTP ${conn.responseCode}")
+            conn.inputStream.bufferedReader().use { reader ->
+                val buffer = CharArray(MAX_JSON + 1)
+                val content = StringBuilder()
+                while (content.length < buffer.size) {
+                    val count = reader.read(buffer, 0, buffer.size - content.length)
+                    if (count < 0) break
+                    content.append(buffer, 0, count)
+                }
+                require(content.length <= MAX_JSON) { "GitHub response too large" }
+                content.toString()
+            }
+        } finally { conn.disconnect() }
+    }
+
     /** Extract only the expected APK from the official release ZIP into private cache storage. */
-    suspend fun downloadApk(update: ReleaseUpdate): File = withContext(Dispatchers.IO) {
+    suspend fun downloadApk(update: ReleaseUpdate, allowOlder: Boolean = false): File = withContext(Dispatchers.IO) {
         val installed = ReleaseVersion.parse(BuildConfig.VERSION_NAME)
         val target = ReleaseVersion.parse(update.version)
-        require(installed != null && target != null && target > installed) { "Not a newer update" }
+        require(installed != null && target != null) { "Unreadable version" }
+        // A return to stable (design 1.15.0.D2) may target an older versionName, never a beta.
+        if (allowOlder) require(target.beta == null && target != installed) { "Not a stable release" }
+        else require(target > installed) { "Not a newer update" }
         val name = "InfoDeck_${update.version}"
         require(update.zipUrl == "https://github.com/krishnabhunia/info-deck/releases/download/v${update.version}/$name.zip") {
             "Unexpected GitHub download URL"
@@ -162,6 +194,70 @@ class UpdateManager(private val context: Context) {
         } finally {
             conn.disconnect()
         }
+    }
+
+
+    val installedCode: Long get() = BuildConfig.VERSION_CODE.toLong()
+
+    /** Read package name, versionCode and DB schema from a downloaded APK without installing it. */
+    fun inspect(apk: File): ReturnPlanner.ApkFacts? = try {
+        @Suppress("DEPRECATION")
+        val info = context.packageManager.getPackageArchiveInfo(apk.absolutePath, PackageManager.GET_META_DATA or signerFlag())
+        if (info == null) {
+            Logger.e("UpdateManager.inspect", "not a readable APK: ${apk.name}")
+            null
+        } else {
+            val meta = info.applicationInfo?.metaData
+            val schema = meta?.getInt(DB_SCHEMA_KEY, -1)?.takeIf { it > 0 }
+            ReturnPlanner.ApkFacts(
+                info.packageName, PackageInfoCompat.getLongVersionCode(info), schema,
+                zipRestore = meta?.getBoolean(FULL_BACKUP_KEY, false) == true,
+                sameSigner = ReturnPlanner.signersMatch(signers(info), installedSigners())
+            )
+        }
+    } catch (e: Exception) {
+        Logger.e("UpdateManager.inspect", "APK inspection failed", e); null
+    }
+
+    private fun signerFlag(): Int =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) PackageManager.GET_SIGNING_CERTIFICATES
+        else @Suppress("DEPRECATION") PackageManager.GET_SIGNATURES
+
+    /** SHA-256 digests of the current signing certificate(s). */
+    @Suppress("DEPRECATION")
+    private fun signers(info: android.content.pm.PackageInfo?): Set<String> {
+        val raw = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            info?.signingInfo?.let { if (it.hasMultipleSigners()) it.apkContentsSigners else it.signingCertificateHistory }
+        } else info?.signatures
+        val sha = java.security.MessageDigest.getInstance("SHA-256")
+        return raw.orEmpty().map { sig -> sha.digest(sig.toByteArray()).joinToString("") { "%02x".format(it) } }.toSet()
+    }
+
+    private fun installedSigners(): Set<String> = try {
+        @Suppress("DEPRECATION")
+        signers(context.packageManager.getPackageInfo(context.packageName, signerFlag()))
+    } catch (e: Exception) {
+        Logger.e("UpdateManager.inspect", "could not read installed signer", e); emptySet()
+    }
+
+    /** Copy a downloaded file to a place the user picked, so it survives an uninstall. */
+    suspend fun saveCopy(source: File, target: Uri): Boolean = withContext(Dispatchers.IO) {
+        try {
+            context.contentResolver.openOutputStream(target)?.use { out ->
+                source.inputStream().use { it.copyTo(out) }
+            } ?: error("no output stream")
+            true
+        } catch (e: Exception) {
+            Logger.e("UpdateManager.saveCopy", "could not save ${source.name}", e); false
+        }
+    }
+
+    /** Opens Android's own uninstall confirmation for InfoDeck. Never silent. */
+    fun uninstallSelf() {
+        context.startActivity(
+            Intent(Intent.ACTION_DELETE, Uri.parse("package:${context.packageName}"))
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        )
     }
 
     fun canInstall(): Boolean =

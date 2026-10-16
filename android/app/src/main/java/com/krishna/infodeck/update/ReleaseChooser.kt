@@ -45,15 +45,27 @@ object ReleaseChooser {
 
     fun newest(releasesJson: String, installedVersion: String, includeBeta: Boolean): ReleaseUpdate? {
         val installed = ReleaseVersion.parse(installedVersion) ?: return null
-        val releases = Json.parseToJsonElement(releasesJson) as? JsonArray ?: return null
+        return official(releasesJson)
+            .filter { (version, update) -> version > installed && (!update.beta || includeBeta) }
+            .maxByOrNull { it.first }?.second
+    }
+
+    /** Every official stable release, newest first (used to return from a beta, design 1.15.0.D2). */
+    fun stables(releasesJson: String): List<ReleaseUpdate> =
+        official(releasesJson).filter { !it.second.beta }.sortedByDescending { it.first }.map { it.second }
+
+    private fun official(releasesJson: String): List<Pair<ReleaseVersion, ReleaseUpdate>> {
+        // A malformed response is an error for the caller to show, never "no update".
+        val releases = Json.parseToJsonElement(releasesJson) as? JsonArray
+            ?: throw IllegalArgumentException("GitHub releases response is not a list")
         return releases.mapNotNull { item ->
             val obj = runCatching { item.jsonObject }.getOrNull() ?: return@mapNotNull null
             if (obj["draft"]?.jsonPrimitive?.booleanOrNull == true) return@mapNotNull null
             val tag = obj["tag_name"]?.jsonPrimitive?.contentOrNull ?: return@mapNotNull null
             val version = ReleaseVersion.parse(tag) ?: return@mapNotNull null
-            if (tag != "v${version.text}" || version <= installed) return@mapNotNull null
+            if (tag != "v${version.text}") return@mapNotNull null
             val isBeta = obj["prerelease"]?.jsonPrimitive?.booleanOrNull ?: return@mapNotNull null
-            if (isBeta != (version.beta != null) || (isBeta && !includeBeta)) return@mapNotNull null
+            if (isBeta != (version.beta != null)) return@mapNotNull null
             val file = "InfoDeck_${version.text}.zip"
             val base = "$REPO/releases/download/$tag/"
             val assets = runCatching { obj["assets"]?.jsonArray }.getOrNull() ?: return@mapNotNull null
@@ -64,6 +76,6 @@ object ReleaseChooser {
             }?.jsonObject ?: return@mapNotNull null
             val url = asset["browser_download_url"]!!.jsonPrimitive.content
             version to ReleaseUpdate(version.text, url, "$REPO/releases/tag/$tag", isBeta)
-        }.maxByOrNull { it.first }?.second
+        }
     }
 }

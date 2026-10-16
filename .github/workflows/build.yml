@@ -107,6 +107,8 @@ jobs:
       display: ${{ steps.ver.outputs.display }}
       publish: ${{ steps.ver.outputs.publish }}
       prerelease: ${{ steps.ver.outputs.prerelease }}
+      # Android versionCode source: main's VERSION for PR betas, VERSION itself on main.
+      code_version: ${{ steps.ver.outputs.code_version }}
       has_android: ${{ steps.detect.outputs.android }}
       has_windows: ${{ steps.detect.outputs.windows }}
       has_macos: ${{ steps.detect.outputs.macos }}
@@ -177,10 +179,14 @@ jobs:
                 exit 1
               fi
               version=$(python3 common/scripts/version.py next "$base" "$kinds")
+              # A beta keeps the versionCode of the stable it is built on, so that stable can
+              # be reinstalled over the beta later with all data kept (design 1.15.0.D2).
+              code_version="$base"
             else
               # Bootstrap: main has no VERSION yet (the initial import) - take the PR's own.
               kinds="bootstrap"
               version=$(tr -d '[:space:]' < VERSION)
+              code_version="$version"
             fi
             if [ "$kinds" = "none" ]; then
               echo "publish=false" >> "$GITHUB_OUTPUT"; display="$version"
@@ -192,6 +198,7 @@ jobs:
             version=$(tr -d '[:space:]' < VERSION)
             python3 common/scripts/version.py check "$version"
             display="$version"
+            code_version="$version"
             if git ls-remote --exit-code --tags origin "refs/tags/v${version}" >/dev/null 2>&1; then
               echo "Tag v${version} already exists - nothing new to release."
               echo "publish=false" >> "$GITHUB_OUTPUT"
@@ -202,8 +209,9 @@ jobs:
           fi
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "display=$display" >> "$GITHUB_OUTPUT"
+          echo "code_version=$code_version" >> "$GITHUB_OUTPUT"
           echo "### Version" >> "$GITHUB_STEP_SUMMARY"
-          echo "Building **${{ env.SOFTWARE_NAME }} ${display}** (versionCode $(python3 common/scripts/version.py code "$version"))" >> "$GITHUB_STEP_SUMMARY"
+          echo "Building **${{ env.SOFTWARE_NAME }} ${display}** (versionCode $(python3 common/scripts/version.py code "$code_version"))" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Verify repository standards against candidate version
         env:
@@ -362,7 +370,11 @@ jobs:
           INFODECK_STOREPASS: ${{ secrets.INFODECK_STOREPASS }}
           INFODECK_KEYPASS: ${{ secrets.INFODECK_KEYPASS }}
           INFODECK_KEY_ALIAS: ${{ vars.INFODECK_KEY_ALIAS || 'infodeck' }}
-        run: ./gradlew :app:assembleRelease -PversionNameOverride="${{ needs.prepare.outputs.display }}" --console=plain
+        run: >-
+          ./gradlew :app:assembleRelease
+          -PversionNameOverride="${{ needs.prepare.outputs.display }}"
+          -PversionCodeOverride="$(python3 ../common/scripts/version.py code "${{ needs.prepare.outputs.code_version }}")"
+          --console=plain
 
       - name: Verify the APK
         if: env.FORK_PR != 'true'
@@ -372,7 +384,7 @@ jobs:
           apk=android/app/build/outputs/apk/release/app-release.apk
           [ -f "$apk" ] || { echo "::error::Signed APK app-release.apk was not produced - check the signing secrets and INFODECK_KEY_ALIAS"; exit 1; }
           python3 common/scripts/apk_signature_gate.py check "$apk"
-          bash common/scripts/verify_apk.sh "$apk" "${{ needs.prepare.outputs.display }}" "${{ needs.prepare.outputs.version }}"
+          bash common/scripts/verify_apk.sh "$apk" "${{ needs.prepare.outputs.display }}" "${{ needs.prepare.outputs.code_version }}"
           mkdir -p out && cp "$apk" "out/${SOFTWARE_NAME}_${{ needs.prepare.outputs.display }}.apk"
           echo "signed=true" >> "$GITHUB_OUTPUT"
 
@@ -434,7 +446,7 @@ jobs:
           if [ "${{ needs.prepare.outputs.has_android }}" = "true" ]; then
             # Second gate: nothing unsigned goes into the zip or a release, whatever produced it.
             python3 common/scripts/apk_signature_gate.py check "$apk"
-            bash common/scripts/verify_apk.sh "$apk" "${{ needs.prepare.outputs.display }}" "${{ needs.prepare.outputs.version }}"
+            bash common/scripts/verify_apk.sh "$apk" "${{ needs.prepare.outputs.display }}" "${{ needs.prepare.outputs.code_version }}"
           fi
           exe=$(find parts -type f -name '*x64*.exe' -print -quit)
           portable=$(find parts -type f -name '*portable*.exe' -print -quit)

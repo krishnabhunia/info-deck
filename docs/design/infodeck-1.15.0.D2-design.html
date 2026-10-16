@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InfoDeck — 1.15.0 D2 design · return from beta to stable</title>
+<style>
+  :root{
+    --ink:#131A26; --ink2:#5A6675; --hint:#96A0AF;
+    --indigo:#3B5BDB; --indigo-c:#E8ECFD;
+    --teal:#0E9384; --teal-c:#DDF3F0;
+    --violet:#7A5AF8; --violet-c:#EEE9FE;
+    --green:#12A150; --green-c:#DFF5E8;
+    --amber:#B76E00; --amber-c:#FDF0DA;
+    --rose:#E5484D; --rose-c:#FDE7E8;
+    --slate:#64748B; --slate-c:#EEF1F5;
+    --bg:#F6F8FC; --line:#E9EDF4; --outline:#C6CEDC;
+    --page:#E3E7F0; --tag:#22337F; --q:#7A5A00; --q-bg:#FFF3C4; --q-bd:#E2C35C;
+    --pri-d:#1E357F;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--page);font-family:Roboto,"Segoe UI",system-ui,sans-serif;color:var(--ink);padding:26px 16px 70px}
+  .wrap{max-width:1180px;margin:0 auto}
+  header.page h1{font-size:24px;font-weight:800;color:var(--pri-d)}
+  header.page p{font-size:13.5px;color:var(--ink2);margin-top:5px;line-height:1.55}
+  .stamp{display:inline-block;margin:10px 8px 0 0;font-size:12px;font-weight:700;color:#22337F;background:var(--indigo-c);border:1px solid #B9C3F5;border-radius:20px;padding:3px 12px}
+  .stamp.o{color:#7A2E00;background:#FFE1CC;border-color:#E8B08C}
+  h2.sec{font-size:18px;font-weight:800;color:var(--pri-d);margin:36px 0 12px;padding-bottom:6px;border-bottom:2px solid #C9D1DD}
+  .ok-box{background:var(--green-c);border:1px solid #A7DDBE;border-radius:10px;padding:12px 14px;font-size:13.5px;line-height:1.55;margin:10px 0}
+  .rej-box{background:var(--rose-c);border:1px solid #E7ADA8;border-radius:10px;padding:12px 14px;font-size:13.5px;line-height:1.55;margin:10px 0}
+  table.tb{width:100%;border-collapse:collapse;font-size:12.5px;background:#fff;margin:6px 0}
+  table.tb th{background:#E9EDF8;color:var(--pri-d);text-align:left;padding:6px 8px;border:1px solid #BFC9D8;font-size:12px}
+  table.tb td{padding:6px 8px;border:1px solid #D2D9E3;vertical-align:top;line-height:1.45}
+  table.tb .sr{width:1%;white-space:nowrap;text-align:center}
+  table.tb td.k{font-weight:700;color:var(--tag)}
+  table.tb td.rec{color:var(--green);font-weight:600}
+  table.tb tr:nth-child(even) td{background:#F5F7FA}
+  code{font-family:Consolas,Menlo,monospace;font-size:12px;background:#EEF1F5;padding:1px 4px;border-radius:3px}
+  .tbl-wrap{overflow-x:auto}
+
+  .frames{display:grid;grid-template-columns:repeat(auto-fit,minmax(390px,1fr));gap:30px 24px;margin-top:14px}
+  figure{display:flex;flex-direction:column;align-items:center;gap:10px}
+  figure h3{font-size:15px;font-weight:800;color:var(--pri-d);align-self:flex-start}
+  figure h3 small{font-weight:500;color:var(--ink2);font-size:12.5px;margin-left:6px}
+  b.n{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:9px;background:var(--tag);color:#fff;font-size:10.5px;font-weight:800;flex-shrink:0;font-style:normal;box-shadow:0 0 0 2px #fff}
+  b.n.g{background:var(--green)} b.n.a{background:var(--amber)} b.n.d{background:var(--rose)}
+  .pin{position:absolute;z-index:9}
+
+  /* phone */
+  .phone{width:378px;height:790px;background:var(--bg);border:9px solid #12151C;border-radius:38px;overflow:hidden;position:relative;box-shadow:0 16px 38px rgba(20,30,50,.22);display:flex;flex-direction:column;flex-shrink:0}
+  .sb{height:22px;color:var(--ink2);font-size:10.5px;font-weight:700;display:flex;align-items:center;justify-content:space-between;padding:0 16px;flex-shrink:0;background:#fff}
+  .nbar{height:48px;background:#fff;display:flex;align-items:center;gap:8px;padding:0 12px;flex-shrink:0;font-size:16.5px;font-weight:800}
+  .hair{height:3px;background:linear-gradient(90deg,var(--indigo),var(--violet) 45%,var(--teal));flex-shrink:0}
+  .body{flex:1;overflow:hidden;position:relative;padding:10px 12px 0}
+  .grp{background:#fff;border-radius:14px;margin-bottom:10px;overflow:hidden;border:1px solid var(--line)}
+  .gh{display:flex;align-items:center;gap:10px;padding:10px 12px;font-weight:800;font-size:14px}
+  .gh .dot{width:26px;height:26px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:13px}
+  .gh .sm{margin-left:auto;font-size:11px;font-weight:600;color:var(--ink2)}
+  .row{display:flex;align-items:center;gap:8px;padding:8px 12px;border-top:1px solid var(--line);position:relative}
+  .row .t{font-size:13.5px}
+  .row .s{font-size:11px;color:var(--ink2);margin-top:1px;line-height:1.35}
+  .row .grow{flex:1;min-width:0}
+  .sw{width:36px;height:20px;border-radius:10px;background:var(--outline);position:relative;flex-shrink:0}
+  .sw::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:8px;background:#fff}
+  .sw.on{background:var(--indigo)} .sw.on::after{left:18px}
+  .ob{border:1.5px solid var(--outline);border-radius:18px;padding:5px 12px;font-size:12px;font-weight:700;color:var(--indigo);white-space:nowrap;flex-shrink:0}
+  .fb{background:var(--indigo);border-radius:18px;padding:6px 12px;font-size:12px;font-weight:700;color:#fff;white-space:nowrap;flex-shrink:0}
+  .fb.g{background:var(--green)} .fb.d{background:var(--rose)} .fb.off{background:#C9D0DC;color:#fff}
+  .badge{font-size:10px;font-weight:800;color:#7A2E00;background:#FFE1CC;border-radius:8px;padding:1px 7px}
+  .note{font-size:11px;color:var(--ink2);padding:4px 12px 8px}
+
+  .scrim{position:absolute;inset:0;background:rgba(14,20,34,.46);z-index:2}
+  .sheet{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:22px 22px 0 0;padding:6px 16px 0;box-shadow:0 -6px 24px rgba(10,20,40,.18);z-index:3}
+  .handle{width:40px;height:4px;border-radius:2px;background:var(--outline);margin:4px auto 10px}
+  .sheet h4{font-size:16.5px;font-weight:800}
+  .sheet .sub{font-size:12px;color:var(--ink2);margin:3px 0 10px;line-height:1.45}
+  .clear{height:193px;border-top:2px dashed #E7ADA8;background:repeating-linear-gradient(135deg,#FFF5F5 0 8px,#fff 8px 16px);display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:700;color:#A33;margin:12px -16px 0}
+  .step{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-top:1px solid var(--line);position:relative}
+  .step .num{width:24px;height:24px;border-radius:12px;background:var(--indigo-c);color:var(--indigo);font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .step .num.ok{background:var(--green);color:#fff}
+  .step .num.wait{background:var(--slate-c);color:var(--slate)}
+  .step .tx{flex:1;min-width:0;font-size:13px;font-weight:700}
+  .step .tx span{display:block;font-size:11px;font-weight:400;color:var(--ink2);margin-top:2px;line-height:1.4}
+  .warn{background:var(--amber-c);border:1px solid #EBC98A;border-radius:10px;padding:8px 10px;font-size:11.5px;line-height:1.45;color:#5C3B00;position:relative}
+  .info{background:var(--green-c);border:1px solid #A7DDBE;border-radius:10px;padding:8px 10px;font-size:11.5px;line-height:1.45;color:#0B4D2A;position:relative}
+  .btns{display:flex;gap:10px;margin-top:12px}
+  .btns div{flex:1;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13.5px}
+  .btns .c{border:1.5px solid var(--outline);color:var(--ink)}
+  .btns .p{background:var(--indigo);color:#fff}
+  .snack{position:absolute;left:12px;right:12px;bottom:205px;background:#20283A;color:#fff;border-radius:10px;padding:10px 12px;font-size:12px;z-index:4}
+
+  /* flow diagram */
+  .flow{background:#fff;border:1px solid #C9D1DD;border-radius:12px;padding:16px;overflow-x:auto}
+  .flow svg text{font-family:Roboto,"Segoe UI",system-ui,sans-serif}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="page">
+  <h1>InfoDeck — return from a beta to the stable version</h1>
+  <p>Design <b>infodeck-1.15.0.D2</b> · latest stable on GitHub: <b>v1.15.0</b> · approach chosen by Krishna: <b>both</b> — (1) betas keep the base stable's versionCode so the return is an in-place reinstall, and (2) a guided backup → uninstall → reinstall → restore path when in-place is impossible.</p>
+  <span class="stamp">Android rule: an APK with a lower versionCode is refused</span>
+  <span class="stamp">Equal versionCode installs over the top, data kept</span>
+  <span class="stamp o">⚑ Behaviour change: beta APKs no longer carry their target versionCode</span>
+</header>
+
+<h2 class="sec">1 · Why a beta could not be undone before</h2>
+<div class="tbl-wrap"><table class="tb">
+  <tr><th class="sr">SrNo.</th><th>Step</th><th>versionName</th><th>versionCode (before)</th><th>versionCode (after this PR)</th><th>Android result</th></tr>
+  <tr><td class="sr">1</td><td>Stable installed</td><td>1.15.0</td><td>1015000</td><td>1015000</td><td>—</td></tr>
+  <tr><td class="sr">2</td><td>Beta from a feature PR</td><td>1.16.0-beta.90</td><td>1016000</td><td><b>1015000</b> (main's version)</td><td>Installs (higher or equal)</td></tr>
+  <tr><td class="sr">3</td><td>Back to stable</td><td>1.15.0</td><td>1015000 &lt; 1016000 → <b>refused</b></td><td>1015000 = 1015000 → <b>installs, data kept</b></td><td>Fixed</td></tr>
+  <tr><td class="sr">4</td><td>Next stable after merge</td><td>1.16.0</td><td>1016000</td><td>1016000</td><td>Installs over the beta or the stable</td></tr>
+</table></div>
+<div class="rej-box"><b>Honest limit:</b> betas already on a phone that were built before this change (for example <code>2.0.0-beta.78</code>, versionCode 2000000) do not contain this code and carry a high versionCode. They cannot be returned in place. The one-time way back for those is the manual version of path (2): make a JSON backup in that beta, uninstall, install the stable, restore. Attached PDF/Word files in that beta are not in a JSON backup, so save them out first.</div>
+
+<h2 class="sec">2 · Decision flow inside the app</h2>
+<div class="flow">
+<svg viewBox="0 0 1120 330" width="1120" height="330" role="img" aria-label="Return to stable decision flow">
+  <defs><marker id="ar" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#3A4558"/></marker></defs>
+  <g font-size="13" fill="#131A26">
+    <rect x="10" y="20" width="180" height="70" rx="12" fill="#E8ECFD" stroke="#3A4558"/>
+    <text x="100" y="48" text-anchor="middle" font-weight="700">Tap "Return to stable"</text>
+    <text x="100" y="68" text-anchor="middle">only shown on a beta</text>
+
+    <rect x="230" y="20" width="200" height="70" rx="12" fill="#DDF3F0" stroke="#3A4558"/>
+    <text x="330" y="45" text-anchor="middle" font-weight="700">Download stable ZIP</text>
+    <text x="330" y="64" text-anchor="middle">official GitHub release only,</text>
+    <text x="330" y="80" text-anchor="middle">extract Android APK</text>
+
+    <rect x="470" y="20" width="220" height="70" rx="12" fill="#EEE9FE" stroke="#3A4558"/>
+    <text x="580" y="45" text-anchor="middle" font-weight="700">Read the APK (offline)</text>
+    <text x="580" y="64" text-anchor="middle">package name, versionCode,</text>
+    <text x="580" y="80" text-anchor="middle">database schema</text>
+
+    <polygon points="840,10 990,55 840,100 690,55" fill="#FDF0DA" stroke="#3A4558"/>
+    <text x="840" y="50" text-anchor="middle" font-weight="700">code ≥ installed</text>
+    <text x="840" y="68" text-anchor="middle" font-weight="700">and schema ≥ installed?</text>
+
+    <rect x="760" y="170" width="250" height="78" rx="12" fill="#DFF5E8" stroke="#3A4558"/>
+    <text x="885" y="196" text-anchor="middle" font-weight="700">Path 1 · In-place return</text>
+    <text x="885" y="215" text-anchor="middle">beta updates switched off,</text>
+    <text x="885" y="232" text-anchor="middle">Android asks to confirm</text>
+
+    <rect x="400" y="170" width="290" height="78" rx="12" fill="#FDE7E8" stroke="#3A4558"/>
+    <text x="545" y="196" text-anchor="middle" font-weight="700">Path 2 · Guided reinstall</text>
+    <text x="545" y="215" text-anchor="middle">full backup (with files) + installer</text>
+    <text x="545" y="232" text-anchor="middle">saved first, then uninstall</text>
+
+    <rect x="40" y="170" width="300" height="78" rx="12" fill="#EEF1F5" stroke="#3A4558"/>
+    <text x="190" y="196" text-anchor="middle" font-weight="700">Refused (nothing changes)</text>
+    <text x="190" y="215" text-anchor="middle">different package or not a valid</text>
+    <text x="190" y="232" text-anchor="middle">official APK → error + Logger.e</text>
+
+    <text x="900" y="140" font-weight="700" fill="#0B6B35">yes</text>
+    <text x="640" y="140" font-weight="700" fill="#A33">no</text>
+    <text x="350" y="140" font-weight="700" fill="#5A6675">invalid</text>
+    <text x="560" y="290" text-anchor="middle" fill="#5A6675">Every run: Logger.e on each failure · no silent install · Android checks the signing certificate itself</text>
+  </g>
+  <g stroke="#3A4558" stroke-width="1.6" fill="none" marker-end="url(#ar)">
+    <path d="M190 55 H226"/><path d="M430 55 H466"/><path d="M690 55 H686"/>
+    <path d="M885 100 V166"/>
+    <path d="M800 85 Q700 130 600 166"/>
+    <path d="M580 90 Q420 120 230 166"/>
+  </g>
+</svg>
+</div>
+
+<h2 class="sec">3 · Screens</h2>
+<div class="frames">
+
+<figure>
+  <h3>A · Settings → Diagnostics and updates <small>on a beta</small></h3>
+  <div class="phone">
+    <div class="sb"><span>10:57</span><span>5G ▮▮▮</span></div>
+    <div class="nbar">←&nbsp; Settings</div><div class="hair"></div>
+    <div class="body">
+      <div class="grp">
+        <div class="gh"><span class="dot" style="background:var(--teal-c);color:var(--teal)">⚙</span>Diagnostics and updates<span class="sm">▲</span></div>
+        <div class="row"><div class="grow"><div class="t">Error Logs</div><div class="s">Logger.e entries - view, share, clear</div></div><span class="s">0</span></div>
+        <div class="row"><div class="grow"><div class="t">Check for updates</div><div class="s">Search GitHub Releases for an updated Android APK</div></div></div>
+        <div class="row"><div class="grow"><div class="t">Include beta updates</div><div class="s">Optional early releases from pull requests</div></div><span class="sw on"></span></div>
+        <div class="row" style="background:#FFF9F2">
+          <b class="n pin" style="left:-4px;top:-6px">1</b>
+          <div class="grow"><div class="t">You are on a beta <span class="badge">1.16.0-beta.90</span></div><div class="s">Go back to the stable version. Cards, reminders and files stay.</div></div>
+        </div>
+        <div class="row">
+          <b class="n pin g" style="left:-4px;top:-6px">2</b>
+          <div class="grow"><div class="t">Return to v1.15.0</div><div class="s">Your previous stable version</div></div><span class="fb">Return</span>
+        </div>
+        <div class="row">
+          <b class="n pin a" style="left:-4px;top:-6px">3</b>
+          <div class="grow"><div class="t">Newest stable v1.15.1</div><div class="s">Shown only if newer than your previous one</div></div><span class="ob">Return</span>
+        </div>
+        <div class="note">Checked GitHub just now</div>
+      </div>
+    </div>
+  </div>
+  <div class="tbl-wrap"><table class="tb">
+    <tr><th class="sr">SrNo.</th><th>Element</th><th>Rule</th></tr>
+    <tr><td class="sr">1</td><td class="k">Beta banner</td><td>Visible only when the installed versionName contains <code>-beta.</code>; stable builds never show any Return rows.</td></tr>
+    <tr><td class="sr">2</td><td class="k">Previous stable</td><td>The last stable version this phone ran (recorded at every start of a stable build). Falls back to the newest stable when nothing is recorded or that release is gone.</td></tr>
+    <tr><td class="sr">3</td><td class="k">Newest stable</td><td>Extra row only when it differs from row 2. Both rows use the same flow.</td></tr>
+  </table></div>
+</figure>
+
+<figure>
+  <h3>B · Confirm in-place return <small>path 1</small></h3>
+  <div class="phone">
+    <div class="sb"><span>10:58</span><span>5G ▮▮▮</span></div>
+    <div class="nbar">←&nbsp; Settings</div><div class="hair"></div>
+    <div class="body"></div>
+    <div class="scrim"></div>
+    <div class="sheet"><div class="handle"></div>
+      <h4>Return to v1.15.0?</h4>
+      <div class="sub">The stable installer was downloaded from GitHub and checked: same app, same versionCode family, same database.</div>
+      <div class="info"><b class="n pin g" style="left:-6px;top:-8px">1</b>All cards, reminders, tags, settings and attached files stay on the phone.</div>
+      <div class="warn" style="margin-top:8px"><b class="n pin a" style="left:-6px;top:-8px">2</b>"Include beta updates" will be switched off so the beta is not offered again straight away.</div>
+      <div class="step" style="margin-top:8px;border-top:0">
+        <span class="num">3</span><div class="tx">Android asks you to confirm<span>Tap "Update" or "Install" in the Android prompt. InfoDeck closes and reopens as v1.15.0.</span></div>
+      </div>
+      <div class="btns"><div class="c">Cancel</div><div class="p">Return to stable</div></div>
+      <div class="clear">25% bottom clearance</div>
+    </div>
+  </div>
+</figure>
+
+<figure>
+  <h3>C · Guided reinstall <small>path 2 · fallback</small></h3>
+  <div class="phone">
+    <div class="sb"><span>10:58</span><span>5G ▮▮▮</span></div>
+    <div class="nbar">←&nbsp; Settings</div><div class="hair"></div>
+    <div class="body"></div>
+    <div class="scrim"></div>
+    <div class="sheet"><div class="handle"></div>
+      <h4>Reinstall v1.15.0</h4>
+      <div class="sub">Android cannot put v1.15.0 over this beta (this beta is newer, or its database changed). Save everything first, then reinstall.</div>
+      <div class="step"><b class="n pin" style="left:-15px;top:2px">1</b><span class="num ok">✓</span><div class="tx">Save full backup<span>infodeck-full-backup.zip · cards, tags, reminders and all attached files</span></div><span class="ob">Save again</span></div>
+      <div class="step"><b class="n pin" style="left:-15px;top:2px">2</b><span class="num ok">✓</span><div class="tx">Save the v1.15.0 installer<span>InfoDeck_1.15.0.apk · keep it in Downloads</span></div><span class="ob">Save again</span></div>
+      <div class="step"><b class="n pin d" style="left:-15px;top:2px">3</b><span class="num">3</span><div class="tx">Uninstall this beta<span>Enabled only after steps 1 and 2. Removes the app and its data.</span></div><span class="fb d">Uninstall</span></div>
+      <div class="step"><b class="n pin" style="left:-15px;top:2px">4</b><span class="num wait">4</span><div class="tx">Install and restore<span>Open the saved APK in Files → open InfoDeck → Settings → Backup → Restore → pick the ZIP → Replace all</span></div></div>
+      <div class="clear">25% bottom clearance</div>
+    </div>
+  </div>
+</figure>
+
+<figure>
+  <h3>D · Backup group <small>full backup added</small></h3>
+  <div class="phone">
+    <div class="sb"><span>11:02</span><span>5G ▮▮▮</span></div>
+    <div class="nbar">←&nbsp; Settings</div><div class="hair"></div>
+    <div class="body">
+      <div class="grp">
+        <div class="gh"><span class="dot" style="background:var(--violet-c);color:var(--violet)">⇅</span>Backup and restore<span class="sm">▲</span></div>
+        <div class="row"><div class="grow"><div class="t">Backup to file</div><div class="s">JSON - cards, dates, tags and reminders (excludes files)</div></div></div>
+        <div class="row" style="background:#F6FFF9"><b class="n pin g" style="left:-4px;top:-6px">1</b><div class="grow"><div class="t">Full backup (with files)</div><div class="s">ZIP - everything above plus attached PDF/Word files</div></div></div>
+        <div class="row"><b class="n pin" style="left:-4px;top:-6px">2</b><div class="grow"><div class="t">Restore from file</div><div class="s">JSON or full-backup ZIP</div></div></div>
+        <div class="row"><div class="grow"><div class="t">Last backup</div></div><span class="s">16-Oct-2026</span></div>
+      </div>
+    </div>
+    <div class="snack"><b class="n pin a" style="left:-6px;top:-8px">3</b>This beta was built on an older release. Return to stable first, or wait for the next beta.</div>
+  </div>
+  <div class="tbl-wrap"><table class="tb">
+    <tr><th class="sr">SrNo.</th><th>Element</th><th>Rule</th></tr>
+    <tr><td class="sr">1</td><td class="k">Full backup</td><td>ZIP holding <code>infodeck-backup.json</code> (schema 3, lists files) and <code>files/&lt;index&gt;</code>. Also usable any time, not only for a return.</td></tr>
+    <tr><td class="sr">1a</td><td class="k">Old targets</td><td>A stable that cannot read the ZIP (no <code>FULL_BACKUP_RESTORE</code> manifest flag, i.e. 1.15.0 and older) gets a <b>JSON</b> data backup in screen C step 1 instead, with a warning to save attached files first.</td></tr>
+    <tr><td class="sr">2</td><td class="k">Restore</td><td>Detects JSON or ZIP by content. ZIP restore copies each file back, inside the 25 MB / 10-per-card limits, rejecting unsafe paths.</td></tr>
+    <tr><td class="sr">3</td><td class="k">Update guard</td><td>Before any update or return, the downloaded APK's versionCode is compared with the installed one. A lower code is stopped with a clear message instead of Android's "App not installed".</td></tr>
+  </table></div>
+</figure>
+</div>
+
+<h2 class="sec">4 · CI change</h2>
+<div class="tbl-wrap"><table class="tb">
+  <tr><th class="sr">SrNo.</th><th>Run</th><th>versionName</th><th>versionCode</th><th>Verified by</th></tr>
+  <tr><td class="sr">1</td><td>Pull request beta</td><td>&lt;target&gt;-beta.&lt;run&gt; (unchanged)</td><td><b>Code of main's VERSION</b> (the stable the beta is built on)</td><td><code>verify_apk.sh</code> checks the base code; <code>-PversionCodeOverride</code> must equal <code>version.py code &lt;main&gt;</code></td></tr>
+  <tr><td class="sr">2</td><td>Merge to main</td><td>x.y.z</td><td>x×1,000,000 + y×1,000 + z (unchanged)</td><td>Unchanged</td></tr>
+  <tr><td class="sr">3</td><td>Manifest</td><td colspan="2"><code>com.krishna.infodeck.DB_SCHEMA</code> meta-data = Room schema version, so a downloaded APK can be checked before installing</td><td>JUnit test: manifest value = <code>AppDatabase.SCHEMA_VERSION</code></td></tr>
+</table></div>
+
+<h2 class="sec">5 · Open questions — defaults applied (answer by number to change)</h2>
+<div class="tbl-wrap"><table class="tb">
+  <tr><th class="sr">SrNo.</th><th>Question</th><th>Default used in the PR</th></tr>
+  <tr><td class="sr">Q1</td><td>Switch off "Include beta updates" automatically on return?</td><td class="rec">Yes, just before Android's install prompt opens</td></tr>
+  <tr><td class="sr">Q2</td><td>Keep the JSON backup row next to the new full backup?</td><td class="rec">Yes, both rows</td></tr>
+  <tr><td class="sr">Q3</td><td>Uninstall button locked until backup and installer are saved?</td><td class="rec">Yes</td></tr>
+  <tr><td class="sr">Q4</td><td>Return target: previous stable on this phone, plus newest stable if different?</td><td class="rec">Yes (row 2 + row 3 on screen A)</td></tr>
+  <tr><td class="sr">Q5</td><td>Version label for this PR</td><td class="rec">release:feature</td></tr>
+</table></div>
+
+<h2 class="sec">6 · Three companions</h2>
+<div class="tbl-wrap"><table class="tb">
+  <tr><th class="sr">SrNo.</th><th>Companion</th><th>What is covered</th></tr>
+  <tr><td class="sr">1</td><td class="k">Exception handling</td><td>Download, APK inspection, backup write, ZIP restore, uninstall intent and install intent are each guarded; every failure shows a plain message and changes nothing.</td></tr>
+  <tr><td class="sr">2</td><td class="k">Logger.e</td><td>Each guard and each refused plan logs to Error Logs.</td></tr>
+  <tr><td class="sr">3</td><td class="k">Tests</td><td>JUnit: return planner, stable chooser, previous-stable recording rule, ZIP path safety, backup schema 3 round-trip, manifest/DB schema gate; Python: CI base-versionCode wiring. Device checklist: in-place return, guided reinstall, full backup restore with files.</td></tr>
+</table></div>
+<div class="ok-box">Negative controls: stable builds show no Return rows; a stable update over a stable is unchanged; a JSON-only backup restores exactly as before; an APK from another package is refused.</div>
+</div>
+</body>
+</html>

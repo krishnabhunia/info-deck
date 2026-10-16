@@ -348,8 +348,16 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         done(ok)
     }
 
-    fun restore(uri: Uri, replaceAll: Boolean, done: (Int) -> Unit) = viewModelScope.launch {
-        val n = BackupIo.import(getApplication(), uri, db, replaceAll)
-        replan(); done(n)
+    /** Full backup ZIP with attached files (design 1.15.0.D2). */
+    fun fullBackup(uri: Uri, done: (com.krishna.infodeck.backup.FullBackupResult) -> Unit) = viewModelScope.launch {
+        val r = BackupIo.exportFull(getApplication(), uri, db)
+        if (r.ok) prefs.setLastBackup(System.currentTimeMillis())
+        done(r)
+    }
+
+    /** JSON or full-backup ZIP; the result also counts attached files restored and failed. */
+    fun restore(uri: Uri, replaceAll: Boolean, done: (com.krishna.infodeck.backup.RestoreResult) -> Unit) = viewModelScope.launch {
+        val r = BackupIo.import(getApplication(), uri, db, replaceAll)
+        replan(); done(r)
     }
 }

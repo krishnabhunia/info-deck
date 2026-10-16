@@ -47,7 +47,8 @@ data class AppSettings(
     val followSystemText: Boolean = true,
     val autoCaps: Boolean = true,
     val autoCapsValues: Boolean = true,
-    val betaUpdates: Boolean = false
+    val betaUpdates: Boolean = false,
+    val lastStableVersion: String = ""
 )
 
 class Prefs(private val context: Context) {
@@ -82,6 +83,7 @@ class Prefs(private val context: Context) {
         val caps = booleanPreferencesKey("auto_caps")
         val capsValues = booleanPreferencesKey("auto_caps_values")
         val betaUpdates = booleanPreferencesKey("beta_updates")
+        val lastStable = stringPreferencesKey("last_stable_version")
         val offsets = TextRole.values().associateWith { floatPreferencesKey("off_" + it.name) }
     }
 
@@ -135,7 +137,8 @@ class Prefs(private val context: Context) {
                 followSystemText = p[K.followSys] ?: true,
                 autoCaps = p[K.caps] ?: true,
                 autoCapsValues = p[K.capsValues] ?: true,
-                betaUpdates = p[K.betaUpdates] ?: false
+                betaUpdates = p[K.betaUpdates] ?: false,
+                lastStableVersion = p[K.lastStable] ?: ""
             )
         }
 
@@ -179,4 +182,6 @@ class Prefs(private val context: Context) {
     suspend fun setAutoCaps(v: Boolean) = edit { it[K.caps] = v }
     suspend fun setAutoCapsValues(v: Boolean) = edit { it[K.capsValues] = v }
     suspend fun setBetaUpdates(v: Boolean) = edit { it[K.betaUpdates] = v }
+    /** Last stable version this phone ran; the return-to-stable target (design 1.15.0.D2). */
+    suspend fun setLastStableVersion(v: String) = edit { it[K.lastStable] = v }
 }

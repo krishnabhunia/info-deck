@@ -126,6 +126,13 @@ fun SettingsScreen(
             scope.launch { snackbar.showSnackbar(if (ok) "Backup written" else "Backup failed - see Error Logs") }
         }
     }
+    val fullBackupLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/zip")
+    ) { uri ->
+        if (uri != null) vm.fullBackup(uri) { r ->
+            scope.launch { snackbar.showSnackbar(fullBackupMessage(r)) }
+        }
+    }
     val restoreLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.OpenDocument()
     ) { uri -> if (uri != null) restoreUri = uri }
@@ -357,8 +364,12 @@ fun SettingsScreen(
                     backupLauncher.launch("infodeck-backup-${System.currentTimeMillis()}.json")
                 }
                 Divider(color = MaterialTheme.colorScheme.outlineVariant)
-                SettingRow("Restore from file", "Replace or merge, asked before restoring", null) {
-                    restoreLauncher.launch(arrayOf("application/json", "text/plain", "*/*"))
+                SettingRow("Full backup (with files)", "ZIP - everything above plus attached PDF/Word files", null) {
+                    fullBackupLauncher.launch("infodeck-full-backup-${System.currentTimeMillis()}.zip")
+                }
+                Divider(color = MaterialTheme.colorScheme.outlineVariant)
+                SettingRow("Restore from file", "JSON or full-backup ZIP - replace or merge, asked first", null) {
+                    restoreLauncher.launch(arrayOf("application/json", "application/zip", "text/plain", "*/*"))
                 }
                 Divider(color = MaterialTheme.colorScheme.outlineVariant)
                 SettingRow(
@@ -404,6 +415,7 @@ fun SettingsScreen(
                 SettingRow("Error Logs", "Logger.e entries - view, share, clear", "$errors") { onErrorLogs() }
                 Divider(color = MaterialTheme.colorScheme.outlineVariant)
                 GitHubUpdatesSettings(s.betaUpdates) { vm.setBetaUpdates(it) }
+                ReturnToStableSection(vm, s.lastStableVersion, snackbar)
             }
 
             SettingsGroupCard(
@@ -503,24 +515,39 @@ fun SettingsScreen(
     if (ru != null) AlertDialog(
         onDismissRequest = { restoreUri = null },
         title = { Text("Restore backup") },
-        text = { Text("JSON backups exclude attached PDF/Word documents. Replace all permanently removes existing cards and attached files. Merge retains existing cards and files. Continue?") },
+        text = { Text("A full-backup ZIP also restores attached PDF/Word files; a JSON backup does not. Replace all permanently removes existing cards and attached files. Merge retains existing cards and files. Continue?") },
         confirmButton = {
             TextButton(onClick = {
                 restoreUri = null
-                vm.restore(ru, true) { n ->
-                    scope.launch { snackbar.showSnackbar(if (n >= 0) "Replaced - $n cards restored" else "Restore failed - see Error Logs") }
+                vm.restore(ru, true) { r ->
+                    scope.launch { snackbar.showSnackbar(restoreMessage(r, "Replaced", "restored")) }
                 }
             }) { Text("Replace all") }
         },
         dismissButton = {
             TextButton(onClick = {
                 restoreUri = null
-                vm.restore(ru, false) { n ->
-                    scope.launch { snackbar.showSnackbar(if (n >= 0) "Merged - $n cards added" else "Restore failed - see Error Logs") }
+                vm.restore(ru, false) { r ->
+                    scope.launch { snackbar.showSnackbar(restoreMessage(r, "Merged", "added")) }
                 }
             }) { Text("Merge") }
         }
     )
+}
+
+/** Snackbar text for a full backup; never hides missing attachments (design 1.15.0.D2). */
+internal fun fullBackupMessage(r: com.krishna.infodeck.backup.FullBackupResult): String = when {
+    !r.ok -> "Backup failed - see Error Logs"
+    r.filesMissing > 0 -> "Full backup written - ${r.filesMissing} attached file(s) were already missing"
+    else -> "Full backup written - ${r.filesSaved} attached file(s) included"
+}
+
+/** Snackbar text for a restore, including attached files that could not be restored. */
+internal fun restoreMessage(r: com.krishna.infodeck.backup.RestoreResult, verb: String, noun: String): String = when {
+    r.cards < 0 -> "Restore failed - see Error Logs"
+    r.filesFailed > 0 -> "$verb - ${r.cards} cards $noun, ${r.filesFailed} attached file(s) not restored - see Error Logs"
+    r.filesRestored > 0 -> "$verb - ${r.cards} cards $noun with ${r.filesRestored} attached file(s)"
+    else -> "$verb - ${r.cards} cards $noun"
 }
 
 @Composable
@@ -596,8 +623,18 @@ private fun GitHubUpdatesSettings(includeBeta: Boolean, onBetaChange: (Boolean) 
                         downloading = true
                         try {
                             val apk = manager.downloadApk(available)
-                            manager.install(apk) // Android must ask the user to confirm.
-                            status = "Confirm installation in Android"
+                            // Stop a lower versionCode with a clear reason (design 1.15.0.D2).
+                            // An unreadable APK is left to Android's own installer checks.
+                            val blocker = manager.inspect(apk)?.let {
+                                com.krishna.infodeck.update.ReturnPlanner.updateBlocker(manager.installedCode, it)
+                            }
+                            if (blocker != null) {
+                                com.krishna.infodeck.core.Logger.e("Settings.update", "update refused: $blocker")
+                                status = blocker
+                            } else {
+                                manager.install(apk) // Android must ask the user to confirm.
+                                status = "Confirm installation in Android"
+                            }
                         } catch (e: Exception) {
                             status = "Update failed: " + (e.message ?: "Download error")
                         } finally {

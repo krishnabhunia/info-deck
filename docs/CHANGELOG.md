@@ -12,6 +12,15 @@
 - New unit tests: `Release20Test` (20 cases).
 
 
+## Unreleased — N65 · Return from a beta to the stable version (16-Oct-2026)
+- ⚑ Beta APKs now carry the versionCode of the stable they are built on (`main`'s VERSION), so that stable can be installed back over the beta with all data kept. Stable releases are unchanged.
+- Settings → Diagnostics and updates shows "Return to v<previous stable>" while a beta is installed (plus the newest stable when different). The downloaded APK is read first; if Android can install it in place, one confirmation does it and beta updates are switched off.
+- When in-place is impossible (higher beta code or newer database), a guided sheet saves a full backup and the stable installer, then opens Android's uninstall prompt; restore afterwards from the ZIP.
+- New **Full backup (with files)** ZIP and ZIP-aware **Restore from file** (attachments included, path-safe, size-capped).
+- Updates with a lower versionCode are stopped with a clear message.
+- Independent review fixes: JSON backup for return targets that cannot read the ZIP; backup/restore I/O off the main thread; index-named ZIP entries; streamed, capped unzip; honest counts of missing/failed attachments; paged release list; signer verified before a guided reinstall; only declared ZIP entries extracted.
+- Design `infodeck-1.15.0.D2-design.html`; 22 JUnit + 2 Python regression tests.
+
 ## Unreleased — N63 · Restore protected-extension Design A (15-Oct-2026)
 - Restore PR #3's approved two-dialog file rename with a locked extension, a separate extension editor, and a mandatory unchecked acknowledgement box before any extension change (including case-only changes).
 - Preserve PR #8's 80-character filename limit, typed-extension suggestion, common extension choices, real file-type mismatch warning, failure handling, and 5-second Undo. Storage bytes and MIME remain unchanged.

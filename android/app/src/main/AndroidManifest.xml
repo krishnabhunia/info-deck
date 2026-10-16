@@ -3,6 +3,8 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <!-- Only to open Android's own uninstall prompt for InfoDeck when returning from a beta. -->
+    <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
@@ -37,6 +39,15 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.InfoDeck">
+
+        <!-- Room schema version (= DB_SCHEMA_VERSION). Read from downloaded APKs before a return to stable. -->
+        <meta-data
+            android:name="com.krishna.infodeck.DB_SCHEMA"
+            android:value="2" />
+        <!-- This build can restore a full-backup ZIP with attached files (N65). Read before a guided reinstall. -->
+        <meta-data
+            android:name="com.krishna.infodeck.FULL_BACKUP_RESTORE"
+            android:value="true" />
 
         <activity
             android:name=".MainActivity"

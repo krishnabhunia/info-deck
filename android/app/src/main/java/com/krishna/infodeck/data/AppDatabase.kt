@@ -20,13 +20,20 @@ class Converters {
     @TypeConverter fun stringToAction(s: String?): RingAction? = s?.let { runCatching { RingAction.valueOf(it) }.getOrNull() }
 }
 
+/**
+ * Room schema version. Also published as the DB_SCHEMA meta-data in AndroidManifest.xml so a
+ * downloaded APK can be checked before installing it over this one (design 1.15.0.D2).
+ * DbSchemaManifestTest fails the build if the two ever differ.
+ */
+const val DB_SCHEMA_VERSION = 2
+
 @Database(
     entities = [
         CategoryEntity::class, CardEntity::class, DataVarEntity::class,
         DateVarEntity::class, SchedulerEntity::class, RingLogEntity::class, ErrorLogEntity::class,
         TagEntity::class, CardTagEntity::class, FileEntity::class
     ],
-    version = 2,
+    version = DB_SCHEMA_VERSION,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
