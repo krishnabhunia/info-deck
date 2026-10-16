@@ -321,7 +321,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     fun setRingMinute(v: Int) = viewModelScope.launch { prefs.setRingMinute(v) }
     fun setVibrate(v: Boolean) = viewModelScope.launch { prefs.setVibrate(v) }
     fun setSnooze(v: Int) = viewModelScope.launch { prefs.setSnooze(v) }
-    fun setTheme(v: String) = viewModelScope.launch { prefs.setTheme(v) }
+    fun setTheme(v: String) = viewModelScope.launch { prefs.setTheme(com.krishna.infodeck.core.ThemeRules.normalise(v)) }
     fun setAppLock(v: Boolean) = viewModelScope.launch { prefs.setAppLock(v) }
 
     fun testRing() = viewModelScope.launch {

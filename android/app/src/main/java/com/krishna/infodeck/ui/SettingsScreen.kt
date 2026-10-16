@@ -7,6 +7,7 @@ import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -26,6 +27,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.BugReport
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Backup
+import androidx.compose.material.icons.filled.Keyboard
+import androidx.compose.material.icons.filled.Alarm
+import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.ui.draw.clip
@@ -89,7 +97,8 @@ fun SettingsScreen(
     onTags: () -> Unit = {},
     onCategories: () -> Unit = {},
     onHome: () -> Unit = {},
-    onUpcoming: () -> Unit = {}
+    onUpcoming: () -> Unit = {},
+    onNewCard: () -> Unit = {}
 ) {
     val s by vm.settings.collectAsState()
     val errors by vm.errorCount.collectAsState()
@@ -143,21 +152,27 @@ fun SettingsScreen(
             if (searching) SlimTopBar(
                 title = "", searching = true, query = query,
                 onQuery = { query = it },
-                onSearchClose = { searching = false; query = "" }
+                onSearchClose = { searching = false; query = "" },
+                role = com.krishna.infodeck.core.Hue.TEAL
             ) else SlimTopBar(
                 title = "Settings",
                 subtitle = "InfoDeck " + BuildConfig.VERSION_NAME,
                 onBack = onBack,
-                onSearchOpen = { searching = true }
+                onSearchOpen = { searching = true },
+                role = com.krishna.infodeck.core.Hue.TEAL
             )
         },
         bottomBar = {
-            InfoBottomBar(selected = 2, overdue = 0, onHome = onHome, onUpcoming = onUpcoming, onSettings = {})
+            InfoBottomBar(
+                selected = 3, overdue = 0, onHome = onHome, onUpcoming = onUpcoming, onSettings = {},
+                onTags = onTags, onNew = onNewCard
+            )
         }
     ) { pad ->
         Column(
             Modifier.padding(pad).fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 12.dp)
         ) {
+            Spacer(Modifier.height(10.dp))
             SettingsGroupCard(
                 group = com.krishna.infodeck.core.SettingsGroup.ORGANISE,
                 summary = "Categories and tags",
@@ -215,10 +230,8 @@ fun SettingsScreen(
                     }
                     OutlinedButton(onClick = { vm.testRing() }) { Text("Ring now", fontWeight = FontWeight.Bold) }
                 }
-            }
-
-            // merged into the group above
-            Column {
+                // 2.0: these two rows sat outside every group; the Settings standard keeps nothing loose.
+                Divider(color = MaterialTheme.colorScheme.outlineVariant)
                 Row(Modifier.fillMaxWidth().heightIn(min = 46.dp).padding(horizontal = 12.dp, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically) {
                     Text("Notifications", Modifier.weight(1f), fontSize = 14.sp)
@@ -252,7 +265,7 @@ fun SettingsScreen(
 
             SettingsGroupCard(
                 group = com.krishna.infodeck.core.SettingsGroup.LOOK,
-                summary = "Text size " + com.krishna.infodeck.core.FriendlySize.nameFor(s.ui.textScale) + " - theme " + s.theme.lowercase(),
+                summary = "Theme " + com.krishna.infodeck.core.ThemeRules.label(s.theme) + " - text size " + com.krishna.infodeck.core.FriendlySize.nameFor(s.ui.textScale),
                 open = openGroup == com.krishna.infodeck.core.SettingsGroup.LOOK,
                 searching = query.isNotBlank(),
                 hits = hits,
@@ -279,17 +292,7 @@ fun SettingsScreen(
                 }
                 Divider(color = MaterialTheme.colorScheme.outlineVariant)
 
-                Box {
-                    SettingRow("Theme", null, s.theme.lowercase().replaceFirstChar { it.uppercase() }) { themeMenu = true }
-                    DropdownMenu(expanded = themeMenu, onDismissRequest = { themeMenu = false }) {
-                        listOf("SYSTEM", "LIGHT", "DARK").forEach { t ->
-                            DropdownMenuItem(
-                                text = { Text(t.lowercase().replaceFirstChar { it.uppercase() }) },
-                                onClick = { vm.setTheme(t); themeMenu = false }
-                            )
-                        }
-                    }
-                }
+                ThemePicker(current = s.theme, onPick = { vm.setTheme(it) })
                 Divider(color = MaterialTheme.colorScheme.outlineVariant)
                 SettingRow(
                     "Text size", "Any size from 70 % to 200 %, applied live",
@@ -346,11 +349,6 @@ fun SettingsScreen(
                         onCheckedChange = { vm.setAutoCapsValues(it) }
                     )
                 }
-            }
-
-            // merged into the group above
-            Column {
-                SettingRow("Manage tags", "Rename, merge, delete - no card is ever deleted with a tag", null) { onTags() }
             }
 
             SettingsGroupCard(
@@ -727,7 +725,7 @@ private fun openExactAlarmSettings(context: android.content.Context) {
 }
 
 
-/** One collapsible Settings group (design 1.3.D1 C5). Opening one closes the previous. */
+/** One collapsible Settings group (design 1.3.D1 C5; 2.0 colour tile per group). Opening one closes the previous. */
 @Composable
 private fun SettingsGroupCard(
     group: com.krishna.infodeck.core.SettingsGroup,
@@ -742,33 +740,119 @@ private fun SettingsGroupCard(
     // While searching, a group opens itself when it holds a match and hides when it does not.
     if (searching && matches.isEmpty()) return
     val expanded = if (searching) true else open
+    val p = deck
+    val (icon, h) = groupLook(group)
+    val hs = p.hue(h)
+    val shape = RoundedCornerShape(16.dp)
+    val danger = group == com.krishna.infodeck.core.SettingsGroup.DANGER
 
-    Card(
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .padding(bottom = 8.dp)
+            .then(if (expanded && !p.dark) Modifier.androidxShadow(8.dp, shape, hs.glyph) else Modifier)
+            .clip(shape)
+            .background(p.surface)
+            .border(if (expanded) 2.dp else 1.dp, if (expanded) hs.glyph else p.line, shape)
     ) {
-        Column {
-            Row(
-                Modifier.fillMaxWidth().heightIn(min = 50.dp).clickable { onToggle() }
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(Modifier.weight(1f)) {
-                    Text(group.label, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                    Text(
-                        if (searching) matches.joinToString(" - ") { it.title } else summary,
-                        fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1, overflow = TextOverflow.Ellipsis
-                    )
-                }
-                Icon(
-                    if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
-                    if (expanded) "Collapse" else "Expand",
-                    Modifier.size(20.dp), tint = Hint
+        Row(
+            Modifier.fillMaxWidth().heightIn(min = 54.dp)
+                .background(if (expanded) hs.tint else Color.Transparent)
+                .clickable { onToggle() }
+                .padding(horizontal = 10.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            HueTile(icon, h, size = 32)
+            Spacer(Modifier.width(10.dp))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    group.label, fontSize = 14.sp, fontWeight = FontWeight.Bold,
+                    color = when {
+                        danger && p.dark -> hs.glyph
+                        danger -> hs.onTint
+                        else -> MaterialTheme.colorScheme.onSurface
+                    }
+                )
+                Text(
+                    if (searching) matches.joinToString(" - ") { it.title } else summary,
+                    fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1, overflow = TextOverflow.Ellipsis
                 )
             }
-            if (expanded) Column(Modifier.padding(horizontal = 2.dp, vertical = 2.dp)) { content() }
+            Icon(
+                if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                if (expanded) "Collapse" else "Expand",
+                Modifier.size(22.dp), tint = if (expanded) hs.glyph else p.ink2
+            )
+        }
+        if (expanded) Column(Modifier.padding(horizontal = 2.dp, vertical = 2.dp)) { content() }
+    }
+}
+
+/** Each group's tile: an icon plus the hue that means the same thing everywhere in the app. */
+private fun groupLook(g: com.krishna.infodeck.core.SettingsGroup): Pair<androidx.compose.ui.graphics.vector.ImageVector, com.krishna.infodeck.core.Hue> =
+    when (g) {
+        com.krishna.infodeck.core.SettingsGroup.ORGANISE -> Icons.Filled.Category to com.krishna.infodeck.core.Hue.SKY
+        com.krishna.infodeck.core.SettingsGroup.LOOK -> Icons.Filled.Palette to com.krishna.infodeck.core.Hue.INDIGO
+        com.krishna.infodeck.core.SettingsGroup.REMINDERS -> Icons.Filled.Alarm to com.krishna.infodeck.core.Hue.AMBER
+        com.krishna.infodeck.core.SettingsGroup.TYPING -> Icons.Filled.Keyboard to com.krishna.infodeck.core.Hue.TEAL
+        com.krishna.infodeck.core.SettingsGroup.DATA -> Icons.Filled.Backup to com.krishna.infodeck.core.Hue.GREEN
+        com.krishna.infodeck.core.SettingsGroup.SECURITY -> Icons.Filled.Lock to com.krishna.infodeck.core.Hue.PURPLE
+        com.krishna.infodeck.core.SettingsGroup.DIAGNOSTICS -> Icons.Filled.BugReport to com.krishna.infodeck.core.Hue.VIOLET
+        com.krishna.infodeck.core.SettingsGroup.DANGER -> Icons.Filled.Warning to com.krishna.infodeck.core.Hue.ROSE
+    }
+
+/**
+ * 2.0 theme picker (design 1.15.0.D1 frame 16): four tiles, each a small preview of its look —
+ * System (follows the phone), Aurora (default), Neon Night (dark), Sunrise (custom).
+ */
+@Composable
+private fun ThemePicker(current: String, onPick: (String) -> Unit) {
+    val p = deck
+    val pri = p.hue(com.krishna.infodeck.core.Hue.INDIGO)
+    val now = com.krishna.infodeck.core.ThemeRules.normalise(current)
+    Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp)) {
+        Text("Theme", fontSize = 14.sp)
+        Text(
+            com.krishna.infodeck.core.ThemeRules.CHOICES.firstOrNull { it.setting == now }?.caption ?: "",
+            fontSize = 11.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(Modifier.height(8.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            com.krishna.infodeck.core.ThemeRules.CHOICES.forEach { c ->
+                val on = c.setting == now
+                val preview: List<Color> = when (c.setting) {
+                    com.krishna.infodeck.core.ThemeRules.LIGHT -> AuroraPalette.brand
+                    com.krishna.infodeck.core.ThemeRules.DARK -> listOf(NeonPalette.bg, NeonPalette.surface2)
+                    com.krishna.infodeck.core.ThemeRules.SUNRISE -> SunrisePalette.brand
+                    else -> listOf(AuroraPalette.brand.first(), NeonPalette.bg)
+                }
+                val dot = if (c.setting == com.krishna.infodeck.core.ThemeRules.DARK) NeonPalette.brand.first() else Color.White
+                val shape = RoundedCornerShape(14.dp)
+                Column(
+                    Modifier.weight(1f).clip(shape)
+                        .background(if (on) pri.tint else p.surface2)
+                        .border(if (on) 2.dp else 1.dp, if (on) pri.glyph else p.line, shape)
+                        .clickable { onPick(c.setting) }
+                        .padding(6.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Box(
+                        Modifier.fillMaxWidth().height(34.dp).clip(RoundedCornerShape(10.dp))
+                            .background(androidx.compose.ui.graphics.Brush.linearGradient(preview)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (on) Icon(Icons.Filled.CheckCircle, "Selected", Modifier.size(18.dp), tint = dot)
+                        else Box(Modifier.size(8.dp).clip(RoundedCornerShape(4.dp)).background(dot))
+                    }
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        c.title, fontSize = 10.5.sp, fontWeight = if (on) FontWeight.ExtraBold else FontWeight.SemiBold,
+                        maxLines = 1, overflow = TextOverflow.Ellipsis,
+                        color = if (on) (if (p.dark) pri.glyph else pri.onTint) else p.ink2
+                    )
+                }
+            }
         }
     }
 }

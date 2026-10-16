@@ -1,5 +1,11 @@
 package com.krishna.infodeck.ui
 
+import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.Sell
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.background
 import android.content.Intent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -45,11 +51,13 @@ fun ErrorLogsScreen(vm: AppViewModel, onBack: () -> Unit) {
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Error Logs") },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Filled.ArrowBack, "Back") } },
+            DeckHeader(
+                title = "Error Logs",
+                role = com.krishna.infodeck.core.Hue.ROSE,
+                subtitle = if (logs.size == 1) "1 entry" else "${logs.size} entries",
+                onBack = onBack,
                 actions = {
-                    IconButton(onClick = {
+                    HeaderIcon(Icons.Filled.Share, "Share") {
                         val text = logs.joinToString("\n") {
                             "${Fmt.dateTime(Fmt.fromMillis(it.ts))} [${it.tag}] ${it.message}${it.detail?.let { d -> " - $d" } ?: ""}"
                         }
@@ -61,14 +69,10 @@ fun ErrorLogsScreen(vm: AppViewModel, onBack: () -> Unit) {
                                     }, "Share error logs"
                                 )
                             )
-                        }
-                    }) { Icon(Icons.Filled.Share, "Share") }
-                    IconButton(onClick = { vm.clearErrors() }) { Icon(Icons.Filled.Delete, "Clear") }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Primary, titleContentColor = Color.White,
-                    navigationIconContentColor = Color.White, actionIconContentColor = Color.White
-                )
+                        }.onFailure { com.krishna.infodeck.core.Logger.e("ErrorLogs", "share failed", it) }
+                    }
+                    HeaderIcon(Icons.Filled.Delete, "Clear") { vm.clearErrors() }
+                }
             )
         }
     ) { pad ->
@@ -79,18 +83,21 @@ fun ErrorLogsScreen(vm: AppViewModel, onBack: () -> Unit) {
         } else {
             LazyColumn(Modifier.padding(pad).fillMaxSize(), contentPadding = PaddingValues(12.dp)) {
                 items(logs, key = { it.id }) { e ->
-                    Card(
-                        shape = RoundedCornerShape(10.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 6.dp)
+                    val rose = deck.hue(com.krishna.infodeck.core.Hue.ROSE)
+                    Column(
+                        Modifier.fillMaxWidth().padding(bottom = 7.dp)
+                            .deckCard(deck, 14.dp, rose.glyph)
                     ) {
-                        Column(Modifier.padding(10.dp)) {
-                            Row(Modifier.fillMaxWidth()) {
-                                Text(e.tag, fontSize = 12.5.sp, fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.primary, modifier = Modifier.weight(1f))
+                        Column(Modifier.padding(start = 12.dp, end = 10.dp, top = 9.dp, bottom = 9.dp)) {
+                            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                                Text(e.tag, fontSize = 11.5.sp, fontWeight = FontWeight.ExtraBold,
+                                    color = if (deck.dark) rose.glyph else rose.onTint,
+                                    modifier = Modifier.clip(RoundedCornerShape(7.dp)).background(rose.tint).padding(horizontal = 7.dp, vertical = 2.dp))
+                                Spacer(Modifier.weight(1f))
                                 Text(Fmt.dateTime(Fmt.fromMillis(e.ts)), fontSize = 11.sp, color = Hint)
                             }
-                            Text(e.message, fontSize = 13.sp)
+                            Text(e.message, fontSize = 12.5.sp, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                                modifier = Modifier.padding(top = 5.dp))
                             e.detail?.let { Text(it, fontSize = 11.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant) }
                         }
                     }

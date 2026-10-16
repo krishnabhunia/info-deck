@@ -1,5 +1,7 @@
 package com.krishna.infodeck.ui
 
+import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.Sell
 import androidx.compose.foundation.background
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.border
@@ -81,14 +83,15 @@ fun TagChip(name: String, onRemove: (() -> Unit)? = null, onClick: (() -> Unit)?
     Row(
         Modifier
             .heightIn(min = 30.dp)
-            .border(1.5.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(15.dp))
+            .clip(RoundedCornerShape(15.dp))
+            .background(tint(com.krishna.infodeck.core.Hue.VIOLET))
             .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier)
             .padding(horizontal = 11.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             TagRules.display(name), fontSize = roleSp(12.5f, TextRole.CHIP),
-            fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1
+            fontWeight = FontWeight.SemiBold, color = onTint(com.krishna.infodeck.core.Hue.VIOLET), maxLines = 1
         )
         if (onRemove != null) {
             Spacer(Modifier.width(5.dp))
@@ -118,7 +121,7 @@ fun TagPickerSheet(
     val exact = all.any { it.name.equals(clean, ignoreCase = true) }
 
     InfoSheet(onDismiss = onDismiss) {
-        Text("Tags", fontSize = roleSp(17f, TextRole.SHEET), fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 8.dp))
+        SheetTitle("Tags", com.krishna.infodeck.core.Hue.VIOLET, Icons.Filled.Sell)
         OutlinedTextField(
             value = query, onValueChange = { query = it.take(TagRules.MAX_NAME + 1) },
             placeholder = { Text("Search or create") },
@@ -197,18 +200,20 @@ fun DangerSheet(
     onDelete: () -> Unit
 ) {
     InfoSheet(onDismiss = onDismiss) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Filled.Warning, null, tint = MaterialTheme.colorScheme.error)
-            Spacer(Modifier.width(8.dp))
-            Text("Danger zone", fontSize = roleSp(17f, TextRole.SHEET), fontWeight = FontWeight.Bold)
-        }
+        SheetTitle("Danger zone", com.krishna.infodeck.core.Hue.ROSE, Icons.Filled.Warning)
         Text(
             "Nothing here can be undone from another device - InfoDeck keeps everything on this phone only.",
             fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 6.dp, bottom = 10.dp)
         )
-        Text(title, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-        Text(detail, fontSize = 11.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        val rose = deck.hue(com.krishna.infodeck.core.Hue.ROSE)
+        Column(
+            Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(rose.tint)
+                .border(1.dp, rose.glyph.copy(alpha = 0.4f), RoundedCornerShape(14.dp)).padding(12.dp)
+        ) {
+            Text(title, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            Text(detail, fontSize = 11.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
 
         Spacer(Modifier.height(14.dp))
         androidx.compose.material3.OutlinedButton(
@@ -322,7 +327,14 @@ fun FileRow(
 /** Manage tags: counts, rename, merge, delete behind the danger layer (S9). */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ManageTagsScreen(vm: AppViewModel, onBack: () -> Unit) {
+fun ManageTagsScreen(
+    vm: AppViewModel,
+    onBack: () -> Unit,
+    onHome: () -> Unit = {},
+    onUpcoming: () -> Unit = {},
+    onSettings: () -> Unit = {},
+    onNewCard: () -> Unit = {}
+) {
     val tags by vm.tags.collectAsState()
     val usage by vm.tagUsage.collectAsState()
     val snackbar = remember { SnackbarHostState() }
@@ -337,19 +349,18 @@ fun ManageTagsScreen(vm: AppViewModel, onBack: () -> Unit) {
     Scaffold(
         snackbarHost = { SnackbarHost(snackbar) },
         topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text("Tags", fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
-                        Text("${tags.size} tags", fontSize = 11.5.sp, color = Color.White.copy(alpha = .85f))
-                    }
-                },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Filled.ArrowBack, "Back") } },
-                actions = { IconButton(onClick = { creating = true }) { Icon(Icons.Filled.Add, "New tag") } },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Primary, titleContentColor = Color.White,
-                    navigationIconContentColor = Color.White, actionIconContentColor = Color.White
-                )
+            DeckHeader(
+                title = "Tags",
+                role = com.krishna.infodeck.core.Hue.VIOLET,
+                subtitle = "${tags.size} tags · rename, merge, delete",
+                onBack = onBack,
+                actions = { HeaderIcon(Icons.Filled.Add, "New tag") { creating = true } }
+            )
+        },
+        bottomBar = {
+            InfoBottomBar(
+                selected = 2, overdue = 0, onHome = onHome, onUpcoming = onUpcoming, onSettings = onSettings,
+                onTags = {}, onNew = onNewCard
             )
         }
     ) { pad ->
@@ -367,14 +378,13 @@ fun ManageTagsScreen(vm: AppViewModel, onBack: () -> Unit) {
                     key = { it.id }) { t ->
                     var menu by remember { mutableStateOf(false) }
                     val count = usage[t.id] ?: 0
-                    Card(
-                        shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-                    ) {
+                    Column(Modifier.fillMaxWidth().deckCard(deck, 14.dp, hue(com.krishna.infodeck.core.Hue.VIOLET))) {
                         Row(
                             Modifier.fillMaxWidth().heightIn(min = 52.dp).padding(horizontal = 10.dp, vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
+                            HueTile(Icons.Filled.Sell, com.krishna.infodeck.core.Hue.VIOLET, size = 30)
+                            Spacer(Modifier.width(10.dp))
                             Column(Modifier.weight(1f)) {
                                 Text(TagRules.display(t.name), fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
                                 Text(
@@ -382,7 +392,7 @@ fun ManageTagsScreen(vm: AppViewModel, onBack: () -> Unit) {
                                     fontSize = 11.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
-                            Pill("$count", MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.onSurfaceVariant)
+                            Pill("$count", tint(com.krishna.infodeck.core.Hue.VIOLET), onTint(com.krishna.infodeck.core.Hue.VIOLET))
                             Box {
                                 IconButton(onClick = { menu = true }) { Icon(Icons.Filled.MoreVert, "Tag actions") }
                                 DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {

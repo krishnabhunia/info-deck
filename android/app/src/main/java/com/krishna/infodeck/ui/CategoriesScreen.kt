@@ -1,5 +1,10 @@
 package com.krishna.infodeck.ui
 
+import androidx.compose.material.icons.filled.Category
+
+import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.Sell
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -83,28 +88,18 @@ fun CategoriesScreen(vm: AppViewModel, onBack: () -> Unit) {
     Scaffold(
         snackbarHost = { SnackbarHost(snackbar) },
         topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text("Categories", fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
-                        Text(
-                            "${state.categories.count { !it.builtIn }} categories - ${state.allRows.size} cards",
-                            fontSize = 11.5.sp, color = Color.White.copy(alpha = 0.85f)
-                        )
-                    }
-                },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Filled.ArrowBack, "Back") } },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Primary, titleContentColor = Color.White,
-                    navigationIconContentColor = Color.White
-                )
+            DeckHeader(
+                title = "Categories",
+                role = com.krishna.infodeck.core.Hue.SKY,
+                subtitle = "${state.categories.count { !it.builtIn }} categories · ${state.allRows.size} cards · drag to reorder",
+                onBack = onBack
             )
         },
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = { creating = true },
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                containerColor = hue(com.krishna.infodeck.core.Hue.SKY),
+                contentColor = if (deck.dark) Color(0xFF0A0E1F) else Color.White
             ) {
                 Icon(Icons.Filled.Add, null); Spacer(Modifier.width(8.dp)); Text("New category", fontWeight = FontWeight.Bold)
             }
@@ -217,12 +212,10 @@ private fun CategoryRowItem(
     val overdue = cards.count { it.isOverdue(today) && it.hasReminder }
     val nextExpiry = cards.mapNotNull { it.keyDate }.filter { !it.isBefore(today) }.minOrNull()
 
-    Card(
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (category.builtIn) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-            else MaterialTheme.colorScheme.surface
-        )
+    val catHue = com.krishna.infodeck.core.Hues.forCategory(category.colorIndex)
+    Column(
+        Modifier.fillMaxWidth().deckCard(deck, 16.dp, if (category.builtIn) null else hue(catHue))
+            .then(if (category.builtIn) Modifier.background(deck.surface2) else Modifier)
     ) {
         Row(
             Modifier.fillMaxWidth().heightIn(min = 56.dp).padding(horizontal = 10.dp, vertical = 8.dp),
@@ -240,7 +233,8 @@ private fun CategoryRowItem(
                 Spacer(Modifier.width(8.dp))
             } else Spacer(Modifier.width(30.dp))
 
-            ColorDot(categoryColor(category.colorIndex), 16)
+            if (category.builtIn) HueTile(Icons.Filled.Folder, com.krishna.infodeck.core.Hue.SLATE, size = 34, flat = true)
+            else HueTile(glyphIcon(com.krishna.infodeck.core.Hues.glyphFor(category.name)), catHue, size = 34)
             Spacer(Modifier.width(10.dp))
             Column(Modifier.weight(1f)) {
                 Text(category.name, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -277,10 +271,10 @@ fun CategoryEditSheet(
     onDismiss: () -> Unit, onSave: (String, Int) -> Unit
 ) {
     var name by remember { mutableStateOf(initialName) }
-    var color by remember { mutableIntStateOf(initialColor.coerceIn(0, CategoryColors.lastIndex)) }
+    var color by remember { mutableIntStateOf(initialColor.coerceIn(0, 7)) }
 
     InfoSheet(onDismiss = onDismiss) {
-        Text(title, fontSize = 17.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 12.dp))
+        SheetTitle(title, com.krishna.infodeck.core.Hue.SKY, Icons.Filled.Category)
         OutlinedTextField(
             value = name, onValueChange = { name = it.take(40) },
             label = { Text("Category name") }, singleLine = true,

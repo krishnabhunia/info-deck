@@ -1,5 +1,11 @@
 package com.krishna.infodeck.ui
 
+import androidx.compose.material.icons.filled.Search
+
+import androidx.compose.material.icons.filled.Warning
+
+import androidx.compose.ui.draw.clip
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -54,7 +60,9 @@ fun UpcomingScreen(
     onBack: () -> Unit,
     onOpenCard: (Long) -> Unit,
     onHome: () -> Unit = onBack,
-    onSettings: () -> Unit = {}
+    onSettings: () -> Unit = {},
+    onTags: () -> Unit = {},
+    onNewCard: () -> Unit = {}
 ) {
     val state by vm.home.collectAsState()
     val history by vm.repo.ringLogFlow.collectAsState(initial = emptyList())
@@ -74,34 +82,31 @@ fun UpcomingScreen(
             if (searching) SlimTopBar(
                 title = "", searching = true, query = query,
                 onQuery = { query = it },
-                onSearchClose = { searching = false; query = "" }
-            ) else SlimTopBar(
+                onSearchClose = { searching = false; query = "" },
+                role = com.krishna.infodeck.core.Hue.AMBER
+            ) else DeckHeader(
                 title = "Upcoming",
-                subtitle = "${upcoming.size} reminders",
+                role = com.krishna.infodeck.core.Hue.AMBER,
+                subtitle = "${upcoming.size} reminders · soonest first",
                 onBack = onBack,
-                onSearchOpen = { searching = true }
+                actions = { HueIconButton(Icons.Filled.Search, "Search", com.krishna.infodeck.core.Hue.AMBER, onClick = { searching = true }) },
+                below = {
+                    UpcomingTabs(upcoming.size, history.size, showHistory) { showHistory = it }
+                }
             )
         },
         bottomBar = {
             InfoBottomBar(
                 selected = 1, overdue = 0,
-                onHome = onHome, onUpcoming = {}, onSettings = onSettings
+                onHome = onHome, onUpcoming = {}, onSettings = onSettings,
+                onTags = onTags, onNew = onNewCard
             )
         }
     ) { pad ->
         Column(Modifier.padding(pad).fillMaxSize()) {
-            Box(Modifier.padding(horizontal = 12.dp, vertical = 6.dp)) {
-                FilterStrip(
-                    chips = listOf(
-                        Triple("Upcoming", upcoming.size, !showHistory),
-                        Triple("History", history.size, showHistory)
-                    ),
-                    onChip = { i -> showHistory = i == 1 },
-                    trailingLabel = "Soonest",
-                    onTrailing = { }
-                )
-            }
-
+            val overdueRows = state.allRows.filter { it.isOverdue(today) }
+            if (!showHistory && overdueRows.isNotEmpty()) OverdueBanner(overdueRows.first(), overdueRows.size, today, onOpenCard)
+            Spacer(Modifier.height(4.dp))
             if (!showHistory) {
                 if (upcoming.isEmpty()) {
                     EmptyLine("No reminders scheduled.")
@@ -116,50 +121,13 @@ fun UpcomingScreen(
                                 item(key = "h$monthKey") {
                                     Text(
                                         monthKey.uppercase(),
-                                        fontSize = 11.5.sp, fontWeight = FontWeight.ExtraBold,
+                                        fontSize = 11.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 0.6.sp,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         modifier = Modifier.padding(start = 4.dp, top = 10.dp, bottom = 6.dp)
                                     )
                                 }
                             }
-                            item(key = "c${row.id}${at}") {
-                                Card(
-                                    shape = RoundedCornerShape(12.dp),
-                                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                                    modifier = Modifier.fillMaxWidth().padding(bottom = 6.dp).clickable { onOpenCard(row.id) }
-                                ) {
-                                    Row(
-                                        Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 8.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Column(
-                                            Modifier.width(46.dp),
-                                            horizontalAlignment = Alignment.CenterHorizontally
-                                        ) {
-                                            Text(Fmt.day(at.toLocalDate()), fontSize = 19.sp,
-                                                fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary)
-                                            Text(Fmt.dow(at.toLocalDate()), fontSize = 10.5.sp,
-                                                fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                            Text(Fmt.time(at.hour * 60 + at.minute), fontSize = 10.5.sp, color = Hint)
-                                        }
-                                        Spacer(Modifier.width(10.dp))
-                                        Column(Modifier.weight(1f)) {
-                                            Text(row.label, fontSize = 13.5.sp, fontWeight = FontWeight.SemiBold,
-                                                maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                            Text(
-                                                "${row.categoryName} - ${row.nextRingRule ?: ""}",
-                                                fontSize = 11.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                maxLines = 2, overflow = TextOverflow.Ellipsis
-                                            )
-                                        }
-                                        Pill(
-                                            Fmt.relativeShort(at.toLocalDate(), today),
-                                            MaterialTheme.colorScheme.secondaryContainer,
-                                            MaterialTheme.colorScheme.onSecondaryContainer
-                                        )
-                                    }
-                                }
-                            }
+                            item(key = "c${row.id}${at}") { UpcomingItem(row, at, today, onOpenCard) }
                         }
                     }
                 }
@@ -173,12 +141,95 @@ fun UpcomingScreen(
     }
 }
 
+/** Upcoming / History tabs inside the amber header band. */
+@Composable
+private fun UpcomingTabs(upcoming: Int, history: Int, showHistory: Boolean, onPick: (Boolean) -> Unit) {
+    val p = deck
+    val a = p.hue(com.krishna.infodeck.core.Hue.AMBER)
+    Row(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp))
+            .background(if (p.dark) Color.White.copy(alpha = 0.06f) else Color.White.copy(alpha = 0.22f)).padding(3.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        listOf(false to "Upcoming $upcoming", true to "History $history").forEach { (hist, label) ->
+            val on = hist == showHistory
+            Box(
+                Modifier.weight(1f).height(32.dp).clip(RoundedCornerShape(11.dp))
+                    .background(if (!on) Color.Transparent else if (p.dark) a.tint else Color.White)
+                    .then(if (on && p.dark) Modifier.border(1.dp, a.glyph, RoundedCornerShape(11.dp)) else Modifier)
+                    .clickable { onPick(hist) },
+                contentAlignment = Alignment.Center
+            ) {
+                Text(label, fontSize = 12.sp, fontWeight = FontWeight.ExtraBold,
+                    color = when { on && p.dark -> a.glyph; on -> a.onTint; p.dark -> p.ink2; else -> Color.White })
+            }
+        }
+    }
+}
+
+/** Rose banner for the first overdue card (design 1.15.0.D1 frame 13). */
+@Composable
+private fun OverdueBanner(row: com.krishna.infodeck.core.CardRow, count: Int, today: LocalDate, onOpenCard: (Long) -> Unit) {
+    val p = deck
+    val r = p.hue(com.krishna.infodeck.core.Hue.ROSE)
+    Row(
+        Modifier.padding(horizontal = 12.dp, vertical = 8.dp).fillMaxWidth().clip(RoundedCornerShape(14.dp))
+            .background(r.tint).border(1.dp, r.glyph.copy(alpha = 0.4f), RoundedCornerShape(14.dp))
+            .clickable { onOpenCard(row.id) }.padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(Icons.Filled.Warning, null, Modifier.size(20.dp), tint = r.glyph)
+        Spacer(Modifier.width(10.dp))
+        Column(Modifier.weight(1f)) {
+            Text(if (count == 1) "${row.label} is overdue" else "${row.label} and ${count - 1} more are overdue",
+                fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            row.keyDate?.let {
+                Text("${row.keyDateName} ${Fmt.date(it)} · ${Fmt.relativeShort(it, today)}", fontSize = 11.sp,
+                    color = if (p.dark) r.glyph else r.onTint, maxLines = 1)
+            }
+        }
+        Text("Open", fontSize = 11.5.sp, fontWeight = FontWeight.ExtraBold, color = if (p.dark) Color(0xFF0A0E1F) else Color.White,
+            modifier = Modifier.clip(RoundedCornerShape(14.dp)).background(r.glyph).padding(horizontal = 12.dp, vertical = 5.dp))
+    }
+}
+
+@Composable
+private fun UpcomingItem(row: com.krishna.infodeck.core.CardRow, at: java.time.LocalDateTime, today: LocalDate, onOpenCard: (Long) -> Unit) {
+    val p = deck
+    val a = p.hue(com.krishna.infodeck.core.Hue.AMBER)
+    val catHue = com.krishna.infodeck.core.Hues.forCategory(row.colorIndex)
+    Row(
+        Modifier.fillMaxWidth().padding(bottom = 7.dp).deckCard(p, 14.dp, p.hue(catHue).glyph)
+            .clickable { onOpenCard(row.id) }.padding(horizontal = 8.dp, vertical = 7.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(
+            Modifier.width(50.dp).clip(RoundedCornerShape(11.dp)).background(a.tint).padding(vertical = 5.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(Fmt.day(at.toLocalDate()), fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, color = if (p.dark) a.glyph else a.onTint)
+            Text(Fmt.dow(at.toLocalDate()), fontSize = 10.sp, fontWeight = FontWeight.Bold, color = if (p.dark) a.glyph else a.onTint)
+            Text(Fmt.time(at.hour * 60 + at.minute), fontSize = 9.5.sp, color = p.ink2)
+        }
+        Spacer(Modifier.width(9.dp))
+        HueTile(glyphIcon(com.krishna.infodeck.core.Hues.glyphFor(row.categoryName)), catHue, size = 30)
+        Spacer(Modifier.width(9.dp))
+        Column(Modifier.weight(1f)) {
+            Text(row.label, fontSize = 13.5.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text("${row.categoryName} · ${row.nextRingRule ?: ""}", fontSize = 11.sp, color = p.ink2,
+                maxLines = 2, overflow = TextOverflow.Ellipsis)
+        }
+        Pill(Fmt.relativeShort(at.toLocalDate(), today), a.tint, if (p.dark) a.glyph else a.onTint)
+    }
+}
+
 @Composable
 private fun HistoryRow(log: RingLogEntity, onOpenCard: (Long) -> Unit) {
-    Card(
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        modifier = Modifier.fillMaxWidth().padding(bottom = 6.dp).clickable { onOpenCard(log.cardId) }
+    val p = deck
+    val done = log.action?.name?.contains("DONE", true) == true
+    val h = if (done) com.krishna.infodeck.core.Hue.GREEN else com.krishna.infodeck.core.Hue.SLATE
+    Column(
+        Modifier.fillMaxWidth().padding(bottom = 7.dp).deckCard(p, 14.dp, p.hue(h).glyph).clickable { onOpenCard(log.cardId) }
     ) {
         Row(Modifier.fillMaxWidth().padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
@@ -195,7 +246,7 @@ private fun HistoryRow(log: RingLogEntity, onOpenCard: (Long) -> Unit) {
             }
             Pill(
                 log.action?.name ?: "Shown",
-                MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.onSurfaceVariant
+                p.hue(h).tint, if (p.dark) p.hue(h).glyph else p.hue(h).onTint
             )
         }
     }

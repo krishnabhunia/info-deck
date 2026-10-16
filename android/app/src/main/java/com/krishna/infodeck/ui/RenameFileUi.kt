@@ -1,5 +1,7 @@
 package com.krishna.infodeck.ui
 
+import androidx.compose.material.icons.filled.Edit
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -79,11 +81,22 @@ import com.krishna.infodeck.data.FileRenameRules
 import com.krishna.infodeck.data.FileRules
 import kotlinx.coroutines.delay
 
-/* N62 · design 1.9.D1 — the amber family marks "the extension is being changed". */
-internal val ExtAmber = Color(0xFFB45309)
-internal val ExtAmberText = Color(0xFF8A5300)
-private val ExtAmberLine = Color(0xFFEBC27A)
-private val OkText = Color(0xFF0B6B36)
+/* N62 · design 1.9.D1 — the amber family marks "the extension is being changed".
+ * 2.0: the family now comes from the active theme's amber (time/attention) and green hues. */
+internal val ExtAmber: Color
+    @Composable get() = deck.hue(com.krishna.infodeck.core.Hue.AMBER).let { if (deck.dark) it.glyph else it.onTint }
+internal val ExtOnAmber: Color
+    @Composable get() = if (deck.dark) Color(0xFF0A0E1F) else Color.White
+internal val ExtAmberText: Color
+    @Composable get() = deck.hue(com.krishna.infodeck.core.Hue.AMBER).let { if (deck.dark) it.glyph else it.onTint }
+private val ExtAmberLine: Color
+    @Composable get() = deck.hue(com.krishna.infodeck.core.Hue.AMBER).glyph.copy(alpha = 0.45f)
+private val ExtAmberTint: Color
+    @Composable get() = deck.hue(com.krishna.infodeck.core.Hue.AMBER).tint
+private val OkText: Color
+    @Composable get() = deck.hue(com.krishna.infodeck.core.Hue.GREEN).let { if (deck.dark) it.glyph else it.onTint }
+private val OkLine: Color
+    @Composable get() = deck.hue(com.krishna.infodeck.core.Hue.GREEN).glyph.copy(alpha = 0.45f)
 
 /**
  * Rename a file: Step 1 edits the NAME with the extension locked; "Change extension…"
@@ -142,8 +155,7 @@ fun RenameFileSheet(file: FileEntity, onDismiss: () -> Unit, onRename: (String, 
                 .imePadding()
                 .verticalScroll(rememberScrollState())
         ) {
-            Text("Rename file", fontSize = 17.sp, fontWeight = FontWeight.Bold)
-            Spacer(Modifier.height(10.dp))
+            SheetTitle("Rename file", com.krishna.infodeck.core.Hue.PURPLE, Icons.Filled.Edit)
             RenameFileHeader(file)
             Spacer(Modifier.height(14.dp))
 
@@ -376,13 +388,14 @@ private fun SavedAsLine(decision: Decision) {
     )
 }
 
+@Composable
 private fun savedAs(name: String, changed: Boolean): AnnotatedString {
     val p = FileNameRules.split(name)
     return buildAnnotatedString {
         append("Saved as ")
         withStyle(SpanStyle(fontWeight = FontWeight.SemiBold, color = Color.Unspecified)) { append(p.base) }
         if (p.hasExt) {
-            val style = if (changed) SpanStyle(fontWeight = FontWeight.ExtraBold, color = ExtAmberText, background = AmberContainer)
+            val style = if (changed) SpanStyle(fontWeight = FontWeight.ExtraBold, color = ExtAmberText, background = ExtAmberTint)
             else SpanStyle(fontWeight = FontWeight.ExtraBold)
             withStyle(style) { append(".${p.ext}") }
         } else if (changed) {
@@ -394,8 +407,8 @@ private fun savedAs(name: String, changed: Boolean): AnnotatedString {
 @Composable
 private fun ExtChip(ext: String, selected: Boolean, isReal: Boolean, onClick: () -> Unit) {
     val bg = when { selected -> ExtAmber; isReal -> OkContainer; else -> Color.Transparent }
-    val fg = when { selected -> Color.White; isReal -> OkText; else -> MaterialTheme.colorScheme.onSurfaceVariant }
-    val line = when { selected -> ExtAmber; isReal -> Color(0xFF9FD7B6); else -> MaterialTheme.colorScheme.outline }
+    val fg = when { selected -> ExtOnAmber; isReal -> OkText; else -> MaterialTheme.colorScheme.onSurfaceVariant }
+    val line = when { selected -> ExtAmber; isReal -> OkLine; else -> MaterialTheme.colorScheme.outline }
     Row(
         Modifier
             .height(32.dp)
@@ -422,7 +435,7 @@ private fun NoteBox(amber: Boolean, text: String, action: String? = null, onActi
             .fillMaxWidth()
             .clip(RoundedCornerShape(11.dp))
             .background(if (amber) AmberContainer else OkContainer)
-            .border(1.dp, if (amber) ExtAmberLine else Color(0xFFA7DDBE), RoundedCornerShape(11.dp))
+            .border(1.dp, if (amber) ExtAmberLine else OkLine, RoundedCornerShape(11.dp))
             .padding(horizontal = 11.dp, vertical = 9.dp)
     ) {
         if (amber) {
@@ -430,7 +443,7 @@ private fun NoteBox(amber: Boolean, text: String, action: String? = null, onActi
             Spacer(Modifier.width(8.dp))
         }
         Column(Modifier.weight(1f)) {
-            Text(text, fontSize = 12.5.sp, lineHeight = 17.sp, color = if (amber) Color(0xFF5C3A00) else OkText)
+            Text(text, fontSize = 12.5.sp, lineHeight = 17.sp, color = if (amber) deck.ink else OkText)
             if (action != null) Text(
                 action, fontSize = 12.5.sp, fontWeight = FontWeight.ExtraBold, color = ExtAmberText,
                 modifier = Modifier.padding(top = 4.dp).clickable { onAction() }
@@ -504,7 +517,7 @@ private fun ExtensionConfirmDialog(
                     androidx.compose.material3.Button(
                         onClick = onChange, modifier = Modifier.weight(1f).height(46.dp),
                         shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = ExtAmber, contentColor = Color.White)
+                        colors = ButtonDefaults.buttonColors(containerColor = ExtAmber, contentColor = ExtOnAmber)
                     ) { Text(changeLabel, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis) }
                 }
             }
@@ -528,7 +541,7 @@ private fun DialogNote(amber: Boolean, text: String) {
         Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(9.dp))
-            .background(if (amber) Color(0xFFFFF8EC) else OkContainer)
+            .background(if (amber) ExtAmberTint else OkContainer)
             .padding(horizontal = 9.dp, vertical = 8.dp),
         verticalAlignment = Alignment.Top
     ) {
@@ -536,6 +549,6 @@ private fun DialogNote(amber: Boolean, text: String) {
             Icon(Icons.Filled.Warning, null, Modifier.size(14.dp), tint = Amber)
             Spacer(Modifier.width(7.dp))
         }
-        Text(text, fontSize = 12.sp, lineHeight = 16.sp, color = if (amber) Color(0xFF5C3A00) else OkText)
+        Text(text, fontSize = 12.sp, lineHeight = 16.sp, color = if (amber) deck.ink else OkText)
     }
 }

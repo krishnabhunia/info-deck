@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased — 2.0 complete redesign: three themes (N64, design 1.15.0.D1)
+- **Aurora Pop** is the new default light theme, **Neon Night** the dark theme and **Sunrise Wallet** a custom theme you can pick; System follows the phone (Aurora by day, Neon at night). Saved 1.x theme choices keep their meaning.
+- Every screen gets a role-coloured header (status bar matched), a colourful Home hero with search and stats, themed section and card rows (Sunrise draws each card as a gradient wallet card), a four-tab bottom bar with Tags, and a category-coloured card hero with a big countdown.
+- Settings: colour tile per group, visual theme picker; Notifications and Exact alarms moved into the Reminders group; duplicate loose Manage tags row removed.
+- Every bottom sheet restyled to match: role-tile titles, check chips, tinted option rows, segmented controls, a big reminder stepper, a green live share preview, a violet QR frame and theme-coloured rename warnings; the 25 % bottom clearance is unchanged.
+- New launcher icon: a fanned deck of cards on the Aurora gradient, with an Android 13 themed (monochrome) layer.
+- Settings group "Diagnostics and About" renamed "Diagnostics and updates" (About Me sits outside the accordion).
+- Versioning: a major release now starts at x.0.0 (1.15.0 → **2.0.0**); `version.py`, its self-test and the docs updated.
+- Bundled OFL fonts (Poppins, DM Sans, Fredoka, Nunito — Latin subsets, ≈ 500 KB) with licence texts.
+- New unit tests: `Release20Test` (20 cases).
+
 
 ## Unreleased — N65 · Return from a beta to the stable version (16-Oct-2026)
 - ⚑ Beta APKs now carry the versionCode of the stable they are built on (`main`'s VERSION), so that stable can be installed back over the beta with all data kept. Stable releases are unchanged.

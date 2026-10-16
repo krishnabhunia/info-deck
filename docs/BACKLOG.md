@@ -27,6 +27,42 @@ Honest limit: betas already installed that were built before this PR (e.g. `2.0.
 
 Companions — (1) Exceptions: download, APK read, saves, uninstall/install intents, ZIP restore and each restored file are guarded; a refused plan or failed step changes nothing and shows a plain reason. (2) Logging: every guard and refusal goes to `Logger.e` (`ReturnToStable`, `Settings.update`, `UpdateManager.inspect/saveCopy`, `BackupIo.exportFull/import/restoreFiles`). (3) Tests: 22 JUnit in `ReturnToStableTest` (planner, signer proof, update guard, guided-backup kind, stable recording, targets, `ReleaseChooser.stables`/strict JSON, ZIP index-entry safety incl. traversal, safe extensions, ZIP detection, result messages, schema-3 round-trip, old JSON compatibility, manifest schema + ZIP-capability gate) + 2 Python (`test_release_signing.py`: beta base-code verification, workflow/Gradle wiring). Negative controls: stable builds show no Return rows; JSON restore unchanged; foreign package refused; override above VERSION fails the build.
 
+### N64 — 2.0 complete redesign: three themes · 15-Oct-2026 (PR `cld-redesign-three-themes`)
+
+Approved by Krishna on 15-Oct-2026 from design `docs/design/infodeck-1.15.0.D1-design.html`:
+**Option 1 Aurora Pop = default theme**, **Option 3 Neon Night = dark theme**, **Option 4 Sunrise Wallet = custom theme**, Option 2 discarded. Target version **2.0.0** (see open item Q-V below).
+
+| SrNo. | Item | Status |
+|---|---|---|
+| 1 | Theme engine: `DeckPalette` per theme (surfaces, ink, brand gradient, nine role hues, fonts, nav style) provided through `LocalDeck`; Material colour scheme and typography derived from it | [x] |
+| 2 | `ThemeRules`: System (Aurora by day, Neon at night) · Aurora · Neon Night · Sunrise; old stored SYSTEM/LIGHT/DARK keep their meaning — no migration; unknown values follow the phone | [x] |
+| 3 | Bundled OFL fonts, Latin subsets (≈ 500 KB): Poppins (Aurora), DM Sans (Neon), Fredoka + Nunito (Sunrise); licence texts kept in `res/raw` | [x] |
+| 4 | Role-coloured header on every screen (gradient band in Aurora/Sunrise, glowing dark band with gradient title in Neon); status bar continues the band | [x] |
+| 5 | Home hero with search pill and Overdue / This month / No reminder stats; "Grouped by · View · Filter" toolbar; themed section cards and card rows; Sunrise wallet cards with OVERDUE stamp | [x] |
+| 6 | Bottom bar Home · Upcoming · Tags · Settings in three styles (Aurora floating pill, Neon glass, Sunrise curved bar with centre ＋) | [x] |
+| 7 | Card view hero in the category colour with big countdown; Edit · Copy · QR · Share role tiles; Data / Dates / Reminders / Files role blocks | [x] |
+| 8 | Card editor role section headings with coloured Add pills | [x] |
+| 9 | Upcoming: amber header with Upcoming / History tabs, overdue banner, dated items | [x] |
+| 10 | Settings: colour tile per accordion group, theme picker with four preview tiles; Categories, Tags, Text size, Error Logs, Lock screen restyled | [x] |
+| 11 | Bottom sheets in the 2.0 style: role-tile titles, choice chips with check, tinted option rows and segmented controls — View, Sort, Filter (category-coloured chips), Move, More, Reminder (unit chips + big stepper + amber preview), Share (tick rows, masking, green live preview), Send with, QR (violet frame), Rename file (theme amber), Tags, Danger zone, Category edit (gradient swatches) | [x] |
+| 12 | Defaults applied 16-Oct-2026: launcher icon redrawn (Aurora gradient deck + themed monochrome layer); "Diagnostics and About" → "Diagnostics and updates"; major release starts at x.0.0 so this ships as 2.0.0 | [x] |
+| 13 | Device check of all three themes on Krishna's phone (checklist below) | [ ] |
+
+⚑ Behaviour changes (announced before release):
+1. ⚑ Theme picker has four choices; **Sunrise** is new. "Light" now means Aurora and "Dark" means Neon Night.
+2. ⚑ The bottom bar gains a **Tags** tab (Home · Upcoming · Tags · Settings); the Tags screen now shows the bar.
+3. ⚑ Home: the gradient hero replaces the slim top bar and the chip strip. The stats toggle exactly the filters the chips did (zero counts stay hidden); Filter is now one tap away from the toolbar.
+4. ⚑ Sunrise only: the floating New-card button moves into the centre of the bottom bar.
+5. ⚑ Settings standard fix: "Notifications" and "Exact alarms" sat outside every group and now live in **Reminders**; a second loose "Manage tags" row duplicated Organise → Tags and is removed.
+6. ⚑ Upcoming: Upcoming / History tabs move into the header; an overdue banner opens the first overdue card.
+7. ⚑ The status bar takes the colour of each screen's header.
+
+Sheet fix found during the visual check: in Neon a "tint at full opacity" turned ticked rows solid lime (and the open Home section solid cyan); both fixed, and a sweep found no other instance. Neon's bright fills now take dark ink on Save buttons.
+
+Companions — (1) Exceptions: unknown or corrupt theme values normalise to System and never crash; unknown nav style keeps the floating New-card button; the status-bar painter is guarded. (2) Logging: every fallback above logs through `Logger.e` (`ThemeRules`, `NavStyleRules`, `GreetingRules`, `Theme`). (3) Tests: `Release20Test` (20 JUnit cases — theme resolution day/night, legacy values, aliases, unknown values, picker order, tab order, Sunrise single New button, hero-stat filter toggles, greeting hours) and the updated tab order in `NavAndSettingsTest`. Device checklist only (cannot be proven in CI): (a) switch System/Aurora/Neon/Sunrise and back — every screen recolours, no restart needed; (b) phone dark mode with System → Neon; (c) Home stats toggle filters and show their active state; (d) Sunrise centre ＋ creates a card in the open section; (e) status bar matches each header; (f) text size 70 % and 200 % — headers, hero and wallet cards still fit; (g) app lock screen in all three themes; (h) upgrade over 1.x keeps the saved theme.
+
+Q-V resolved 16-Oct-2026 (Krishna: "use default and recommendations"): a major release now starts at **x.0.0** — `version.py`, its self-test, `docs/versioning.md` and `CONTRIBUTING.md` updated; this PR becomes **2.0.0** (versionCode 2000000). The uploaded standard only defines x = major, so nothing in it conflicts.
+
 ### N63 — Restore approved Design A file-extension confirmation · 15-Oct-2026
 
 - [x] Reintroduce the approved file rename dialog from PR #3: locked extension, explicit unlock, and mandatory second dialog with an acknowledgement checkbox.

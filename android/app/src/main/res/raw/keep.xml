@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 2.0: the SIL Open Font Licence texts ship with the bundled fonts (OFL clause 2). -->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@raw/ofl_poppins,@raw/ofl_dmsans,@raw/ofl_fredoka,@raw/ofl_nunito,@font/*" />
