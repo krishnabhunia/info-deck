@@ -21,7 +21,7 @@ The single GitHub Actions workflow computes the candidate version from the curre
 - A merged feature/fix PR is released on `main` as `v1.12.0` with `InfoDeck_1.12.0.zip` and `Android/InfoDeck_1.12.0.apk` when signing secrets are present.
 - `release:none` leaves the version unchanged and does not publish a new release.
 - Android `versionCode` is `x × 1,000,000 + y × 1,000 + z`; `1.12.0` → `1012000`. Gradle reads `VERSION` and uses the workflow's beta `versionNameOverride` when supplied.
-- **Beta versionCode (N64):** a PR beta carries the versionCode of `main`'s VERSION — the stable it is built on — passed as `-PversionCodeOverride`. Example: `1.16.0-beta.7` built on `1.15.0` has versionCode `1015000`. Android accepts an equal versionCode, so the stable can be reinstalled over the beta with data kept (Settings → Return to stable). Gradle refuses an override above the VERSION code; `verify_apk.sh` checks the base code.
+- **Beta versionCode (N65):** a PR beta carries the versionCode of `main`'s VERSION — the stable it is built on — passed as `-PversionCodeOverride`. Example: `1.16.0-beta.7` built on `1.15.0` has versionCode `1015000`. Android accepts an equal versionCode, so the stable can be reinstalled over the beta with data kept (Settings → Return to stable). Gradle refuses an override above the VERSION code; `verify_apk.sh` checks the base code.
 - The installed application's Settings → About Me shows `BuildConfig.VERSION_NAME`.
 
 ## One-time migration from historical x.y

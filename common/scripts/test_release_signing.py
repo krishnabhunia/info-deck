@@ -166,7 +166,7 @@ echo "uses-permission: name='$TEST_PERMISSION'"
         self.assertNotEqual(self.verify().returncode, 0)
 
     def test_beta_carries_the_base_stable_version_code(self):
-        # Design 1.15.0.D1: a 1.16.0 beta built on main 1.15.0 carries versionCode 1015000.
+        # Design 1.15.0.D2: a 1.16.0 beta built on main 1.15.0 carries versionCode 1015000.
         self.env.update(TEST_CODE="1015000", TEST_NAME="1.16.0-beta.3")
         ok = self.run_script("verify_apk.sh", self.apk.as_posix(), "1.16.0-beta.3", "1.15.0")
         self.assertEqual(ok.returncode, 0, ok.stdout + ok.stderr)

@@ -348,7 +348,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         done(ok)
     }
 
-    /** Full backup ZIP with attached files (design 1.15.0.D1). */
+    /** Full backup ZIP with attached files (design 1.15.0.D2). */
     fun fullBackup(uri: Uri, done: (Boolean) -> Unit) = viewModelScope.launch {
         val ok = BackupIo.exportFull(getApplication(), uri, db)
         if (ok) prefs.setLastBackup(System.currentTimeMillis())

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Usage: verify_apk.sh <apk> <display version> <code x.y.z>
 # <code x.y.z> is the version whose versionCode the APK must carry: the release itself on main,
-# and main's VERSION (the stable a beta is built on) for PR betas - design 1.15.0.D1.
+# and main's VERSION (the stable a beta is built on) for PR betas - design 1.15.0.D2.
 # Mandatory at both the Android upload and final ZIP boundaries.
 set -euo pipefail
 apk="$1"; display="$2"; version="$3"

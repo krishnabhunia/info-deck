@@ -111,7 +111,7 @@ class UpdateManager(private val context: Context) {
         val installed = ReleaseVersion.parse(BuildConfig.VERSION_NAME)
         val target = ReleaseVersion.parse(update.version)
         require(installed != null && target != null) { "Unreadable version" }
-        // A return to stable (design 1.15.0.D1) may target an older versionName, never a beta.
+        // A return to stable (design 1.15.0.D2) may target an older versionName, never a beta.
         if (allowOlder) require(target.beta == null && target != installed) { "Not a stable release" }
         else require(target > installed) { "Not a newer update" }
         val name = "InfoDeck_${update.version}"

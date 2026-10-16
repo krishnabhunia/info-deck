@@ -18,7 +18,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
 
-/** Design 1.15.0.D1 — return from a beta to the stable version. */
+/** Design 1.15.0.D2 — return from a beta to the stable version. */
 class ReturnToStableTest {
     private val pkg = ReturnPlanner.PACKAGE
 

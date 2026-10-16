@@ -50,7 +50,7 @@ object ReleaseChooser {
             .maxByOrNull { it.first }?.second
     }
 
-    /** Every official stable release, newest first (used to return from a beta, design 1.15.0.D1). */
+    /** Every official stable release, newest first (used to return from a beta, design 1.15.0.D2). */
     fun stables(releasesJson: String): List<ReleaseUpdate> =
         official(releasesJson).filter { !it.second.beta }.sortedByDescending { it.first }.map { it.second }
 

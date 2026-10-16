@@ -180,7 +180,7 @@ jobs:
               fi
               version=$(python3 common/scripts/version.py next "$base" "$kinds")
               # A beta keeps the versionCode of the stable it is built on, so that stable can
-              # be reinstalled over the beta later with all data kept (design 1.15.0.D1).
+              # be reinstalled over the beta later with all data kept (design 1.15.0.D2).
               code_version="$base"
             else
               # Bootstrap: main has no VERSION yet (the initial import) - take the PR's own.

@@ -1,7 +1,7 @@
 package com.krishna.infodeck.backup
 
 /**
- * Layout of the full backup ZIP (design 1.15.0.D1):
+ * Layout of the full backup ZIP (design 1.15.0.D2):
  *
  *   infodeck-backup.json               backup schema 3 (cards, tags, reminders + file list)
  *   files/<cardId>/<storedName>        each attached PDF/Word file, byte for byte

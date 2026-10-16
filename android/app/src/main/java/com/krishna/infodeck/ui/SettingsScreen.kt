@@ -610,7 +610,7 @@ private fun GitHubUpdatesSettings(includeBeta: Boolean, onBetaChange: (Boolean) 
                         downloading = true
                         try {
                             val apk = manager.downloadApk(available)
-                            // Stop a lower versionCode with a clear reason (design 1.15.0.D1).
+                            // Stop a lower versionCode with a clear reason (design 1.15.0.D2).
                             val blocker = com.krishna.infodeck.update.ReturnPlanner
                                 .updateBlocker(manager.installedCode, manager.inspect(apk))
                             if (blocker != null) {

@@ -1,7 +1,7 @@
 # InfoDeck — PIPELINE QUEUE (BACKLOG)
 
-### N64 — Return from a beta to the stable version · 16-Oct-2026 (PR `cld-beta-return-to-stable`, `release:feature`)
-Request: "Create a PR where beta version can be downgraded to previous installed full version." Approach chosen by Krishna: **both** (in-place return + guided reinstall fallback). Design: `docs/design/infodeck-1.15.0.D1-design.html` (built in the same PR; Q1–Q5 on defaults).
+### N65 — Return from a beta to the stable version · 16-Oct-2026 (PR `cld-beta-return-to-stable`, `release:feature`)
+Request: "Create a PR where beta version can be downgraded to previous installed full version." Approach chosen by Krishna: **both** (in-place return + guided reinstall fallback). Design: `docs/design/infodeck-1.15.0.D2-design.html` (built in the same PR; Q1–Q5 on defaults).
 
 Root cause: Android refuses an APK whose versionCode is lower than the installed one. Betas carried their *target* code (`1.16.0-beta.N` = 1016000), so the stable (1015000) could never be installed back over them.
 

@@ -48,7 +48,7 @@ import kotlinx.coroutines.launch
 import java.io.File
 
 /**
- * Return from a beta to a stable version (design 1.15.0.D1, screens A–C).
+ * Return from a beta to a stable version (design 1.15.0.D2, screens A–C).
  * Shown only while a beta is installed. Path 1 reinstalls the stable in place (data kept);
  * path 2 saves a full backup and the stable installer, then opens Android's uninstall prompt.
  */

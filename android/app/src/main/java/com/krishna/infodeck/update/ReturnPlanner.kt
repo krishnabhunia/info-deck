@@ -1,7 +1,7 @@
 package com.krishna.infodeck.update
 
 /**
- * Pure rules for going back from a beta to a stable version (design 1.15.0.D1).
+ * Pure rules for going back from a beta to a stable version (design 1.15.0.D2).
  *
  * Android refuses an APK whose versionCode is LOWER than the installed one, but accepts an
  * EQUAL one and keeps the app's data. Beta builds therefore carry the versionCode of the stable

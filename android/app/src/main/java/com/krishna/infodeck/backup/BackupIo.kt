@@ -109,7 +109,7 @@ object BackupIo {
     }
 
     /**
-     * Full backup (design 1.15.0.D1): a ZIP with the schema-3 JSON plus every attached file.
+     * Full backup (design 1.15.0.D2): a ZIP with the schema-3 JSON plus every attached file.
      * Files missing from storage are left out of the list, so the ZIP never promises bytes it lacks.
      */
     suspend fun exportFull(context: Context, uri: Uri, db: AppDatabase): Boolean = try {

@@ -22,7 +22,7 @@ class Converters {
 
 /**
  * Room schema version. Also published as the DB_SCHEMA meta-data in AndroidManifest.xml so a
- * downloaded APK can be checked before installing it over this one (design 1.15.0.D1).
+ * downloaded APK can be checked before installing it over this one (design 1.15.0.D2).
  * DbSchemaManifestTest fails the build if the two ever differ.
  */
 const val DB_SCHEMA_VERSION = 2

@@ -182,6 +182,6 @@ class Prefs(private val context: Context) {
     suspend fun setAutoCaps(v: Boolean) = edit { it[K.caps] = v }
     suspend fun setAutoCapsValues(v: Boolean) = edit { it[K.capsValues] = v }
     suspend fun setBetaUpdates(v: Boolean) = edit { it[K.betaUpdates] = v }
-    /** Last stable version this phone ran; the return-to-stable target (design 1.15.0.D1). */
+    /** Last stable version this phone ran; the return-to-stable target (design 1.15.0.D2). */
     suspend fun setLastStableVersion(v: String) = edit { it[K.lastStable] = v }
 }

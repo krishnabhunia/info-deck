@@ -30,7 +30,7 @@ android {
         // Versioning (project-wide): x.y.z of plain integers, read from the repo-root VERSION file.
         // versionCode = x*1,000,000 + y*1,000 + z — computed, never typed, so it cannot drift.
         // CI may override the name for beta builds with -PversionNameOverride=1.12.0-beta.3
-        // Beta builds (design 1.15.0.D1): CI passes -PversionCodeOverride = the code of main's VERSION,
+        // Beta builds (design 1.15.0.D2): CI passes -PversionCodeOverride = the code of main's VERSION,
         // the stable the beta is built on, so that stable can later be reinstalled over the beta.
         versionCode = (project.findProperty("versionCodeOverride") as String?)?.let { raw ->
             val code = raw.trim().toIntOrNull() ?: error("versionCodeOverride must be an integer, got '$raw'")

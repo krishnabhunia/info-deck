@@ -35,7 +35,7 @@ Source: [standards/versions_management.md](../standards/versions_management.md) 
 | 2 | Wi-Fi-only default, or any network |
 | 3 | Keep the last downloaded APK for re-install, or delete after install |
 
-## Return from a beta to stable — N64 (16-Oct-2026, design `infodeck-1.15.0.D1`)
+## Return from a beta to stable — N65 (16-Oct-2026, design `infodeck-1.15.0.D2`)
 
 | ID | Requirement |
 |---|---|
