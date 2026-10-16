@@ -202,7 +202,7 @@ class UpdateManager(private val context: Context) {
     /** Read package name, versionCode and DB schema from a downloaded APK without installing it. */
     fun inspect(apk: File): ReturnPlanner.ApkFacts? = try {
         @Suppress("DEPRECATION")
-        val info = context.packageManager.getPackageArchiveInfo(apk.absolutePath, PackageManager.GET_META_DATA)
+        val info = context.packageManager.getPackageArchiveInfo(apk.absolutePath, PackageManager.GET_META_DATA or signerFlag())
         if (info == null) {
             Logger.e("UpdateManager.inspect", "not a readable APK: ${apk.name}")
             null
@@ -211,11 +211,33 @@ class UpdateManager(private val context: Context) {
             val schema = meta?.getInt(DB_SCHEMA_KEY, -1)?.takeIf { it > 0 }
             ReturnPlanner.ApkFacts(
                 info.packageName, PackageInfoCompat.getLongVersionCode(info), schema,
-                zipRestore = meta?.getBoolean(FULL_BACKUP_KEY, false) == true
+                zipRestore = meta?.getBoolean(FULL_BACKUP_KEY, false) == true,
+                sameSigner = ReturnPlanner.signersMatch(signers(info), installedSigners())
             )
         }
     } catch (e: Exception) {
         Logger.e("UpdateManager.inspect", "APK inspection failed", e); null
+    }
+
+    private fun signerFlag(): Int =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) PackageManager.GET_SIGNING_CERTIFICATES
+        else @Suppress("DEPRECATION") PackageManager.GET_SIGNATURES
+
+    /** SHA-256 digests of the current signing certificate(s). */
+    @Suppress("DEPRECATION")
+    private fun signers(info: android.content.pm.PackageInfo?): Set<String> {
+        val raw = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            info?.signingInfo?.let { if (it.hasMultipleSigners()) it.apkContentsSigners else it.signingCertificateHistory }
+        } else info?.signatures
+        val sha = java.security.MessageDigest.getInstance("SHA-256")
+        return raw.orEmpty().map { sig -> sha.digest(sig.toByteArray()).joinToString("") { "%02x".format(it) } }.toSet()
+    }
+
+    private fun installedSigners(): Set<String> = try {
+        @Suppress("DEPRECATION")
+        signers(context.packageManager.getPackageInfo(context.packageName, signerFlag()))
+    } catch (e: Exception) {
+        Logger.e("UpdateManager.inspect", "could not read installed signer", e); emptySet()
     }
 
     /** Copy a downloaded file to a place the user picked, so it survives an uninstall. */

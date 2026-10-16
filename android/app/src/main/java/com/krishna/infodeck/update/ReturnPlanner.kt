@@ -19,8 +19,14 @@ object ReturnPlanner {
     data class ApkFacts(
         val packageName: String?, val versionCode: Long, val dbSchema: Int?,
         /** True when that build can restore a full-backup ZIP (manifest FULL_BACKUP_RESTORE). */
-        val zipRestore: Boolean = false
+        val zipRestore: Boolean = false,
+        /** Same signing certificate(s) as the installed app; null when it could not be read. */
+        val sameSigner: Boolean? = null
     )
+
+    /** SHA-256 certificate digests compared as sets; null when either side is unknown. */
+    fun signersMatch(archive: Set<String>, installed: Set<String>): Boolean? =
+        if (archive.isEmpty() || installed.isEmpty()) null else archive == installed
 
     /** Which backup the guided reinstall must save so the target version can restore it. */
     fun guidedBackup(apk: ApkFacts?): GuidedBackup =
@@ -44,14 +50,16 @@ object ReturnPlanner {
         if (apk == null) return Plan.Refuse("The downloaded file is not a valid Android app")
         if (apk.packageName != PACKAGE) return Plan.Refuse("The downloaded app is not InfoDeck")
         if (apk.versionCode <= 0) return Plan.Refuse("The downloaded app has no version number")
+        if (apk.sameSigner == false) return Plan.Refuse("The downloaded app is signed with a different key")
         val schema = apk.dbSchema?.takeIf { it > 0 } ?: LEGACY_DB_SCHEMA
-        if (apk.versionCode < installedCode) {
-            return Plan.Reinstall("This beta has a higher Android version number than the stable version")
+        val reinstallReason = when {
+            apk.versionCode < installedCode -> "This beta has a higher Android version number than the stable version"
+            schema < installedSchema -> "This beta changed the database, which the stable version cannot read"
+            else -> return Plan.InPlace // Android itself verifies the signer for an in-place install.
         }
-        if (schema < installedSchema) {
-            return Plan.Reinstall("This beta changed the database, which the stable version cannot read")
-        }
-        return Plan.InPlace
+        // After an uninstall Android has nothing to compare against, so the signer must be proven here.
+        if (apk.sameSigner != true) return Plan.Refuse("Could not confirm the downloaded app's signature")
+        return Plan.Reinstall(reinstallReason)
     }
 
     /**

@@ -187,11 +187,14 @@ object BackupIo {
     }
 
     /**
-     * Unpacks only safe entries, streaming each file straight to disk with a per-file cap,
-     * a total cap and a free-space check. Returns the backup JSON text, or null.
+     * Unpacks only safe entries declared by the backup JSON (which exportFull writes first),
+     * streaming each file to disk with a per-file cap, a total cap and a free-space check.
+     * Returns the backup JSON text, or null.
      */
     private fun unzipTo(context: Context, uri: Uri, staging: File): String? {
         var json: String? = null
+        var declared: Set<Int> = emptySet()   // empty until the JSON (written first) is read
+        val extracted = HashSet<Int>()
         var entries = 0
         var total = 0L
         staging.mkdirs()
@@ -202,14 +205,16 @@ object BackupIo {
                     entries++
                     require(entries <= FullBackupRules.MAX_ENTRIES) { "too many entries in backup" }
                     if (!e.isDirectory) {
-                        if (e.name == FullBackupRules.JSON_ENTRY) {
+                        if (e.name == FullBackupRules.JSON_ENTRY && json == null) {
                             val buf = java.io.ByteArrayOutputStream()
                             copyCapped(zip, buf, FullBackupRules.MAX_JSON_BYTES)
                             json = buf.toString(Charsets.UTF_8.name())
+                            // Only files the manifest declares are ever extracted.
+                            declared = decode(json!!)?.files?.map { it.index }?.filter { it >= 0 }?.toSet().orEmpty()
                         } else {
                             val index = FullBackupRules.parseFileEntry(e.name)
-                            if (index == null) {
-                                Logger.e("BackupIo.import", "skipped unexpected backup entry")
+                            if (index == null || index !in declared || !extracted.add(index)) {
+                                Logger.e("BackupIo.import", "skipped undeclared or repeated backup entry")
                             } else {
                                 require(staging.usableSpace > FullBackupRules.FREE_SPACE_MARGIN + FileRules.MAX_BYTES) {
                                     "not enough free space to restore attached files"

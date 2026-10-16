@@ -7,8 +7,8 @@
 - When in-place is impossible (higher beta code or newer database), a guided sheet saves a full backup and the stable installer, then opens Android's uninstall prompt; restore afterwards from the ZIP.
 - New **Full backup (with files)** ZIP and ZIP-aware **Restore from file** (attachments included, path-safe, size-capped).
 - Updates with a lower versionCode are stopped with a clear message.
-- Independent review fixes: JSON backup for return targets that cannot read the ZIP; backup/restore I/O off the main thread; index-named ZIP entries; streamed, capped unzip; honest counts of missing/failed attachments; paged release list.
-- Design `infodeck-1.15.0.D2-design.html`; 20 JUnit + 2 Python regression tests.
+- Independent review fixes: JSON backup for return targets that cannot read the ZIP; backup/restore I/O off the main thread; index-named ZIP entries; streamed, capped unzip; honest counts of missing/failed attachments; paged release list; signer verified before a guided reinstall; only declared ZIP entries extracted.
+- Design `infodeck-1.15.0.D2-design.html`; 22 JUnit + 2 Python regression tests.
 
 ## Unreleased — N63 · Restore protected-extension Design A (15-Oct-2026)
 - Restore PR #3's approved two-dialog file rename with a locked extension, a separate extension editor, and a mandatory unchecked acknowledgement box before any extension change (including case-only changes).

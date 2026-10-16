@@ -44,3 +44,4 @@ Source: [standards/versions_management.md](../standards/versions_management.md) 
 | UPD-12 | Before any install the downloaded APK is read: package must be InfoDeck; lower versionCode or newer database schema (manifest `DB_SCHEMA`) means in-place is impossible |
 | UPD-13 | When in-place is impossible: save a full backup ZIP and the installer APK first; only then may Android's uninstall prompt open; never a silent uninstall |
 | UPD-14 | Returning in place switches "Include beta updates" off |
+| UPD-15 | A guided reinstall is offered only when the downloaded APK's signing certificate matches the installed app (UPD-7 applied before the uninstall) |

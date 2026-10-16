@@ -34,20 +34,38 @@ class ReturnToStableTest {
 
     @Test fun oldStyleBetaWithTargetCodeNeedsReinstall() {
         // 2.0.0-beta.78 was built before this change and carries 2000000.
-        val plan = ReturnPlanner.forReturn(2_000_000, 2, ApkFacts(pkg, 1_015_000, 2))
+        val plan = ReturnPlanner.forReturn(2_000_000, 2, ApkFacts(pkg, 1_015_000, 2, sameSigner = true))
         assertTrue(plan is Plan.Reinstall)
         assertTrue((plan as Plan.Reinstall).reason.contains("version number"))
     }
 
     @Test fun betaWithNewerDatabaseNeedsReinstallEvenWithEqualCode() {
-        val plan = ReturnPlanner.forReturn(1_015_000, 3, ApkFacts(pkg, 1_015_000, 2))
+        val plan = ReturnPlanner.forReturn(1_015_000, 3, ApkFacts(pkg, 1_015_000, 2, sameSigner = true))
         assertTrue(plan is Plan.Reinstall)
         assertTrue((plan as Plan.Reinstall).reason.contains("database"))
     }
 
     @Test fun releasesWithoutSchemaMetaDataAreTreatedAsLegacySchemaTwo() {
         assertEquals(Plan.InPlace, ReturnPlanner.forReturn(1_015_000, 2, ApkFacts(pkg, 1_015_000, null)))
-        assertTrue(ReturnPlanner.forReturn(1_015_000, 3, ApkFacts(pkg, 1_015_000, null)) is Plan.Reinstall)
+        assertTrue(ReturnPlanner.forReturn(1_015_000, 3, ApkFacts(pkg, 1_015_000, null, sameSigner = true)) is Plan.Reinstall)
+    }
+
+    @Test fun guidedReinstallNeedsAProvenSigner() {
+        // After uninstalling, Android has nothing to compare the signer with — so it is checked here.
+        assertTrue(ReturnPlanner.forReturn(2_000_000, 2, ApkFacts(pkg, 1_015_000, 2, sameSigner = null)) is Plan.Refuse)
+        assertTrue(ReturnPlanner.forReturn(2_000_000, 2, ApkFacts(pkg, 1_015_000, 2, sameSigner = false)) is Plan.Refuse)
+        // A different signer is refused even when an in-place install would be possible.
+        assertTrue(ReturnPlanner.forReturn(1_015_000, 2, ApkFacts(pkg, 1_015_000, 2, sameSigner = false)) is Plan.Refuse)
+        // Unknown signer in place: Android's installer still enforces it.
+        assertEquals(Plan.InPlace, ReturnPlanner.forReturn(1_015_000, 2, ApkFacts(pkg, 1_015_000, 2, sameSigner = null)))
+    }
+
+    @Test fun signerSetsCompareExactly() {
+        assertEquals(true, ReturnPlanner.signersMatch(setOf("ab"), setOf("ab")))
+        assertEquals(false, ReturnPlanner.signersMatch(setOf("ab"), setOf("cd")))
+        assertEquals(false, ReturnPlanner.signersMatch(setOf("ab", "cd"), setOf("ab")))
+        assertNull(ReturnPlanner.signersMatch(emptySet(), setOf("ab")))
+        assertNull(ReturnPlanner.signersMatch(setOf("ab"), emptySet()))
     }
 
     @Test fun foreignOrUnreadableApksAreRefused() {
