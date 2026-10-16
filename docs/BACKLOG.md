@@ -1,5 +1,28 @@
 # InfoDeck — PIPELINE QUEUE (BACKLOG)
 
+### N64 — Return from a beta to the stable version · 16-Oct-2026 (PR `cld-beta-return-to-stable`, `release:feature`)
+Request: "Create a PR where beta version can be downgraded to previous installed full version." Approach chosen by Krishna: **both** (in-place return + guided reinstall fallback). Design: `docs/design/infodeck-1.15.0.D1-design.html` (built in the same PR; Q1–Q5 on defaults).
+
+Root cause: Android refuses an APK whose versionCode is lower than the installed one. Betas carried their *target* code (`1.16.0-beta.N` = 1016000), so the stable (1015000) could never be installed back over them.
+
+| SrNo. | Item | Status |
+|---|---|---|
+| 1 | ⚑ CI: PR betas carry the versionCode of `main`'s VERSION (`-PversionCodeOverride`); `verify_apk.sh` checks that base code; Gradle rejects an override above the VERSION code | [x] |
+| 2 | Manifest meta-data `com.krishna.infodeck.DB_SCHEMA` = Room schema; class-wide gate `manifestSchemaMetaDataMatchesTheRoomVersion` | [x] |
+| 3 | Settings → Diagnostics and updates, beta only: "Return to v<previous stable>" (+ "Newest stable" when different) | [x] |
+| 4 | Path 1 in-place: download official stable ZIP → read APK (package, versionCode, schema) → confirm sheet → beta updates off → Android install prompt | [x] |
+| 5 | Path 2 guided reinstall when code or schema is lower: save full backup ZIP + save installer APK → Uninstall (locked until both saved; `REQUEST_DELETE_PACKAGES`) → install + restore | [x] |
+| 6 | Full backup (with files): ZIP = schema-3 JSON + `files/<card>/<stored>`; Restore detects JSON or ZIP; path-safe, size-capped, staging always cleaned | [x] |
+| 7 | Ordinary updates: a downloaded APK with a lower versionCode is stopped with a clear message instead of Android's "App not installed" | [x] |
+| 8 | Last stable version recorded at every start of a stable build | [x] |
+| 9 | Device: install a beta from this PR over 1.15.0 → Return to v1.15.0 → data and files intact | [ ] |
+| 10 | Device: Full backup → Restore (Replace all) on a phone with attached files → files open | [ ] |
+| 11 | Device: guided path on a beta with a higher code (e.g. `2.0.0-beta.78` will NOT show it — built before this change; use a later old-style beta or a test build) | [ ] |
+
+Honest limit: betas already installed that were built before this PR (e.g. `2.0.0-beta.78`, code 2000000) do not contain the Return feature and cannot be returned in place. One-time manual way back: JSON backup in that beta → save attached files out → uninstall → install stable → restore.
+
+Companions — (1) Exceptions: download, APK read, saves, uninstall/install intents, ZIP restore and each restored file are guarded; a refused plan or failed step changes nothing and shows a plain reason. (2) Logging: every guard and refusal goes to `Logger.e` (`ReturnToStable`, `Settings.update`, `UpdateManager.inspect/saveCopy`, `BackupIo.exportFull/import/restoreFiles`). (3) Tests: 17 JUnit in `ReturnToStableTest` (planner, update guard, stable recording, targets, `ReleaseChooser.stables`, ZIP path safety incl. traversal, ZIP detection, schema-3 round-trip, old JSON compatibility, manifest/schema gate) + 2 Python (`test_release_signing.py`: beta base-code verification, workflow/Gradle wiring). Negative controls: stable builds show no Return rows; JSON restore unchanged; foreign package refused; override above VERSION fails the build.
+
 ### N63 — Restore approved Design A file-extension confirmation · 15-Oct-2026
 
 - [x] Reintroduce the approved file rename dialog from PR #3: locked extension, explicit unlock, and mandatory second dialog with an acknowledgement checkbox.

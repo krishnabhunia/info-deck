@@ -165,6 +165,32 @@ echo "uses-permission: name='$TEST_PERMISSION'"
         self.apk.unlink()
         self.assertNotEqual(self.verify().returncode, 0)
 
+    def test_beta_carries_the_base_stable_version_code(self):
+        # Design 1.15.0.D1: a 1.16.0 beta built on main 1.15.0 carries versionCode 1015000.
+        self.env.update(TEST_CODE="1015000", TEST_NAME="1.16.0-beta.3")
+        ok = self.run_script("verify_apk.sh", self.apk.as_posix(), "1.16.0-beta.3", "1.15.0")
+        self.assertEqual(ok.returncode, 0, ok.stdout + ok.stderr)
+        wrong = self.run_script("verify_apk.sh", self.apk.as_posix(), "1.16.0-beta.3", "1.16.0")
+        self.assertNotEqual(wrong.returncode, 0)
+        self.assertIn("versionCode='1016000'", wrong.stdout)
+
+    def test_workflow_wires_the_beta_version_code(self):
+        source = (ROOT / ".github/workflows/build.yml").read_text(encoding="utf-8")
+        prepare = source.split("\n  prepare:\n", 1)[1].split("\n  windows:\n", 1)[0]
+        android = source.split("\n  android:\n", 1)[1].split("\n  package:\n", 1)[0]
+        package = source.split("\n  package:\n", 1)[1]
+        self.assertIn('code_version="$base"', prepare)
+        self.assertEqual(prepare.count('code_version="$version"'), 2)  # bootstrap + main
+        self.assertIn('echo "code_version=$code_version" >> "$GITHUB_OUTPUT"', prepare)
+        self.assertIn("code_version: ${{ steps.ver.outputs.code_version }}", prepare)
+        self.assertIn('-PversionCodeOverride="$(python3 ../common/scripts/version.py code "${{ needs.prepare.outputs.code_version }}")"', android)
+        for part in (android, package):
+            self.assertIn('verify_apk.sh "$apk" "${{ needs.prepare.outputs.display }}" "${{ needs.prepare.outputs.code_version }}"', part)
+            self.assertNotIn('"${{ needs.prepare.outputs.display }}" "${{ needs.prepare.outputs.version }}"', part)
+        gradle = (ROOT / "android/app/build.gradle.kts").read_text(encoding="utf-8")
+        self.assertIn('findProperty("versionCodeOverride")', gradle)
+        self.assertIn("require(code in 1..appVersion.code)", gradle)
+
     def test_workflow_requires_verified_android_before_any_upload(self):
         source = (ROOT / ".github/workflows/build.yml").read_text(encoding="utf-8")
         android = source.split("\n  android:\n", 1)[1].split("\n  package:\n", 1)[0]

@@ -117,6 +117,13 @@ fun SettingsScreen(
             scope.launch { snackbar.showSnackbar(if (ok) "Backup written" else "Backup failed - see Error Logs") }
         }
     }
+    val fullBackupLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/zip")
+    ) { uri ->
+        if (uri != null) vm.fullBackup(uri) { ok ->
+            scope.launch { snackbar.showSnackbar(if (ok) "Full backup written" else "Backup failed - see Error Logs") }
+        }
+    }
     val restoreLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.OpenDocument()
     ) { uri -> if (uri != null) restoreUri = uri }
@@ -359,8 +366,12 @@ fun SettingsScreen(
                     backupLauncher.launch("infodeck-backup-${System.currentTimeMillis()}.json")
                 }
                 Divider(color = MaterialTheme.colorScheme.outlineVariant)
-                SettingRow("Restore from file", "Replace or merge, asked before restoring", null) {
-                    restoreLauncher.launch(arrayOf("application/json", "text/plain", "*/*"))
+                SettingRow("Full backup (with files)", "ZIP - everything above plus attached PDF/Word files", null) {
+                    fullBackupLauncher.launch("infodeck-full-backup-${System.currentTimeMillis()}.zip")
+                }
+                Divider(color = MaterialTheme.colorScheme.outlineVariant)
+                SettingRow("Restore from file", "JSON or full-backup ZIP - replace or merge, asked first", null) {
+                    restoreLauncher.launch(arrayOf("application/json", "application/zip", "text/plain", "*/*"))
                 }
                 Divider(color = MaterialTheme.colorScheme.outlineVariant)
                 SettingRow(
@@ -406,6 +417,7 @@ fun SettingsScreen(
                 SettingRow("Error Logs", "Logger.e entries - view, share, clear", "$errors") { onErrorLogs() }
                 Divider(color = MaterialTheme.colorScheme.outlineVariant)
                 GitHubUpdatesSettings(s.betaUpdates) { vm.setBetaUpdates(it) }
+                ReturnToStableSection(vm, s.lastStableVersion, snackbar)
             }
 
             SettingsGroupCard(
@@ -505,7 +517,7 @@ fun SettingsScreen(
     if (ru != null) AlertDialog(
         onDismissRequest = { restoreUri = null },
         title = { Text("Restore backup") },
-        text = { Text("JSON backups exclude attached PDF/Word documents. Replace all permanently removes existing cards and attached files. Merge retains existing cards and files. Continue?") },
+        text = { Text("A full-backup ZIP also restores attached PDF/Word files; a JSON backup does not. Replace all permanently removes existing cards and attached files. Merge retains existing cards and files. Continue?") },
         confirmButton = {
             TextButton(onClick = {
                 restoreUri = null
@@ -598,8 +610,16 @@ private fun GitHubUpdatesSettings(includeBeta: Boolean, onBetaChange: (Boolean) 
                         downloading = true
                         try {
                             val apk = manager.downloadApk(available)
-                            manager.install(apk) // Android must ask the user to confirm.
-                            status = "Confirm installation in Android"
+                            // Stop a lower versionCode with a clear reason (design 1.15.0.D1).
+                            val blocker = com.krishna.infodeck.update.ReturnPlanner
+                                .updateBlocker(manager.installedCode, manager.inspect(apk))
+                            if (blocker != null) {
+                                com.krishna.infodeck.core.Logger.e("Settings.update", "update refused: $blocker")
+                                status = blocker
+                            } else {
+                                manager.install(apk) // Android must ask the user to confirm.
+                                status = "Confirm installation in Android"
+                            }
                         } catch (e: Exception) {
                             status = "Update failed: " + (e.message ?: "Download error")
                         } finally {

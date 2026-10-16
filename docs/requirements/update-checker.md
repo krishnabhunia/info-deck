@@ -34,3 +34,13 @@ Source: [standards/versions_management.md](../standards/versions_management.md) 
 | 1 | Release asset to download: the APK attached directly to the release, or unpack it from the zip |
 | 2 | Wi-Fi-only default, or any network |
 | 3 | Keep the last downloaded APK for re-install, or delete after install |
+
+## Return from a beta to stable — N64 (16-Oct-2026, design `infodeck-1.15.0.D1`)
+
+| ID | Requirement |
+|---|---|
+| UPD-10 | While a beta is installed, Settings offers "Return to v<previous stable>" (the last stable this phone ran) and, when different, the newest stable |
+| UPD-11 | Beta builds carry the versionCode of the stable they are built on, so the stable installs over them in place (Android allows equal, refuses lower) |
+| UPD-12 | Before any install the downloaded APK is read: package must be InfoDeck; lower versionCode or newer database schema (manifest `DB_SCHEMA`) means in-place is impossible |
+| UPD-13 | When in-place is impossible: save a full backup ZIP and the installer APK first; only then may Android's uninstall prompt open; never a silent uninstall |
+| UPD-14 | Returning in place switches "Include beta updates" off |
