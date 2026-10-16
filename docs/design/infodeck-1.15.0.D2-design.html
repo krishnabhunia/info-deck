@@ -262,7 +262,8 @@
   </div>
   <div class="tbl-wrap"><table class="tb">
     <tr><th class="sr">SrNo.</th><th>Element</th><th>Rule</th></tr>
-    <tr><td class="sr">1</td><td class="k">Full backup</td><td>ZIP holding <code>infodeck-backup.json</code> (schema 3, lists files) and <code>files/&lt;card&gt;/&lt;stored name&gt;</code>. Also usable any time, not only for a return.</td></tr>
+    <tr><td class="sr">1</td><td class="k">Full backup</td><td>ZIP holding <code>infodeck-backup.json</code> (schema 3, lists files) and <code>files/&lt;index&gt;</code>. Also usable any time, not only for a return.</td></tr>
+    <tr><td class="sr">1a</td><td class="k">Old targets</td><td>A stable that cannot read the ZIP (no <code>FULL_BACKUP_RESTORE</code> manifest flag, i.e. 1.15.0 and older) gets a <b>JSON</b> data backup in screen C step 1 instead, with a warning to save attached files first.</td></tr>
     <tr><td class="sr">2</td><td class="k">Restore</td><td>Detects JSON or ZIP by content. ZIP restore copies each file back, inside the 25 MB / 10-per-card limits, rejecting unsafe paths.</td></tr>
     <tr><td class="sr">3</td><td class="k">Update guard</td><td>Before any update or return, the downloaded APK's versionCode is compared with the installed one. A lower code is stopped with a clear message instead of Android's "App not installed".</td></tr>
   </table></div>

@@ -16,7 +16,17 @@ object ReturnPlanner {
     const val LEGACY_DB_SCHEMA = 2
 
     /** What the app could read from a downloaded APK file without installing it. */
-    data class ApkFacts(val packageName: String?, val versionCode: Long, val dbSchema: Int?)
+    data class ApkFacts(
+        val packageName: String?, val versionCode: Long, val dbSchema: Int?,
+        /** True when that build can restore a full-backup ZIP (manifest FULL_BACKUP_RESTORE). */
+        val zipRestore: Boolean = false
+    )
+
+    /** Which backup the guided reinstall must save so the target version can restore it. */
+    fun guidedBackup(apk: ApkFacts?): GuidedBackup =
+        if (apk?.zipRestore == true) GuidedBackup.FULL_ZIP else GuidedBackup.JSON_ONLY
+
+    enum class GuidedBackup { FULL_ZIP, JSON_ONLY }
 
     sealed class Plan {
         /** Android will install it over the top; all data stays. */
@@ -48,8 +58,7 @@ object ReturnPlanner {
      * Guard for an ordinary update: stop a lower versionCode with a clear message before
      * Android shows its generic "App not installed". Returns null when the install may proceed.
      */
-    fun updateBlocker(installedCode: Long, apk: ApkFacts?): String? {
-        if (apk == null) return "The downloaded file is not a valid Android app"
+    fun updateBlocker(installedCode: Long, apk: ApkFacts): String? {
         if (apk.packageName != PACKAGE) return "The downloaded app is not InfoDeck"
         if (apk.versionCode < installedCode) {
             return "This release was built on an older version. Return to stable first, or wait for the next build."

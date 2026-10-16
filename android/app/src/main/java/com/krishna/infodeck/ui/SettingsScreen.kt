@@ -120,8 +120,8 @@ fun SettingsScreen(
     val fullBackupLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/zip")
     ) { uri ->
-        if (uri != null) vm.fullBackup(uri) { ok ->
-            scope.launch { snackbar.showSnackbar(if (ok) "Full backup written" else "Backup failed - see Error Logs") }
+        if (uri != null) vm.fullBackup(uri) { r ->
+            scope.launch { snackbar.showSnackbar(fullBackupMessage(r)) }
         }
     }
     val restoreLauncher = rememberLauncherForActivityResult(
@@ -521,20 +521,35 @@ fun SettingsScreen(
         confirmButton = {
             TextButton(onClick = {
                 restoreUri = null
-                vm.restore(ru, true) { n ->
-                    scope.launch { snackbar.showSnackbar(if (n >= 0) "Replaced - $n cards restored" else "Restore failed - see Error Logs") }
+                vm.restore(ru, true) { r ->
+                    scope.launch { snackbar.showSnackbar(restoreMessage(r, "Replaced", "restored")) }
                 }
             }) { Text("Replace all") }
         },
         dismissButton = {
             TextButton(onClick = {
                 restoreUri = null
-                vm.restore(ru, false) { n ->
-                    scope.launch { snackbar.showSnackbar(if (n >= 0) "Merged - $n cards added" else "Restore failed - see Error Logs") }
+                vm.restore(ru, false) { r ->
+                    scope.launch { snackbar.showSnackbar(restoreMessage(r, "Merged", "added")) }
                 }
             }) { Text("Merge") }
         }
     )
+}
+
+/** Snackbar text for a full backup; never hides missing attachments (design 1.15.0.D2). */
+internal fun fullBackupMessage(r: com.krishna.infodeck.backup.FullBackupResult): String = when {
+    !r.ok -> "Backup failed - see Error Logs"
+    r.filesMissing > 0 -> "Full backup written - ${r.filesMissing} attached file(s) were already missing"
+    else -> "Full backup written - ${r.filesSaved} attached file(s) included"
+}
+
+/** Snackbar text for a restore, including attached files that could not be restored. */
+internal fun restoreMessage(r: com.krishna.infodeck.backup.RestoreResult, verb: String, noun: String): String = when {
+    r.cards < 0 -> "Restore failed - see Error Logs"
+    r.filesFailed > 0 -> "$verb - ${r.cards} cards $noun, ${r.filesFailed} attached file(s) not restored - see Error Logs"
+    r.filesRestored > 0 -> "$verb - ${r.cards} cards $noun with ${r.filesRestored} attached file(s)"
+    else -> "$verb - ${r.cards} cards $noun"
 }
 
 @Composable
@@ -611,8 +626,10 @@ private fun GitHubUpdatesSettings(includeBeta: Boolean, onBetaChange: (Boolean) 
                         try {
                             val apk = manager.downloadApk(available)
                             // Stop a lower versionCode with a clear reason (design 1.15.0.D2).
-                            val blocker = com.krishna.infodeck.update.ReturnPlanner
-                                .updateBlocker(manager.installedCode, manager.inspect(apk))
+                            // An unreadable APK is left to Android's own installer checks.
+                            val blocker = manager.inspect(apk)?.let {
+                                com.krishna.infodeck.update.ReturnPlanner.updateBlocker(manager.installedCode, it)
+                            }
                             if (blocker != null) {
                                 com.krishna.infodeck.core.Logger.e("Settings.update", "update refused: $blocker")
                                 status = blocker

@@ -67,6 +67,7 @@ fun ReturnToStableSection(vm: AppViewModel, lastStable: String, snackbar: Snackb
     var chosen by remember { mutableStateOf<ReleaseUpdate?>(null) }
     var apk by remember { mutableStateOf<File?>(null) }
     var plan by remember { mutableStateOf<ReturnPlanner.Plan?>(null) }
+    var backupKind by remember { mutableStateOf(ReturnPlanner.GuidedBackup.JSON_ONLY) }
     var backupSaved by remember { mutableStateOf(false) }
     var apkSaved by remember { mutableStateOf(false) }
 
@@ -75,6 +76,8 @@ fun ReturnToStableSection(vm: AppViewModel, lastStable: String, snackbar: Snackb
         try {
             targets = ReturnPlanner.targets(manager.stableReleases(), lastStable.ifBlank { null })
             message = if (targets.isEmpty()) "No stable release found on GitHub" else ""
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
         } catch (e: Exception) {
             Logger.e("ReturnToStable", "could not list stable releases", e)
             message = "Could not check GitHub: " + (e.message ?: "Network error")
@@ -86,9 +89,18 @@ fun ReturnToStableSection(vm: AppViewModel, lastStable: String, snackbar: Snackb
     val backupLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/zip")
     ) { uri ->
-        if (uri != null) vm.fullBackup(uri) { ok ->
+        if (uri != null) vm.fullBackup(uri) { r ->
+            backupSaved = backupSaved || r.ok
+            scope.launch { snackbar.showSnackbar(fullBackupMessage(r)) }
+        }
+    }
+    // Targets older than full-backup restore can only read the JSON backup (no attached files).
+    val jsonLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/json")
+    ) { uri ->
+        if (uri != null) vm.backup(uri) { ok ->
             backupSaved = backupSaved || ok
-            scope.launch { snackbar.showSnackbar(if (ok) "Full backup saved" else "Backup failed - see Error Logs") }
+            scope.launch { snackbar.showSnackbar(if (ok) "Data backup saved" else "Backup failed - see Error Logs") }
         }
     }
     val apkLauncher = rememberLauncherForActivityResult(
@@ -109,7 +121,9 @@ fun ReturnToStableSection(vm: AppViewModel, lastStable: String, snackbar: Snackb
             message = ""
             try {
                 val file = manager.downloadApk(target, allowOlder = true)
-                val p = ReturnPlanner.forReturn(manager.installedCode, DB_SCHEMA_VERSION, manager.inspect(file))
+                val facts = manager.inspect(file)
+                val p = ReturnPlanner.forReturn(manager.installedCode, DB_SCHEMA_VERSION, facts)
+                backupKind = ReturnPlanner.guidedBackup(facts)
                 if (p is ReturnPlanner.Plan.Refuse) {
                     Logger.e("ReturnToStable", "return to ${target.version} refused: ${p.reason}")
                     message = p.reason
@@ -117,6 +131,8 @@ fun ReturnToStableSection(vm: AppViewModel, lastStable: String, snackbar: Snackb
                     chosen = target; apk = file; plan = p
                     backupSaved = false; apkSaved = false
                 }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Logger.e("ReturnToStable", "download of ${target.version} failed", e)
                 message = "Download failed: " + (e.message ?: "Network error")
@@ -180,7 +196,7 @@ fun ReturnToStableSection(vm: AppViewModel, lastStable: String, snackbar: Snackb
                             // Q1 default: stop offering betas straight away after the return.
                             vm.setBetaUpdates(false)
                             manager.install(file) // Android asks the user to confirm.
-                            message = "Confirm the installation in Android"
+                            message = "Confirm the installation in Android. If you cancel, beta updates stay off - switch them back on above."
                         }
                     } catch (e: Exception) {
                         Logger.e("ReturnToStable", "could not start the in-place return", e)
@@ -190,9 +206,13 @@ fun ReturnToStableSection(vm: AppViewModel, lastStable: String, snackbar: Snackb
                 }
             }
             is ReturnPlanner.Plan.Reinstall -> GuidedReinstallSheet(
-                version = target.version, reason = current.reason,
+                version = target.version, reason = current.reason, kind = backupKind,
                 backupSaved = backupSaved, apkSaved = apkSaved, onDismiss = close,
-                onSaveBackup = { backupLauncher.launch("infodeck-full-backup-${System.currentTimeMillis()}.zip") },
+                onSaveBackup = {
+                    if (backupKind == ReturnPlanner.GuidedBackup.FULL_ZIP)
+                        backupLauncher.launch("infodeck-full-backup-${System.currentTimeMillis()}.zip")
+                    else jsonLauncher.launch("infodeck-backup-${System.currentTimeMillis()}.json")
+                },
                 onSaveApk = { apkLauncher.launch("InfoDeck_${target.version}.apk") },
                 onUninstall = {
                     try {
@@ -228,15 +248,22 @@ private fun InPlaceSheet(version: String, onDismiss: () -> Unit, onConfirm: () -
 
 @Composable
 private fun GuidedReinstallSheet(
-    version: String, reason: String, backupSaved: Boolean, apkSaved: Boolean,
+    version: String, reason: String, kind: ReturnPlanner.GuidedBackup, backupSaved: Boolean, apkSaved: Boolean,
     onDismiss: () -> Unit, onSaveBackup: () -> Unit, onSaveApk: () -> Unit, onUninstall: () -> Unit
 ) {
     InfoSheet(onDismiss = onDismiss) {
         Text("Reinstall v$version", fontSize = 17.sp, fontWeight = FontWeight.Bold)
         Text("$reason. Save everything first, then reinstall.", fontSize = 12.5.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp, bottom = 6.dp))
-        StepRow(1, if (backupSaved) StepState.DONE else StepState.TODO, "Save full backup",
-            "ZIP with cards, tags, reminders and all attached files",
+        val full = kind == ReturnPlanner.GuidedBackup.FULL_ZIP
+        if (!full) {
+            Notice("v$version cannot restore attached files. Before uninstalling, open each card and " +
+                "share or save its PDF/Word files - uninstalling removes them.", good = false)
+        }
+        StepRow(1, if (backupSaved) StepState.DONE else StepState.TODO,
+            if (full) "Save full backup" else "Save data backup",
+            if (full) "ZIP with cards, tags, reminders and all attached files"
+            else "JSON with cards, dates, tags and reminders (no attached files)",
             action = if (backupSaved) "Save again" else "Save", onAction = onSaveBackup)
         StepRow(2, if (apkSaved) StepState.DONE else StepState.TODO, "Save the v$version installer",
             "InfoDeck_$version.apk - keep it in Downloads",
@@ -246,7 +273,8 @@ private fun GuidedReinstallSheet(
             "Enabled only after steps 1 and 2. Removes the app and its data.",
             action = "Uninstall", danger = true, enabled = ready, onAction = onUninstall)
         StepRow(4, StepState.WAIT, "Install and restore",
-            "Open the saved APK in Files → open InfoDeck → Settings → Backup → Restore from file → pick the ZIP → Replace all")
+            "Open the saved APK in Files → open InfoDeck → Settings → Backup → Restore from file → pick the " +
+                (if (full) "ZIP" else "JSON") + " → Replace all")
     }
 }
 

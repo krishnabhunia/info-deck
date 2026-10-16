@@ -44,6 +44,10 @@
         <meta-data
             android:name="com.krishna.infodeck.DB_SCHEMA"
             android:value="2" />
+        <!-- This build can restore a full-backup ZIP with attached files (N65). Read before a guided reinstall. -->
+        <meta-data
+            android:name="com.krishna.infodeck.FULL_BACKUP_RESTORE"
+            android:value="true" />
 
         <activity
             android:name=".MainActivity"

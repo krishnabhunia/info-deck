@@ -55,8 +55,9 @@ object ReleaseChooser {
         official(releasesJson).filter { !it.second.beta }.sortedByDescending { it.first }.map { it.second }
 
     private fun official(releasesJson: String): List<Pair<ReleaseVersion, ReleaseUpdate>> {
-        val releases = runCatching { Json.parseToJsonElement(releasesJson) }.getOrNull() as? JsonArray
-            ?: return emptyList()
+        // A malformed response is an error for the caller to show, never "no update".
+        val releases = Json.parseToJsonElement(releasesJson) as? JsonArray
+            ?: throw IllegalArgumentException("GitHub releases response is not a list")
         return releases.mapNotNull { item ->
             val obj = runCatching { item.jsonObject }.getOrNull() ?: return@mapNotNull null
             if (obj["draft"]?.jsonPrimitive?.booleanOrNull == true) return@mapNotNull null

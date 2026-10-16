@@ -27,13 +27,17 @@ class UpdateManager(private val context: Context) {
     private val store = context.getSharedPreferences("infodeck_updates", Context.MODE_PRIVATE)
 
     companion object {
-        private const val API = "https://api.github.com/repos/krishnabhunia/info-deck/releases?per_page=50"
+        private const val API = "https://api.github.com/repos/krishnabhunia/info-deck/releases?per_page=100"
         private const val DAY_MS = 24L * 60 * 60 * 1000
         private const val MAX_JSON = 2 * 1024 * 1024
         private const val MAX_ZIP = 120L * 1024 * 1024
         private const val MAX_APK = 150L * 1024 * 1024
         /** Manifest meta-data carrying the Room schema version (see AndroidManifest.xml). */
         const val DB_SCHEMA_KEY = "com.krishna.infodeck.DB_SCHEMA"
+        /** Manifest meta-data: this build can restore a full-backup ZIP. */
+        const val FULL_BACKUP_KEY = "com.krishna.infodeck.FULL_BACKUP_RESTORE"
+        /** Every PR run publishes a beta, so stables can sit beyond the first page. */
+        private const val MAX_PAGES = 3
 
         private fun connection(url: String): HttpURLConnection {
             require(url.startsWith("https://")) { "Only HTTPS downloads are allowed" }
@@ -89,7 +93,20 @@ class UpdateManager(private val context: Context) {
         ReleaseChooser.stables(fetchReleasesJson())
     }
 
-    private fun fetchReleasesJson(): String = connection(API).let { conn ->
+    /** Up to [MAX_PAGES] pages of releases merged into one JSON array (newest first). */
+    private fun fetchReleasesJson(): String {
+        val all = mutableListOf<kotlinx.serialization.json.JsonElement>()
+        for (page in 1..MAX_PAGES) {
+            val text = fetchPage("$API&page=$page")
+            val items = kotlinx.serialization.json.Json.parseToJsonElement(text) as? kotlinx.serialization.json.JsonArray
+                ?: error("GitHub returned an unexpected response")
+            all.addAll(items)
+            if (items.size < 100) break
+        }
+        return kotlinx.serialization.json.JsonArray(all).toString()
+    }
+
+    private fun fetchPage(url: String): String = connection(url).let { conn ->
         try {
             if (conn.responseCode != 200) error("GitHub HTTP ${conn.responseCode}")
             conn.inputStream.bufferedReader().use { reader ->
@@ -190,8 +207,12 @@ class UpdateManager(private val context: Context) {
             Logger.e("UpdateManager.inspect", "not a readable APK: ${apk.name}")
             null
         } else {
-            val schema = info.applicationInfo?.metaData?.getInt(DB_SCHEMA_KEY, -1)?.takeIf { it > 0 }
-            ReturnPlanner.ApkFacts(info.packageName, PackageInfoCompat.getLongVersionCode(info), schema)
+            val meta = info.applicationInfo?.metaData
+            val schema = meta?.getInt(DB_SCHEMA_KEY, -1)?.takeIf { it > 0 }
+            ReturnPlanner.ApkFacts(
+                info.packageName, PackageInfoCompat.getLongVersionCode(info), schema,
+                zipRestore = meta?.getBoolean(FULL_BACKUP_KEY, false) == true
+            )
         }
     } catch (e: Exception) {
         Logger.e("UpdateManager.inspect", "APK inspection failed", e); null

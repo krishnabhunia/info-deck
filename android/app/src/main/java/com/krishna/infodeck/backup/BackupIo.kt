@@ -28,6 +28,8 @@ import java.util.UUID
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @Serializable data class BCategory(val id: Long, val name: String, val colorIndex: Int, val sortOrder: Int, val builtIn: Boolean)
 @Serializable data class BData(val name: String, val value: String, val order: Int)
@@ -46,8 +48,16 @@ import java.util.zip.ZipOutputStream
 /** Schema 3 (full backup ZIP): one attached file; the bytes live at files/<cardId>/<storedName>. */
 @Serializable data class BFile(
     val cardId: Long, val displayName: String, val storedName: String,
-    val mime: String, val sizeBytes: Long, val order: Int
+    val mime: String, val sizeBytes: Long, val order: Int,
+    /** ZIP entry files/<index>; independent of the stored name, which may contain spaces. */
+    val index: Int = -1
 )
+
+/** Outcome of a full backup: [ok] = written; [filesMissing] = rows whose bytes are gone from storage. */
+data class FullBackupResult(val ok: Boolean, val filesSaved: Int = 0, val filesMissing: Int = 0)
+
+/** Outcome of a restore: [cards] = -1 when nothing was restored. */
+data class RestoreResult(val cards: Int, val filesRestored: Int = 0, val filesFailed: Int = 0)
 @Serializable data class BackupFile(
     val app: String = "InfoDeck",
     val version: Int = 2,
@@ -99,69 +109,72 @@ object BackupIo {
         Logger.e("BackupIo.decode", "not a valid InfoDeck backup", t); null
     }
 
-    suspend fun export(context: Context, uri: Uri, db: AppDatabase): Boolean = try {
-        val text = encode(build(db))
-        context.contentResolver.openOutputStream(uri)?.use { it.write(text.toByteArray()) }
-            ?: throw IllegalStateException("no output stream")
-        true
-    } catch (t: Throwable) {
-        Logger.e("BackupIo.export", "write failed", t); false
+    suspend fun export(context: Context, uri: Uri, db: AppDatabase): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val text = encode(build(db))
+            context.contentResolver.openOutputStream(uri)?.use { it.write(text.toByteArray()) }
+                ?: throw IllegalStateException("no output stream")
+            true
+        } catch (t: Throwable) {
+            Logger.e("BackupIo.export", "write failed", t); false
+        }
     }
 
     /**
-     * Full backup (design 1.15.0.D2): a ZIP with the schema-3 JSON plus every attached file.
-     * Files missing from storage are left out of the list, so the ZIP never promises bytes it lacks.
+     * Full backup (design 1.15.0.D2): a ZIP with the schema-3 JSON plus every attached file,
+     * each stored as files/<index>. Files whose bytes are gone from storage are left out and counted.
      */
-    suspend fun exportFull(context: Context, uri: Uri, db: AppDatabase): Boolean = try {
-        val all = build(db, withFiles = true)
-        val present = all.files.filter { f ->
-            FullBackupRules.fileEntry(f.cardId, f.storedName) != null &&
-                File(context.filesDir, "cards/${f.cardId}/${f.storedName}").isFile
-        }
-        if (present.size != all.files.size) {
-            Logger.e("BackupIo.exportFull", "${all.files.size - present.size} attached files missing from storage")
-        }
-        val backup = all.copy(files = present)
-        context.contentResolver.openOutputStream(uri)?.use { raw ->
-            ZipOutputStream(raw.buffered()).use { zip ->
-                zip.putNextEntry(ZipEntry(FullBackupRules.JSON_ENTRY))
-                zip.write(encode(backup).toByteArray())
-                zip.closeEntry()
-                present.forEach { f ->
-                    zip.putNextEntry(ZipEntry(FullBackupRules.fileEntry(f.cardId, f.storedName)!!))
-                    File(context.filesDir, "cards/${f.cardId}/${f.storedName}").inputStream().use { it.copyTo(zip) }
-                    zip.closeEntry()
-                }
+    suspend fun exportFull(context: Context, uri: Uri, db: AppDatabase): FullBackupResult =
+        withContext(Dispatchers.IO) {
+            try {
+                val all = build(db, withFiles = true)
+                val present = all.files
+                    .filter { File(context.filesDir, "cards/${it.cardId}/${it.storedName}").isFile }
+                    .mapIndexed { i, f -> f.copy(index = i) }
+                val missing = all.files.size - present.size
+                if (missing > 0) Logger.e("BackupIo.exportFull", "$missing attached files missing from storage")
+                context.contentResolver.openOutputStream(uri)?.use { raw ->
+                    ZipOutputStream(raw.buffered()).use { zip ->
+                        zip.putNextEntry(ZipEntry(FullBackupRules.JSON_ENTRY))
+                        zip.write(encode(all.copy(files = present)).toByteArray())
+                        zip.closeEntry()
+                        present.forEach { f ->
+                            zip.putNextEntry(ZipEntry(FullBackupRules.fileEntry(f.index)))
+                            File(context.filesDir, "cards/${f.cardId}/${f.storedName}").inputStream().use { it.copyTo(zip) }
+                            zip.closeEntry()
+                        }
+                    }
+                } ?: throw IllegalStateException("no output stream")
+                FullBackupResult(true, present.size, missing)
+            } catch (t: Throwable) {
+                Logger.e("BackupIo.exportFull", "write failed", t); FullBackupResult(false)
             }
-        } ?: throw IllegalStateException("no output stream")
-        true
-    } catch (t: Throwable) {
-        Logger.e("BackupIo.exportFull", "write failed", t); false
-    }
+        }
 
     /** Restore either a JSON backup or a full-backup ZIP, decided by the file's first bytes. */
-    suspend fun import(context: Context, uri: Uri, db: AppDatabase, replaceAll: Boolean): Int {
-        val staging = File(context.cacheDir, "restore-${System.currentTimeMillis()}")
-        return try {
-            val head = ByteArray(4)
-            val read = context.contentResolver.openInputStream(uri)?.use { readFully(it, head) }
-                ?: throw IllegalStateException("no input stream")
-            if (read == 4 && FullBackupRules.isZip(head)) {
-                val text = unzipTo(context, uri, staging) ?: return -1
-                restore(context, db, text, replaceAll, staging)
-            } else {
-                val text = context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
+    suspend fun import(context: Context, uri: Uri, db: AppDatabase, replaceAll: Boolean): RestoreResult =
+        withContext(Dispatchers.IO) {
+            val staging = File(context.cacheDir, "restore-${System.currentTimeMillis()}")
+            try {
+                val head = ByteArray(4)
+                val read = context.contentResolver.openInputStream(uri)?.use { readFully(it, head) }
                     ?: throw IllegalStateException("no input stream")
-                restore(context, db, text, replaceAll, null)
-            }
-        } catch (t: Throwable) {
-            Logger.e("BackupIo.import", "restore failed", t); -1
-        } finally {
-            if (staging.exists() && !staging.deleteRecursively()) {
-                Logger.e("BackupIo.import", "could not clear restore staging folder")
+                if (read == 4 && FullBackupRules.isZip(head)) {
+                    val text = unzipTo(context, uri, staging) ?: return@withContext RestoreResult(-1)
+                    restore(context, db, text, replaceAll, staging)
+                } else {
+                    val text = context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
+                        ?: throw IllegalStateException("no input stream")
+                    restore(context, db, text, replaceAll, null)
+                }
+            } catch (t: Throwable) {
+                Logger.e("BackupIo.import", "restore failed", t); RestoreResult(-1)
+            } finally {
+                if (staging.exists() && !staging.deleteRecursively()) {
+                    Logger.e("BackupIo.import", "could not clear restore staging folder")
+                }
             }
         }
-    }
 
     private fun readFully(input: java.io.InputStream, into: ByteArray): Int {
         var n = 0
@@ -173,10 +186,14 @@ object BackupIo {
         return n
     }
 
-    /** Unpacks only safe, size-limited entries. Returns the backup JSON text, or null. */
+    /**
+     * Unpacks only safe entries, streaming each file straight to disk with a per-file cap,
+     * a total cap and a free-space check. Returns the backup JSON text, or null.
+     */
     private fun unzipTo(context: Context, uri: Uri, staging: File): String? {
         var json: String? = null
         var entries = 0
+        var total = 0L
         staging.mkdirs()
         context.contentResolver.openInputStream(uri)?.use { raw ->
             ZipInputStream(raw.buffered()).use { zip ->
@@ -186,15 +203,21 @@ object BackupIo {
                     require(entries <= FullBackupRules.MAX_ENTRIES) { "too many entries in backup" }
                     if (!e.isDirectory) {
                         if (e.name == FullBackupRules.JSON_ENTRY) {
-                            json = String(readCapped(zip, FullBackupRules.MAX_JSON_BYTES))
+                            val buf = java.io.ByteArrayOutputStream()
+                            copyCapped(zip, buf, FullBackupRules.MAX_JSON_BYTES)
+                            json = buf.toString(Charsets.UTF_8.name())
                         } else {
-                            val parsed = FullBackupRules.parseFileEntry(e.name)
-                            if (parsed == null) {
+                            val index = FullBackupRules.parseFileEntry(e.name)
+                            if (index == null) {
                                 Logger.e("BackupIo.import", "skipped unexpected backup entry")
                             } else {
-                                val out = File(staging, "${parsed.first}/${parsed.second}")
-                                out.parentFile?.mkdirs()
-                                out.outputStream().use { o -> o.write(readCapped(zip, FileRules.MAX_BYTES)) }
+                                require(staging.usableSpace > FullBackupRules.FREE_SPACE_MARGIN + FileRules.MAX_BYTES) {
+                                    "not enough free space to restore attached files"
+                                }
+                                File(staging, "$index").outputStream().use { o ->
+                                    total += copyCapped(zip, o, FileRules.MAX_BYTES)
+                                }
+                                require(total <= FullBackupRules.MAX_TOTAL_BYTES) { "backup files larger than allowed" }
                             }
                         }
                     }
@@ -207,8 +230,7 @@ object BackupIo {
         return json
     }
 
-    private fun readCapped(input: java.io.InputStream, max: Long): ByteArray {
-        val out = java.io.ByteArrayOutputStream()
+    private fun copyCapped(input: java.io.InputStream, out: java.io.OutputStream, max: Long): Long {
         val buf = ByteArray(64 * 1024)
         var total = 0L
         while (true) {
@@ -218,17 +240,17 @@ object BackupIo {
             require(total <= max) { "backup entry larger than allowed" }
             out.write(buf, 0, n)
         }
-        return out.toByteArray()
+        return total
     }
 
     /** replaceAll = wipe first; otherwise merge (new rows are added, ids re-generated). */
     private suspend fun restore(
         context: Context, db: AppDatabase, text: String, replaceAll: Boolean, staged: File?
-    ): Int {
-        val parsed = decode(text) ?: return -1
+    ): RestoreResult {
+        val parsed = decode(text) ?: return RestoreResult(-1)
         if (parsed.app != "InfoDeck" || parsed.version !in 1..FullBackupRules.SCHEMA_WITH_FILES) {
             Logger.e("BackupIo.import", "unsupported backup app or version")
-            return -1
+            return RestoreResult(-1)
         }
         val cardMap = HashMap<Long, Long>()
         // All relational changes either succeed together or roll back together.
@@ -303,28 +325,31 @@ object BackupIo {
                 Logger.e("BackupIo.import", "could not clear stale attachment storage")
             }
         }
-        if (staged != null) restoreFiles(context, db, parsed.files, cardMap, staged)
-        return restored
+        if (staged == null) return RestoreResult(restored)
+        val (ok, failed) = restoreFiles(context, db, parsed.files, cardMap, staged)
+        return RestoreResult(restored, ok, failed)
     }
 
     /** Copies each staged attachment into its new card; one bad file never stops the rest. */
     private suspend fun restoreFiles(
         context: Context, db: AppDatabase, files: List<BFile>, cardMap: Map<Long, Long>, staged: File
-    ) {
+    ): Pair<Int, Int> {
         val perCard = HashMap<Long, Int>()
+        var ok = 0
         var failed = 0
         files.sortedBy { it.order }.forEach { f ->
             try {
                 val newCard = cardMap[f.cardId] ?: error("card not restored")
-                val source = File(staged, "${f.cardId}/${f.storedName}")
-                require(FullBackupRules.parseFileEntry("files/${f.cardId}/${f.storedName}") != null) { "unsafe name" }
+                require(f.index >= 0) { "no ZIP entry for file" }
+                require(FileRules.typeAllowed(f.mime, f.displayName)) { "file type not allowed" }
+                val source = File(staged, "${f.index}")
                 require(source.isFile && source.length() in 1..FileRules.MAX_BYTES) { "file bytes missing" }
                 val used = perCard.getOrDefault(newCard, 0)
                 require(used < FileRules.MAX_PER_CARD) { "card file limit" }
-                val ext = f.storedName.substringAfterLast('.', "").lowercase()
+                val ext = FullBackupRules.safeExtension(f.displayName)
                 val stored = UUID.randomUUID().toString() + if (ext.isBlank()) "" else ".$ext"
                 val entity = FileEntity(
-                    cardId = newCard, displayName = f.displayName, storedName = stored,
+                    cardId = newCard, displayName = FileRules.sanitise(f.displayName), storedName = stored,
                     mime = f.mime, sizeBytes = source.length(), order = f.order
                 )
                 val target = FileStore.resolve(context, entity)
@@ -335,11 +360,13 @@ object BackupIo {
                     target.delete(); throw t
                 }
                 perCard[newCard] = used + 1
+                ok++
             } catch (t: Throwable) {
                 failed++
                 Logger.e("BackupIo.restoreFiles", "could not restore one attached file", t)
             }
         }
         if (failed > 0) Logger.e("BackupIo.restoreFiles", "$failed of ${files.size} attached files not restored")
+        return ok to failed
     }
 }

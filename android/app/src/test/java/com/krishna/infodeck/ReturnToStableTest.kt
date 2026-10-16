@@ -62,7 +62,14 @@ class ReturnToStableTest {
         assertNull(ReturnPlanner.updateBlocker(1_015_000, ApkFacts(pkg, 1_016_000, 2)))
         assertNotNull(ReturnPlanner.updateBlocker(1_016_000, ApkFacts(pkg, 1_015_000, 2)))
         assertNotNull(ReturnPlanner.updateBlocker(1, ApkFacts("x.y", 9, 2)))
-        assertNotNull(ReturnPlanner.updateBlocker(1, null))
+    }
+
+    @Test fun guidedBackupMatchesWhatTheTargetCanRestore() {
+        assertEquals(ReturnPlanner.GuidedBackup.FULL_ZIP,
+            ReturnPlanner.guidedBackup(ApkFacts(pkg, 1, 2, zipRestore = true)))
+        // 1.15.0 and older have no FULL_BACKUP_RESTORE flag: only the JSON backup is readable there.
+        assertEquals(ReturnPlanner.GuidedBackup.JSON_ONLY, ReturnPlanner.guidedBackup(ApkFacts(pkg, 1, 2)))
+        assertEquals(ReturnPlanner.GuidedBackup.JSON_ONLY, ReturnPlanner.guidedBackup(null))
     }
 
     @Test fun onlyStableBuildsRecordThemselves() {
@@ -104,19 +111,40 @@ class ReturnToStableTest {
         val json = listOf(release("1.14.0"), release("1.16.0-beta.9", true), release("1.15.0"), bad)
             .joinToString(",", "[", "]")
         assertEquals(listOf("1.15.0", "1.14.0"), ReleaseChooser.stables(json).map { it.version })
-        assertEquals(emptyList<ReleaseUpdate>(), ReleaseChooser.stables("not json"))
+        assertTrue(runCatching { ReleaseChooser.stables("{}") }.isFailure)
+        assertTrue(runCatching { ReleaseChooser.newest("not json", "1.0.0", false) }.isFailure)
     }
 
     // ---------------------------------------------------------------- full backup
-    @Test fun zipEntriesStayInsideTheirCardFolder() {
-        assertEquals(12L to "a1b2.pdf", FullBackupRules.parseFileEntry("files/12/a1b2.pdf"))
-        assertEquals("files/7/x.docx", FullBackupRules.fileEntry(7, "x.docx"))
+    @Test fun zipFileEntriesAreBareIndexes() {
+        assertEquals(0, FullBackupRules.parseFileEntry("files/0"))
+        assertEquals(12, FullBackupRules.parseFileEntry("files/12"))
+        assertEquals("files/7", FullBackupRules.fileEntry(7))
         for (bad in listOf(
-            "files/12/../evil.pdf", "files/12/sub/x.pdf", "../files/1/x.pdf", "files/0/x.pdf",
-            "files/-1/x.pdf", "files/12/.hidden", "files/12/a..b", "files/abc/x.pdf", "/files/1/x.pdf",
-            "files/12/", "infodeck-backup.json"
+            "files/12/../evil.pdf", "files/../1", "../files/1", "files/01", "files/-1", "files/1.pdf",
+            "files/abc", "/files/1", "files/", "files/1/", "files/1234567", "infodeck-backup.json"
         )) assertNull(bad, FullBackupRules.parseFileEntry(bad))
-        assertNull(FullBackupRules.fileEntry(3, "../x"))
+        assertTrue(runCatching { FullBackupRules.fileEntry(-1) }.isFailure)
+    }
+
+    @Test fun storedNamesWithSpacesNoLongerDropFilesFromTheBackup() {
+        // Old stored names could carry "Scan 12.10.2024 copy" style extensions; entries no longer use them.
+        assertEquals("pdf", FullBackupRules.safeExtension("Policy.PDF"))
+        assertEquals("", FullBackupRules.safeExtension("Scan 12.10.2024 copy"))
+        assertEquals("", FullBackupRules.safeExtension("noext"))
+        assertEquals("", FullBackupRules.safeExtension("a.toolongextension"))
+    }
+
+    @Test fun messagesNeverHideMissingOrFailedFiles() {
+        assertTrue(com.krishna.infodeck.ui.fullBackupMessage(
+            com.krishna.infodeck.backup.FullBackupResult(true, 3, 1)).contains("1 attached file"))
+        assertTrue(com.krishna.infodeck.ui.fullBackupMessage(
+            com.krishna.infodeck.backup.FullBackupResult(false)).contains("failed"))
+        val r = com.krishna.infodeck.ui.restoreMessage(
+            com.krishna.infodeck.backup.RestoreResult(5, 2, 1), "Replaced", "restored")
+        assertTrue(r.contains("5 cards") && r.contains("1 attached file(s) not restored"))
+        assertTrue(com.krishna.infodeck.ui.restoreMessage(
+            com.krishna.infodeck.backup.RestoreResult(-1), "Merged", "added").contains("failed"))
     }
 
     @Test fun zipIsDetectedByItsHeaderOnly() {
@@ -128,7 +156,7 @@ class ReturnToStableTest {
     @Test fun schemaThreeBackupRoundTripsItsFileList() {
         val b = BackupFile(
             version = FullBackupRules.SCHEMA_WITH_FILES, exportedAt = 5L, categories = emptyList(), cards = emptyList(),
-            files = listOf(BFile(10, "Policy.pdf", "u-1.pdf", "application/pdf", 1234, 0))
+            files = listOf(BFile(10, "Policy.pdf", "u-1.pdf", "application/pdf", 1234, 0, index = 0))
         )
         val back = BackupIo.decode(BackupIo.encode(b))!!
         assertEquals(3, back.version)
@@ -149,5 +177,7 @@ class ReturnToStableTest {
         val m = Regex("""android:name="com\.krishna\.infodeck\.DB_SCHEMA"\s+android:value="(\d+)"""").find(manifest)
         assertNotNull("DB_SCHEMA meta-data missing from AndroidManifest.xml", m)
         assertEquals(DB_SCHEMA_VERSION, m!!.groupValues[1].toInt())
+        assertTrue("FULL_BACKUP_RESTORE meta-data missing",
+            Regex("""android:name="com\.krishna\.infodeck\.FULL_BACKUP_RESTORE"\s+android:value="true"""").containsMatchIn(manifest))
     }
 }
