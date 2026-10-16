@@ -1,5 +1,13 @@
 package com.krishna.infodeck.ui
 
+import androidx.compose.material.icons.filled.Event
+
+import androidx.compose.material.icons.filled.DataObject
+
+import androidx.compose.material.icons.filled.AttachFile
+
+import androidx.compose.foundation.border
+
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -181,16 +189,13 @@ fun CardViewScreen(
     Scaffold(
         snackbarHost = { SnackbarHost(snackbar) },
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(d?.card?.label ?: "Card", maxLines = 2, overflow = TextOverflow.Ellipsis, fontSize = 16.sp)
-                },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Filled.ArrowBack, "Back") } },
-                actions = {
-                    IconButton(onClick = { openShare(1) }) { Icon(Icons.Filled.Share, "Share") }
-                    IconButton(onClick = { onEdit(cardId) }) { Icon(Icons.Filled.Edit, "Edit") }
+            CardHero(
+                d = d, today = today, onBack = onBack,
+                onShare = { openShare(1) }, onEdit = { onEdit(cardId) },
+                onCategory = { d?.let { onOpenCategory(it.card.categoryId) } },
+                menu = {
                     Box {
-                        IconButton(onClick = { overflow = true }) { Icon(Icons.Filled.MoreVert, "More") }
+                        HeaderIcon(Icons.Filled.MoreVert, "More") { overflow = true }
                         DropdownMenu(expanded = overflow, onDismissRequest = { overflow = false }) {
                             DropdownMenuItem(text = { Text("Share as text") }, onClick = {
                                 overflow = false
@@ -203,11 +208,7 @@ fun CardViewScreen(
                             )
                         }
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Primary, titleContentColor = Color.White,
-                    navigationIconContentColor = Color.White, actionIconContentColor = Color.White
-                )
+                }
             )
         }
     ) { pad ->
@@ -218,28 +219,15 @@ fun CardViewScreen(
                 Modifier.padding(pad).fillMaxSize().verticalScroll(rememberScrollState())
                     .padding(horizontal = 12.dp)
             ) {
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(10.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    ActionButton(Icons.Filled.Edit, "Edit") { onEdit(cardId) }
-                    ActionButton(Icons.Filled.ContentCopy, "Copy") {
+                    ActionButton(Icons.Filled.Edit, "Edit", com.krishna.infodeck.core.Hue.INDIGO) { onEdit(cardId) }
+                    ActionButton(Icons.Filled.ContentCopy, "Copy", com.krishna.infodeck.core.Hue.TEAL) {
                         copy(context, com.krishna.infodeck.core.ShareText.build(buildFields(d)))
                         scope.launch { snackbar.showSnackbar("Card copied") }
                     }
-                    ActionButton(Icons.Filled.QrCode2, "QR", violet = true) { openShare(3) }
-                    ActionButton(Icons.Filled.Share, "Share", primary = true) { openShare(1) }
-                }
-                Spacer(Modifier.height(10.dp))
-                Row(
-                    Modifier
-                        .background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(12.dp))
-                        .clickable { onOpenCategory(d.card.categoryId) }
-                        .padding(horizontal = 10.dp, vertical = 5.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    ColorDot(categoryColor(d.colorIndex), 10)
-                    Spacer(Modifier.width(6.dp))
-                    Text(d.categoryName, fontSize = 12.sp, fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer)
+                    ActionButton(Icons.Filled.QrCode2, "QR", com.krishna.infodeck.core.Hue.VIOLET) { openShare(3) }
+                    ActionButton(Icons.Filled.Share, "Share", com.krishna.infodeck.core.Hue.GREEN, primary = true) { openShare(1) }
                 }
 
                 if (d.tags.isNotEmpty()) {
@@ -255,7 +243,7 @@ fun CardViewScreen(
                 }
 
                 if (d.files.isNotEmpty()) {
-                    SectionLabel("Files - ${d.files.size}")
+                    RoleLabel("Files", com.krishna.infodeck.core.Hue.PURPLE, Icons.Filled.AttachFile, d.files.size, Modifier.padding(top = 10.dp))
                     d.files.forEach { f ->
                         Box(Modifier.padding(bottom = 7.dp)) {
                             FileRow(
@@ -278,9 +266,8 @@ fun CardViewScreen(
                 }
 
                 if (d.data.isNotEmpty()) {
-                    SectionLabel("Data")
-                    Card(shape = RoundedCornerShape(14.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
+                    RoleLabel("Data", com.krishna.infodeck.core.Hue.SKY, Icons.Filled.DataObject, d.data.size, Modifier.padding(top = 10.dp))
+                    Column(Modifier.fillMaxWidth().deckCard(deck, 16.dp, hue(com.krishna.infodeck.core.Hue.SKY))) {
                         d.data.forEachIndexed { i, v ->
                             Row(
                                 Modifier.fillMaxWidth().heightIn(min = 46.dp).padding(horizontal = 12.dp, vertical = 6.dp),
@@ -307,9 +294,8 @@ fun CardViewScreen(
                 }
 
                 if (d.dates.isNotEmpty()) {
-                    SectionLabel("Dates")
-                    Card(shape = RoundedCornerShape(14.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
+                    RoleLabel("Dates", com.krishna.infodeck.core.Hue.GREEN, Icons.Filled.Event, d.dates.size, Modifier.padding(top = 10.dp))
+                    Column(Modifier.fillMaxWidth().deckCard(deck, 16.dp, hue(com.krishna.infodeck.core.Hue.GREEN))) {
                         d.dates.forEachIndexed { i, v ->
                             val date = LocalDate.ofEpochDay(v.epochDay)
                             val isKey = d.card.keyDateVarId == v.id
@@ -319,7 +305,7 @@ fun CardViewScreen(
                             ) {
                                 Column(Modifier.weight(1f)) {
                                     Text(
-                                        if (isKey) "${v.name}  ★ key date" else v.name,
+                                        if (isKey) "★ ${v.name} · key date" else v.name,
                                         fontSize = 11.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -327,7 +313,8 @@ fun CardViewScreen(
                                         Spacer(Modifier.width(8.dp))
                                         Text(
                                             Fmt.relative(date, today), fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
-                                            color = if (date.isBefore(today)) MaterialTheme.colorScheme.onSurfaceVariant else Ok
+                                            color = if (date.isBefore(today)) MaterialTheme.colorScheme.onSurfaceVariant
+                                                else if (deck.dark) hue(com.krishna.infodeck.core.Hue.GREEN) else Ok
                                         )
                                     }
                                 }
@@ -342,22 +329,14 @@ fun CardViewScreen(
                 }
 
                 if (d.schedulers.isNotEmpty()) {
-                    SectionLabel("Schedulers")
-                    Card(shape = RoundedCornerShape(14.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
+                    RoleLabel("Reminders", com.krishna.infodeck.core.Hue.AMBER, Icons.Filled.Alarm, d.schedulers.size, Modifier.padding(top = 10.dp))
+                    Column(Modifier.fillMaxWidth().deckCard(deck, 16.dp, hue(com.krishna.infodeck.core.Hue.AMBER))) {
                         d.schedulers.forEachIndexed { i, s ->
                             Row(
                                 Modifier.fillMaxWidth().heightIn(min = 52.dp).padding(horizontal = 10.dp, vertical = 7.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Box(
-                                    Modifier.size(28.dp)
-                                        .background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(14.dp)),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(Icons.Filled.Alarm, null, Modifier.size(16.dp),
-                                        tint = MaterialTheme.colorScheme.onSecondaryContainer)
-                                }
+                                HueTile(Icons.Filled.Alarm, com.krishna.infodeck.core.Hue.AMBER, size = 28, flat = true)
                                 Spacer(Modifier.width(9.dp))
                                 Column(Modifier.weight(1f)) {
                                     Text(s.ruleText, fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
@@ -556,38 +535,124 @@ private fun shareAsText(context: Context, d: CardDetail) {
 }
 
 
+/** 2.0 action tile — tinted in its role colour; Share is filled (design 1.15.0.D1 frame 07). */
 @Composable
 private fun androidx.compose.foundation.layout.RowScope.ActionButton(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     label: String,
+    h: com.krishna.infodeck.core.Hue,
     primary: Boolean = false,
-    violet: Boolean = false,
     onClick: () -> Unit
 ) {
-    val tint = when {
+    val p = deck
+    val s = p.hue(h)
+    val fg = when {
+        primary && p.dark -> Color(0xFF0A0E1F)
         primary -> Color.White
-        violet -> PrimaryViolet
-        else -> Primary
+        p.dark -> s.glyph
+        else -> s.onTint
     }
     Column(
         Modifier
-            .weight(if (primary) 1.6f else 1f)
-            .height(48.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .then(
-                if (primary) Modifier.background(BrandGradient)
-                else Modifier.background(Surface)
-            )
+            .weight(1f)
+            .height(56.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(if (primary) androidx.compose.ui.graphics.Brush.linearGradient(listOf(s.glyph, s.glyph2))
+                else androidx.compose.ui.graphics.SolidColor(s.tint))
+            .then(if (p.dark && !primary) Modifier.border(1.dp, s.glyph.copy(alpha = 0.4f), RoundedCornerShape(16.dp)) else Modifier)
             .clickable { onClick() },
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Icon(icon, label, Modifier.size(18.dp), tint = tint)
-        Spacer(Modifier.height(2.dp))
-        Text(
-            label, fontSize = 10.5.sp, fontWeight = FontWeight.ExtraBold,
-            color = if (primary) Color.White else Ink2
-        )
+        Icon(icon, label, Modifier.size(20.dp), tint = fg)
+        Spacer(Modifier.height(3.dp))
+        Text(label, fontSize = 11.sp, fontWeight = FontWeight.ExtraBold, color = fg)
+    }
+}
+
+/**
+ * 2.0 card hero (design 1.15.0.D1 frame 07): a band in the category's colour with the glyph tile,
+ * the label, category and tags, and the key date with a big countdown ring.
+ */
+@Composable
+private fun CardHero(
+    d: CardDetail?,
+    today: LocalDate,
+    onBack: () -> Unit,
+    onShare: () -> Unit,
+    onEdit: () -> Unit,
+    onCategory: () -> Unit,
+    menu: @Composable () -> Unit
+) {
+    val p = deck
+    val h = d?.let { com.krishna.infodeck.core.Hues.forCategory(it.colorIndex) } ?: com.krishna.infodeck.core.Hue.INDIGO
+    val s = p.hue(h)
+    val ink = headerInk()
+    StatusBarColour(if (p.dark) Color(0xFF0D1226) else s.glyph)
+    val radius = if (p.dark) 0.dp else 28.dp
+    Column(
+        Modifier.fillMaxWidth()
+            .clip(RoundedCornerShape(bottomStart = radius, bottomEnd = radius))
+            .background(
+                if (p.dark) androidx.compose.ui.graphics.Brush.radialGradient(
+                    listOf(s.glyph.copy(alpha = 0.4f), Color(0xFF0D1226)), radius = 900f,
+                    center = androidx.compose.ui.geometry.Offset(1000f, 0f)
+                ) else androidx.compose.ui.graphics.Brush.linearGradient(listOf(s.glyph, s.glyph2))
+            )
+            .padding(bottom = 14.dp)
+    ) {
+        androidx.compose.runtime.CompositionLocalProvider(LocalOnHeader provides true) {
+            Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                HeaderIcon(Icons.Filled.ArrowBack, "Back", onBack)
+                Spacer(Modifier.weight(1f))
+                HeaderIcon(Icons.Filled.Share, "Share", onShare)
+                HeaderIcon(Icons.Filled.Edit, "Edit", onEdit)
+                menu()
+            }
+        }
+        if (d == null) return@Column
+        Row(Modifier.padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                Modifier.size(54.dp).clip(RoundedCornerShape(18.dp))
+                    .background(if (p.dark) s.tint else Color.White.copy(alpha = 0.22f))
+                    .border(1.dp, if (p.dark) s.glyph else Color.White.copy(alpha = 0.35f), RoundedCornerShape(18.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(glyphIcon(com.krishna.infodeck.core.Hues.glyphFor(d.categoryName)), null, Modifier.size(30.dp),
+                    tint = if (p.dark) s.glyph else Color.White)
+            }
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(d.card.label, fontFamily = p.heading, fontSize = 21.sp, color = ink, maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    fontWeight = if (p.heading == FredokaFamily) FontWeight.SemiBold else FontWeight.ExtraBold)
+                Text(
+                    d.categoryName + (if (d.tags.isNotEmpty()) "  ·  " + d.tags.take(3).joinToString(" ") { com.krishna.infodeck.data.TagRules.display(it.name) } else ""),
+                    fontSize = 11.5.sp, color = ink.copy(alpha = 0.88f), maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.clickable { onCategory() }
+                )
+            }
+        }
+        val key = d.dates.firstOrNull { it.id == d.card.keyDateVarId }
+        if (key != null) {
+            val date = LocalDate.ofEpochDay(key.epochDay)
+            Row(
+                Modifier.padding(start = 16.dp, end = 16.dp, top = 12.dp).fillMaxWidth()
+                    .clip(RoundedCornerShape(18.dp))
+                    .background(if (p.dark) Color.White.copy(alpha = 0.05f) else Color.White.copy(alpha = 0.18f))
+                    .border(1.dp, if (p.dark) p.outline else Color.White.copy(alpha = 0.28f), RoundedCornerShape(18.dp))
+                    .padding(horizontal = 10.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                CountdownRing(java.time.temporal.ChronoUnit.DAYS.between(today, date), sizeDp = 52f, onColour = !p.dark)
+                Spacer(Modifier.width(12.dp))
+                Column {
+                    Text("★ Key date · ${key.name}", fontSize = 10.5.sp, color = ink.copy(alpha = 0.85f))
+                    Text(Fmt.date(date), fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, color = ink)
+                    Text(Fmt.relative(date, today), fontSize = 10.5.sp, color = ink.copy(alpha = 0.85f))
+                }
+            }
+        }
     }
 }
 

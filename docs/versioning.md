@@ -6,12 +6,12 @@ Source: [versions_management.md](standards/versions_management.md). Implementati
 
 | Component | Purpose | Release label | Example (from 1.11.0) |
 |---|---|---|---|
-| x | Major | `release:major` (Krishna only) | 2.1.0 |
+| x | Major | `release:major` (Krishna only) | 2.0.0 |
 | y | Minor feature | `release:feature` | 1.12.0 |
 | z | Bug or error fix | `release:fix` | 1.11.1 |
 | unchanged | Docs/CI only | `release:none` | 1.11.0 |
 
-Major and feature changes reset z to zero. The first minor after a major is 1, following the project's existing numbering convention. A mixed feature+fix release is a feature release.
+A major release resets y and z to zero (1.15.0 → 2.0.0, decided 16-Oct-2026); a feature release resets z to zero. The first feature after a major is x.1.0. A mixed feature+fix release is a feature release.
 
 ## Automatic version management
 

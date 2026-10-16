@@ -1,5 +1,17 @@
 package com.krishna.infodeck.ui
 
+import androidx.compose.foundation.layout.fillMaxHeight
+
+import androidx.compose.material.icons.filled.DriveFileMove
+
+import androidx.compose.material.icons.filled.FilterList
+
+import androidx.compose.material.icons.filled.Sort
+
+import androidx.compose.material.icons.filled.ViewAgenda
+
+import com.krishna.infodeck.core.Hue
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -73,60 +85,105 @@ fun InfoSheet(onDismiss: () -> Unit, content: @Composable androidx.compose.found
     }
 }
 
+/**
+ * 2.0 sheet title (design 1.15.0.D1 frames 05–12): a role tile, the title in the theme's
+ * heading face, and an optional trailing action.
+ */
 @Composable
-private fun SheetTitle(text: String, trailing: (@Composable () -> Unit)? = null) {
-    Row(Modifier.fillMaxWidth().padding(bottom = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text(text, fontSize = 17.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+internal fun SheetTitle(
+    text: String,
+    role: Hue = Hue.INDIGO,
+    icon: androidx.compose.ui.graphics.vector.ImageVector? = null,
+    trailing: (@Composable () -> Unit)? = null
+) {
+    val p = deck
+    Row(Modifier.fillMaxWidth().padding(top = 2.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        if (icon != null) {
+            HueTile(icon, role, size = 34)
+            Spacer(Modifier.width(10.dp))
+        }
+        Text(
+            text, fontFamily = p.heading, fontSize = 18.sp, modifier = Modifier.weight(1f),
+            fontWeight = if (p.heading == FredokaFamily) FontWeight.SemiBold else FontWeight.ExtraBold
+        )
         trailing?.invoke()
     }
 }
 
+/** A selectable row: tinted with a check when chosen (replaces the 1.x radio rows). */
 @Composable
-private fun OptionRow(
-    title: String, subtitle: String? = null, selected: Boolean, onClick: () -> Unit
+internal fun OptionRow(
+    title: String, subtitle: String? = null, selected: Boolean,
+    role: Hue = Hue.INDIGO, onClick: () -> Unit
 ) {
+    val p = deck
+    val s = p.hue(role)
+    val shape = RoundedCornerShape(14.dp)
     Row(
-        Modifier.fillMaxWidth().clickable { onClick() }.heightIn(min = 46.dp).padding(vertical = 6.dp),
+        Modifier
+            .padding(bottom = 6.dp)
+            .fillMaxWidth()
+            .clip(shape)
+            .background(if (selected) s.tint else p.surface2)
+            .border(if (selected) 1.5.dp else 0.dp, if (selected) s.glyph else Color.Transparent, shape)
+            .clickable { onClick() }
+            .heightIn(min = 48.dp)
+            .padding(horizontal = 12.dp, vertical = 7.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        RadioButton(selected = selected, onClick = onClick)
-        Spacer(Modifier.width(6.dp))
         Column(Modifier.weight(1f)) {
-            Text(title, fontSize = 14.sp)
-            if (subtitle != null) Text(subtitle, fontSize = 11.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(title, fontSize = 14.sp, fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                color = if (selected) (if (p.dark) s.glyph else s.onTint) else p.ink)
+            if (subtitle != null) Text(subtitle, fontSize = 11.5.sp, color = p.ink2)
+        }
+        Box(
+            Modifier.size(22.dp).clip(RoundedCornerShape(11.dp))
+                .background(if (selected) s.glyph else Color.Transparent)
+                .border(if (selected) 0.dp else 1.5.dp, if (selected) Color.Transparent else p.outline, RoundedCornerShape(11.dp)),
+            contentAlignment = Alignment.Center
+        ) {
+            if (selected) Icon(Icons.Filled.Check, "Selected", Modifier.size(15.dp),
+                tint = if (p.dark) Color(0xFF0A0E1F) else Color.White)
         }
     }
-    Divider(color = MaterialTheme.colorScheme.outlineVariant)
 }
 
+/** Segmented control: a soft track with the chosen segment lifted out of it. */
 @Composable
-private fun SegRow(options: List<String>, selectedIndex: Int, onSelect: (Int) -> Unit) {
+internal fun SegRow(options: List<String>, selectedIndex: Int, role: Hue = Hue.INDIGO, onSelect: (Int) -> Unit) {
+    val p = deck
+    val s = p.hue(role)
     Row(
         Modifier
             .fillMaxWidth()
-            .height(38.dp)
-            .border(1.5.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(19.dp))
+            .height(42.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(p.surface2)
+            .padding(3.dp),
+        horizontalArrangement = Arrangement.spacedBy(3.dp)
     ) {
         options.forEachIndexed { i, label ->
+            val on = i == selectedIndex
             Row(
                 Modifier
                     .weight(1f)
-                    .fillMaxWidth()
+                    .fillMaxHeight()
+                    .clip(RoundedCornerShape(11.dp))
                     .background(
-                        if (i == selectedIndex) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
-                        RoundedCornerShape(19.dp)
+                        when {
+                            !on -> Color.Transparent
+                            p.dark -> s.tint
+                            else -> p.surface
+                        }
                     )
+                    .then(if (on && p.dark) Modifier.border(1.dp, s.glyph, RoundedCornerShape(11.dp)) else Modifier)
                     .clickable { onSelect(i) },
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                if (i == selectedIndex) {
-                    Icon(Icons.Filled.Check, null, Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onPrimaryContainer)
-                    Spacer(Modifier.width(4.dp))
-                }
                 Text(
-                    label, fontSize = 12.5.sp, fontWeight = FontWeight.Bold,
-                    color = if (i == selectedIndex) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.primary,
+                    label, fontSize = 12.5.sp, fontWeight = if (on) FontWeight.ExtraBold else FontWeight.SemiBold,
+                    color = if (on) (if (p.dark) s.glyph else s.onTint) else p.ink2,
                     maxLines = 1, overflow = TextOverflow.Ellipsis
                 )
             }
@@ -134,7 +191,20 @@ private fun SegRow(options: List<String>, selectedIndex: Int, onSelect: (Int) ->
     }
 }
 
+/** A switch row inside a sheet. */
+@Composable
+internal fun SheetSwitch(title: String, subtitle: String, checked: Boolean, onChange: (Boolean) -> Unit) {
+    Row(Modifier.fillMaxWidth().heightIn(min = 52.dp).padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.weight(1f)) {
+            Text(title, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+            Text(subtitle, fontSize = 11.5.sp, color = deck.ink2)
+        }
+        Switch(checked = checked, onCheckedChange = onChange)
+    }
+}
+
 // ---------------- Group by (D2 S3) ----------------
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun GroupBySheet(
     current: GroupBy, order: GroupOrder, singleOpen: Boolean,
@@ -149,54 +219,56 @@ fun GroupBySheet(
     var s by remember { mutableStateOf(singleOpen) }
 
     InfoSheet(onDismiss = onDismiss) {
-        SheetTitle("View")
+        val p = deck
+        val pri = p.hue(Hue.INDIGO)
+        SheetTitle("View", Hue.INDIGO, Icons.Filled.ViewAgenda)
+        SectionLabel("Group by")
+        androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            listOf(
+                GroupBy.CATEGORY to "Category", GroupBy.EXPIRY_MONTH to "Expiry month",
+                GroupBy.EXPIRY_WINDOW to "Expiry window", GroupBy.NEXT_REMINDER to "Next reminder",
+                GroupBy.NONE to "None"
+            ).forEach { (k, label) -> FChip(label, g == k, role = Hue.INDIGO) { g = k } }
+        }
+        Text(
+            when (g) {
+                GroupBy.CATEGORY -> "One section per category"
+                GroupBy.EXPIRY_MONTH -> "By key date - Aug 2026, Sep 2026 ..."
+                GroupBy.EXPIRY_WINDOW -> "Overdue - This week - This month - 3 months - Later"
+                GroupBy.NEXT_REMINDER -> "Overdue - Today - This week - This month - Later"
+                else -> "One flat list, no sections"
+            },
+            fontSize = 11.5.sp, color = p.ink2, modifier = Modifier.padding(start = 2.dp, bottom = 2.dp)
+        )
+
+        SectionLabel("Order sections by")
+        SegRow(GroupOrder.values().map { it.label }, GroupOrder.values().indexOf(o)) { o = GroupOrder.values()[it] }
+
         SectionLabel("Density")
         Row(
-            Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp))
-                .background(MaterialTheme.colorScheme.surfaceVariant).padding(4.dp),
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
+            Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(p.surface2).padding(3.dp),
+            horizontalArrangement = Arrangement.spacedBy(3.dp)
         ) {
             com.krishna.infodeck.core.Density.values().forEach { d ->
                 val on = density == d
                 Column(
                     Modifier.weight(1f).clip(RoundedCornerShape(11.dp))
-                        .background(if (on) MaterialTheme.colorScheme.surface else Color.Transparent)
+                        .background(if (!on) Color.Transparent else if (p.dark) pri.tint else p.surface)
+                        .then(if (on && p.dark) Modifier.border(1.dp, pri.glyph, RoundedCornerShape(11.dp)) else Modifier)
                         .clickable { onDensity(d) }.padding(vertical = 8.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(d.label, fontSize = 11.5.sp, fontWeight = FontWeight.Bold, maxLines = 1,
-                        color = if (on) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text(d.rowDp.toInt().toString() + " dp", fontSize = 9.sp, color = Hint)
+                    Text(d.label, fontSize = 12.sp, fontWeight = if (on) FontWeight.ExtraBold else FontWeight.SemiBold, maxLines = 1,
+                        color = if (on) (if (p.dark) pri.glyph else pri.onTint) else p.ink2)
+                    Text(d.rowDp.toInt().toString() + " dp", fontSize = 9.sp, color = p.hint)
                 }
             }
         }
-        Row(Modifier.fillMaxWidth().heightIn(min = 44.dp), verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text("Tap to expand", fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-                Text("Open one card in place with its details", fontSize = 11.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            androidx.compose.material3.Switch(checked = tapExpand, onCheckedChange = onTapExpand)
-        }
-        SectionLabel("Group by")
+        Spacer(Modifier.height(6.dp))
+        SheetSwitch("Tap to expand", "Open one card in place with its details", tapExpand, onTapExpand)
+        SheetSwitch("One section open at a time", "Opening a section closes the previous one", s) { s = it }
 
-        OptionRow("Category", "One section per category", g == GroupBy.CATEGORY) { g = GroupBy.CATEGORY }
-        OptionRow("Expiry month", "By key date - Aug 2026, Sep 2026 ...", g == GroupBy.EXPIRY_MONTH) { g = GroupBy.EXPIRY_MONTH }
-        OptionRow("Expiry window", "Overdue - This week - This month - 3 months - Later", g == GroupBy.EXPIRY_WINDOW) { g = GroupBy.EXPIRY_WINDOW }
-        OptionRow("Next reminder", "Overdue - Today - This week - This month - Later", g == GroupBy.NEXT_REMINDER) { g = GroupBy.NEXT_REMINDER }
-        OptionRow("None", "One flat list, no sections", g == GroupBy.NONE) { g = GroupBy.NONE }
-
-        SectionLabel("Order sections by")
-        SegRow(GroupOrder.values().map { it.label }, GroupOrder.values().indexOf(o)) { o = GroupOrder.values()[it] }
-
-        Row(Modifier.fillMaxWidth().padding(top = 14.dp), verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text("One section open at a time", fontSize = 14.sp)
-                Text("Opening a section closes the previous one", fontSize = 11.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            Switch(checked = s, onCheckedChange = { s = it })
-        }
-
-        Spacer(Modifier.height(14.dp))
+        Spacer(Modifier.height(12.dp))
         EditorSheetButtons(onCancel = onDismiss, onSave = { onApply(g, o, s) }, saveText = "Apply")
     }
 }
@@ -211,7 +283,7 @@ fun SortBySheet(
     var a by remember { mutableStateOf(asc) }
 
     InfoSheet(onDismiss = onDismiss) {
-        SheetTitle("Sort cards by")
+        SheetTitle("Sort cards by", Hue.INDIGO, Icons.Filled.Sort)
         OptionRow("Name", "Card label, ignoring case", by == SortBy.NAME) { by = SortBy.NAME }
         OptionRow("Expiry date", "The card's key date", by == SortBy.EXPIRY) { by = SortBy.EXPIRY }
         OptionRow("Next reminder", "When it rings next", by == SortBy.REMINDER) { by = SortBy.REMINDER }
@@ -251,7 +323,7 @@ fun FilterSheet(
     )
 
     InfoSheet(onDismiss = onDismiss) {
-        SheetTitle("Filters") {
+        SheetTitle("Filters", Hue.SKY, Icons.Filled.FilterList) {
             TextButton(onClick = { confirmClear = true }, enabled = f.isActive) { Text("Clear all") }
         }
 
@@ -259,7 +331,7 @@ fun FilterSheet(
         FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             categories.forEach { c ->
                 val on = f.categoryIds.contains(c.id)
-                FChip(c.name, on, color = categoryColor(c.colorIndex)) {
+                FChip(c.name, on, category = c.colorIndex) {
                     f = f.copy(
                         categoryIds = if (on) f.categoryIds - c.id else f.categoryIds + c.id
                     )
@@ -270,18 +342,18 @@ fun FilterSheet(
         SectionLabel("Expiry window")
         FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             ExpiryFilter.values().filter { it != ExpiryFilter.CUSTOM }.forEach { e ->
-                FChip(e.label, f.expiry == e) { f = f.copy(expiry = e) }
+                FChip(e.label, f.expiry == e, role = if (e == ExpiryFilter.OVERDUE) Hue.ROSE else Hue.AMBER) { f = f.copy(expiry = e) }
             }
         }
 
         SectionLabel("Reminder")
         FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            ReminderFilter.values().forEach { r -> FChip(r.label, f.reminder == r) { f = f.copy(reminder = r) } }
+            ReminderFilter.values().forEach { r -> FChip(r.label, f.reminder == r, role = Hue.AMBER) { f = f.copy(reminder = r) } }
         }
 
         SectionLabel("Content")
         FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            ContentFilter.values().forEach { c -> FChip(c.label, f.content == c) { f = f.copy(content = c) } }
+            ContentFilter.values().forEach { c -> FChip(c.label, f.content == c, role = Hue.SKY) { f = f.copy(content = c) } }
         }
 
         Spacer(Modifier.height(16.dp))
@@ -296,33 +368,50 @@ fun FilterSheet(
     }
 }
 
+/** Filter / choice chip: the chosen chip fills with its role colour (or its category's gradient). */
 @Composable
-private fun FChip(
+internal fun FChip(
     text: String, on: Boolean,
-    color: androidx.compose.ui.graphics.Color? = null,
+    role: Hue = Hue.INDIGO,
+    category: Int? = null,
     onClick: () -> Unit
 ) {
+    val p = deck
+    val h = category?.let { com.krishna.infodeck.core.Hues.forCategory(it) } ?: role
+    val s = p.hue(h)
+    val shape = RoundedCornerShape(16.dp)
     Row(
         Modifier
             .padding(bottom = 6.dp)
-            .height(30.dp)
+            .height(32.dp)
+            .clip(shape)
             .background(
-                if (on) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
-                RoundedCornerShape(15.dp)
+                when {
+                    !on -> androidx.compose.ui.graphics.SolidColor(p.surface)
+                    p.dark -> androidx.compose.ui.graphics.SolidColor(s.tint)
+                    else -> androidx.compose.ui.graphics.Brush.linearGradient(listOf(s.glyph, s.glyph2))
+                }
             )
-            .border(
-                1.5.dp,
-                if (on) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
-                RoundedCornerShape(15.dp)
-            )
+            .border(if (on && !p.dark) 0.dp else 1.dp, if (on) s.glyph else p.line, shape)
             .clickable { onClick() }
-            .padding(horizontal = 11.dp),
+            .padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        if (color != null) { ColorDot(color, 9); Spacer(Modifier.width(5.dp)) }
+        if (category != null && !on) {
+            Box(Modifier.size(9.dp).clip(RoundedCornerShape(5.dp)).background(s.glyph))
+            Spacer(Modifier.width(6.dp))
+        }
+        if (on) {
+            Icon(Icons.Filled.Check, null, Modifier.size(14.dp), tint = if (p.dark) s.glyph else Color.White)
+            Spacer(Modifier.width(4.dp))
+        }
         Text(
-            text, fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold, maxLines = 1,
-            color = if (on) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+            text, fontSize = 12.5.sp, fontWeight = if (on) FontWeight.Bold else FontWeight.SemiBold, maxLines = 1,
+            color = when {
+                on && p.dark -> s.glyph
+                on -> Color.White
+                else -> p.ink2
+            }
         )
     }
 }
@@ -343,25 +432,28 @@ fun MoveToCategorySheet(
     var newColor by remember { mutableIntStateOf(0) }
 
     InfoSheet(onDismiss = onDismiss) {
-        SheetTitle(if (count == 1) "Move 1 card to" else "Move $count cards to")
+        SheetTitle(if (count == 1) "Move 1 card to" else "Move $count cards to", Hue.SKY, Icons.Filled.DriveFileMove)
 
         categories.forEach { c ->
+            val h = com.krishna.infodeck.core.Hues.forCategory(c.colorIndex)
+            val on = target == c.id
+            val p = deck
+            val shape = RoundedCornerShape(14.dp)
             Row(
-                Modifier.fillMaxWidth().clickable { target = c.id }.heightIn(min = 46.dp),
+                Modifier.padding(bottom = 6.dp).fillMaxWidth().clip(shape)
+                    .background(if (on) p.hue(h).tint else p.surface2)
+                    .border(if (on) 1.5.dp else 0.dp, if (on) p.hue(h).glyph else Color.Transparent, shape)
+                    .clickable { target = c.id }.heightIn(min = 50.dp).padding(horizontal = 10.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                RadioButton(selected = target == c.id, onClick = { target = c.id })
-                ColorDot(categoryColor(c.colorIndex), 12)
+                HueTile(glyphIcon(com.krishna.infodeck.core.Hues.glyphFor(c.name)), h, size = 30)
                 Spacer(Modifier.width(10.dp))
                 Column(Modifier.weight(1f)) {
-                    Text(c.name, fontSize = 14.sp)
-                    if (c.id == currentCategoryId) Text(
-                        "Current category", fontSize = 11.5.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Text(c.name, fontSize = 14.sp, fontWeight = if (on) FontWeight.Bold else FontWeight.Medium)
+                    if (c.id == currentCategoryId) Text("Current category", fontSize = 11.5.sp, color = p.ink2)
                 }
+                if (on) Icon(Icons.Filled.Check, "Selected", Modifier.size(20.dp), tint = p.hue(h).glyph)
             }
-            Divider(color = MaterialTheme.colorScheme.outlineVariant)
         }
 
         if (!creating) {
@@ -403,18 +495,24 @@ fun MoveToCategorySheet(
     }
 }
 
+/** The 8 category colours as gradient swatches in the active theme. */
 @Composable
 fun ColourPicker(selected: Int, onSelect: (Int) -> Unit) {
-    Row(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
-        CategoryColors.forEachIndexed { i, c ->
+    val p = deck
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        (0 until 8).forEach { i ->
+            val s = p.hue(com.krishna.infodeck.core.Hues.forCategory(i))
+            val on = i == selected
             Box(
                 Modifier
-                    .size(30.dp)
-                    .background(c, RoundedCornerShape(15.dp))
+                    .size(32.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(androidx.compose.ui.graphics.Brush.linearGradient(listOf(s.glyph, s.glyph2)))
+                    .border(if (on) 3.dp else 0.dp, if (on) p.ink else Color.Transparent, RoundedCornerShape(16.dp))
                     .clickable { onSelect(i) },
                 contentAlignment = Alignment.Center
             ) {
-                if (i == selected) Icon(Icons.Filled.Check, null, Modifier.size(18.dp), tint = androidx.compose.ui.graphics.Color.White)
+                if (on) Icon(Icons.Filled.Check, "Selected", Modifier.size(18.dp), tint = Color.White)
             }
         }
     }

@@ -52,8 +52,11 @@ class NavAndSettingsTest {
     @Test fun tabIndexFollowsTheRoute() {
         assertEquals(0, NavRules.tabIndex("home"))
         assertEquals(1, NavRules.tabIndex("upcoming"))
-        assertEquals(2, NavRules.tabIndex("settings"))
+        // 2.0: Home · Upcoming · Tags · Settings (design 1.15.0.D1)
         assertEquals(2, NavRules.tabIndex("tags"))
+        assertEquals(3, NavRules.tabIndex("settings"))
+        assertEquals(3, NavRules.tabIndex("categories"))
+        assertEquals(3, NavRules.tabIndex("errors"))
         assertEquals(0, NavRules.tabIndex(null))
     }
 

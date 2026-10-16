@@ -2,100 +2,132 @@ package com.krishna.infodeck.ui
 
 import android.app.Activity
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.text.TextStyle
 import androidx.core.view.WindowCompat
+import com.krishna.infodeck.core.Hue
+import com.krishna.infodeck.core.Hues
+import com.krishna.infodeck.core.Logger
+import com.krishna.infodeck.core.ThemeRules
 
-// Palette locked in the D1/D2 designs.
-val Primary = Color(0xFF2F4FCD)
-val PrimaryDark = Color(0xFF1E357F)
-val PrimaryContainer = Color(0xFFE7EBFF)
-val OnPrimaryContainer = Color(0xFF22337F)
-val Amber = Color(0xFFA9700D)
-val AmberContainer = Color(0xFFFDF2DC)
-val Ok = Color(0xFF1E8E5A)
-val OkContainer = Color(0xFFE3F5EC)
-val Danger = Color(0xFFC0392F)
-val DangerContainer = Color(0xFFFCEAE8)
-val Ink = Color(0xFF131A26)
-val Ink2 = Color(0xFF5A6675)
-val Hint = Color(0xFF96A0AF)
-val Bg = Color(0xFFF5F7FB)
-val Surface = Color(0xFFFFFFFF)
-val LineColor = Color(0xFFE6EAF2)
-
-/** The 8 fixed category colours (D2 S8.4). */
-val PrimaryViolet = Color(0xFF7A5AF8)
-val PrimaryMid = Color(0xFF5A6BF0)
+// 2.0 — the old fixed palette is gone. These names stay so every screen keeps compiling,
+// but each now reads the active theme (Aurora, Neon Night or Sunrise Wallet).
+val Primary: Color @Composable get() = deck.hue(Hue.INDIGO).glyph
+val PrimaryDark: Color @Composable get() = deck.hue(Hue.INDIGO).onTint
+val PrimaryContainer: Color @Composable get() = deck.hue(Hue.INDIGO).tint
+val OnPrimaryContainer: Color @Composable get() = deck.hue(Hue.INDIGO).onTint
+val Amber: Color @Composable get() = deck.hue(Hue.AMBER).onTint
+val AmberContainer: Color @Composable get() = deck.hue(Hue.AMBER).tint
+val Ok: Color @Composable get() = deck.hue(Hue.GREEN).onTint
+val OkContainer: Color @Composable get() = deck.hue(Hue.GREEN).tint
+val Danger: Color @Composable get() = deck.hue(Hue.ROSE).glyph
+val DangerContainer: Color @Composable get() = deck.hue(Hue.ROSE).tint
+val Ink: Color @Composable get() = deck.ink
+val Ink2: Color @Composable get() = deck.ink2
+val Hint: Color @Composable get() = deck.hint
+val Bg: Color @Composable get() = deck.bg
+val Surface: Color @Composable get() = deck.surface
+val LineColor: Color @Composable get() = deck.line
+val PrimaryViolet: Color @Composable get() = deck.brand.last()
+val PrimaryMid: Color @Composable get() = deck.brand[deck.brand.size / 2]
 
 /** The brand gradient used by the hero, the FAB and the Save button. */
-val BrandGradient: androidx.compose.ui.graphics.Brush
-    get() = androidx.compose.ui.graphics.Brush.linearGradient(listOf(Primary, PrimaryMid, PrimaryViolet))
+val BrandGradient: Brush
+    @Composable get() = Brush.linearGradient(deck.brand)
 
-val CategoryColors = listOf(
-    Color(0xFF4A6FB0), Color(0xFF2E8A86), Color(0xFF4E9440), Color(0xFFD48A18),
-    Color(0xFF7B57C0), Color(0xFFC2528A), Color(0xFFC94A42), Color(0xFF7B8794)
-)
+/** The 8 category colours, in the active theme. A category's dot and its tile always agree. */
+val CategoryColors: List<Color>
+    @Composable get() = (0 until 8).map { deck.hue(Hues.forCategory(it)).glyph }
 
-fun categoryColor(index: Int): Color = CategoryColors[index.coerceIn(0, CategoryColors.lastIndex)]
+@Composable
+fun categoryColor(index: Int): Color {
+    if (index < 0) Logger.e("Theme", "negative category colour index $index")
+    return deck.hue(Hues.forCategory(index.coerceIn(0, 7))).glyph
+}
 
-private val LightScheme = lightColorScheme(
-    primary = Primary,
-    onPrimary = Color.White,
-    primaryContainer = PrimaryContainer,
-    onPrimaryContainer = OnPrimaryContainer,
-    secondary = Amber,
-    secondaryContainer = AmberContainer,
-    onSecondaryContainer = Amber,
-    tertiary = Ok,
-    tertiaryContainer = OkContainer,
-    onTertiaryContainer = Ok,
-    background = Bg,
-    onBackground = Ink,
-    surface = Surface,
-    onSurface = Ink,
-    surfaceVariant = Color(0xFFEDF0F4),
-    onSurfaceVariant = Ink2,
-    outline = Color(0xFFB7BFCC),
-    outlineVariant = LineColor,
-    error = Danger,
-    onError = Color.White,
-    errorContainer = DangerContainer,
-    onErrorContainer = Danger
-)
+private fun schemeFor(p: DeckPalette): ColorScheme {
+    val pri = p.hue(Hue.INDIGO)
+    val amber = p.hue(Hue.AMBER)
+    val green = p.hue(Hue.GREEN)
+    val rose = p.hue(Hue.ROSE)
+    val onPri = if (pri.glyph.luminance() > 0.5f) Color(0xFF0A0E1F) else Color.White
+    return if (p.dark) darkColorScheme(
+        primary = pri.glyph, onPrimary = onPri,
+        primaryContainer = pri.tint, onPrimaryContainer = pri.onTint,
+        secondary = amber.glyph, onSecondary = Color(0xFF0A0E1F),
+        secondaryContainer = amber.tint, onSecondaryContainer = amber.onTint,
+        tertiary = green.glyph, onTertiary = Color(0xFF0A0E1F),
+        tertiaryContainer = green.tint, onTertiaryContainer = green.onTint,
+        background = p.bg, onBackground = p.ink,
+        surface = p.surface, onSurface = p.ink,
+        surfaceVariant = p.surface2, onSurfaceVariant = p.ink2,
+        surfaceTint = Color.Transparent,
+        outline = p.outline, outlineVariant = p.line,
+        error = rose.glyph, onError = Color(0xFF0A0E1F),
+        errorContainer = rose.tint, onErrorContainer = rose.onTint
+    ) else lightColorScheme(
+        primary = pri.glyph, onPrimary = onPri,
+        primaryContainer = pri.tint, onPrimaryContainer = pri.onTint,
+        secondary = amber.onTint, onSecondary = Color.White,
+        secondaryContainer = amber.tint, onSecondaryContainer = amber.onTint,
+        tertiary = green.onTint, onTertiary = Color.White,
+        tertiaryContainer = green.tint, onTertiaryContainer = green.onTint,
+        background = p.bg, onBackground = p.ink,
+        surface = p.surface, onSurface = p.ink,
+        surfaceVariant = p.surface2, onSurfaceVariant = p.ink2,
+        surfaceTint = Color.Transparent,
+        outline = p.outline, outlineVariant = p.line,
+        error = rose.onTint, onError = Color.White,
+        errorContainer = rose.tint, onErrorContainer = rose.onTint
+    )
+}
 
-private val DarkScheme = darkColorScheme(
-    primary = Color(0xFF9CB6E8),
-    onPrimary = Color(0xFF0E2148),
-    primaryContainer = Color(0xFF2A4272),
-    onPrimaryContainer = Color(0xFFD9E3F7),
-    secondary = Color(0xFFE9BC72),
-    secondaryContainer = Color(0xFF4A3512),
-    onSecondaryContainer = Color(0xFFFFE2B4),
-    tertiary = Color(0xFF9BD49A),
-    tertiaryContainer = Color(0xFF1E3F20),
-    onTertiaryContainer = Color(0xFFCDEBCB),
-    background = Color(0xFF12161C),
-    onBackground = Color(0xFFE6EAF0),
-    surface = Color(0xFF1A1F27),
-    onSurface = Color(0xFFE6EAF0),
-    surfaceVariant = Color(0xFF262D37),
-    onSurfaceVariant = Color(0xFFB5BECB),
-    outline = Color(0xFF6C7684),
-    outlineVariant = Color(0xFF333B46),
-    error = Color(0xFFF2B8B5),
-    onError = Color(0xFF601410),
-    errorContainer = Color(0xFF8C1D18),
-    onErrorContainer = Color(0xFFF9DEDC)
-)
+private fun typographyFor(p: DeckPalette): Typography {
+    val t = Typography()
+    fun TextStyle.body() = copy(fontFamily = p.body)
+    fun TextStyle.head() = copy(fontFamily = p.heading)
+    return Typography(
+        displayLarge = t.displayLarge.head(), displayMedium = t.displayMedium.head(), displaySmall = t.displaySmall.head(),
+        headlineLarge = t.headlineLarge.head(), headlineMedium = t.headlineMedium.head(), headlineSmall = t.headlineSmall.head(),
+        titleLarge = t.titleLarge.head(), titleMedium = t.titleMedium.body(), titleSmall = t.titleSmall.body(),
+        bodyLarge = t.bodyLarge.body(), bodyMedium = t.bodyMedium.body(), bodySmall = t.bodySmall.body(),
+        labelLarge = t.labelLarge.body(), labelMedium = t.labelMedium.body(), labelSmall = t.labelSmall.body()
+    )
+}
+
+/**
+ * Paints the system status bar to match the band behind it. Every screen header calls this,
+ * so the bar always continues the header's colour.
+ */
+@Composable
+fun StatusBarColour(colour: Color) {
+    val view = LocalView.current
+    if (view.isInEditMode) return
+    val context = LocalContext.current
+    SideEffect {
+        try {
+            (context as? Activity)?.window?.let { w ->
+                @Suppress("DEPRECATION")
+                w.statusBarColor = colour.toArgb()
+                WindowCompat.getInsetsController(w, view).isAppearanceLightStatusBars = colour.luminance() > 0.6f
+            }
+        } catch (t: Throwable) {
+            Logger.e("Theme", "could not paint the status bar", t)
+        }
+    }
+}
 
 @Composable
 fun InfoDeckTheme(
@@ -104,22 +136,9 @@ fun InfoDeckTheme(
     followSystemText: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    val dark = when (themeSetting) {
-        "DARK" -> true
-        "LIGHT" -> false
-        else -> isSystemInDarkTheme()
-    }
-    val scheme = if (dark) DarkScheme else LightScheme
-    val view = LocalView.current
-    if (!view.isInEditMode) {
-        val context = LocalContext.current
-        SideEffect {
-            (context as? Activity)?.window?.let { w ->
-                w.statusBarColor = (if (dark) Color(0xFF12161C) else Primary).toArgb()
-                WindowCompat.getInsetsController(w, view).isAppearanceLightStatusBars = false
-            }
-        }
-    }
+    val style = ThemeRules.resolve(themeSetting, isSystemInDarkTheme())
+    val palette = paletteFor(style)
+
     // One value drives every sp in the app: the device density is re-provided with
     // InfoDeck's own font scale, optionally multiplied by the phone's setting.
     val base = androidx.compose.ui.platform.LocalDensity.current
@@ -128,8 +147,10 @@ fun InfoDeckTheme(
 
     androidx.compose.runtime.CompositionLocalProvider(
         androidx.compose.ui.platform.LocalDensity provides density,
-        com.krishna.infodeck.core.LocalUiScale provides ui
+        com.krishna.infodeck.core.LocalUiScale provides ui,
+        LocalDeck provides palette
     ) {
-        MaterialTheme(colorScheme = scheme, typography = Typography(), content = content)
+        StatusBarColour(if (!palette.dark && palette.heroOnColour) palette.brand.first() else palette.bg)
+        MaterialTheme(colorScheme = schemeFor(palette), typography = typographyFor(palette), content = content)
     }
 }

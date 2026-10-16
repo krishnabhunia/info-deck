@@ -109,6 +109,16 @@ Out of scope: sync, multi-user, web or desktop clients, iOS (paused project-wide
 | FR-6.8 | Optional biometric / device-credential app lock, off by default; never locks the owner out | N22 |
 | FR-6.9 | Error Logs screen lists every logged failure, with share and clear | N23 |
 
+### 3.7 Themes (2.0)
+
+| ID | Requirement | Origin |
+|---|---|---|
+| FR-7.1 | Three themes: Aurora (default, light), Neon Night (dark), Sunrise Wallet (custom); System follows the phone — Aurora by day, Neon at night | N64 |
+| FR-7.2 | Stored values SYSTEM / LIGHT / DARK keep their 1.x meaning; SUNRISE is new; unknown values follow the phone and are logged | N64 |
+| FR-7.3 | A hue keeps its meaning in every theme: amber = time, rose = trouble, green = share/OK, purple = file, violet = tag/QR, teal = settings, sky = data | N64 |
+| FR-7.4 | Every screen header is a band in its role colour and the status bar continues it | N64 |
+| FR-7.5 | Bottom bar Home · Upcoming · Tags · Settings; Sunrise carries New card in the centre of the bar and shows no floating button | N64 |
+
 ## 4 · Non-functional requirements
 
 | ID | Requirement |
@@ -126,6 +136,6 @@ Out of scope: sync, multi-user, web or desktop clients, iOS (paused project-wide
 
 | ID | Requirement | Spec |
 |---|---|---|
-| FR-7.x | In-app update check from GitHub Releases, daily, optional beta channel | [update-checker.md](update-checker.md) — design-first, awaits approval |
+| FR-9.x | In-app update check from GitHub Releases, daily, optional beta channel | [update-checker.md](update-checker.md) — design-first, awaits approval |
 
 Everything else still queued is listed in [BACKLOG.md](../BACKLOG.md).

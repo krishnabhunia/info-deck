@@ -9,7 +9,7 @@ Status meanings: **Pass** = observed in the current repository; **Fixed in this 
 | Requirement | Status | Evidence or gap |
 |---|---|---|
 | Every version has format x.y.z | **Fixed in this PR** | Previously `VERSION=1.11` and the script/Gradle accepted x.y. Updated `common/scripts/version.py` and `android/app/build.gradle.kts` require x.y.z. PR's automatic feature bump wrote `1.12.0`. The one-time `next` input still accepts legacy `1.11`; strict `check` does not. |
-| x major / y minor / z fix | **Fixed in this PR** | Next-version arithmetic emits `(x+1).1.0`, `x.(y+1).0` or `x.y.(z+1)`. Existing project convention starts a major at minor 1. |
+| x major / y minor / z fix | **Fixed in this PR** | Next-version arithmetic emits `(x+1).0.0`, `x.(y+1).0` or `x.y.(z+1)` (major changed from `(x+1).1.0` on 16-Oct-2026 at Krishna's request). |
 | GitHub automatically manages version | **Pass** | `.github/workflows/build.yml` calculates based on a single release label and writes `VERSION` on the PR branch. `release:none` is excluded from publishing. |
 | Check for new version after restart | **Pending** | No release-checking code exists in `MainActivity`/`InfoDeckApp`. Current Android app deliberately has no `INTERNET` permission. |
 | Settings-based download and silent installation | **Pending / platform limitation** | No updater is implemented. Ordinary sideloaded Android apps cannot silently install upgrades: user confirmation via Android's system installer is required. Future implementation must use background download followed by system-confirmed installation. |

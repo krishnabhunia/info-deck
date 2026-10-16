@@ -515,28 +515,11 @@ fun ConfirmDialog(
     )
 }
 
-/** Gradient hero used as the top bar on pushed screens. */
+/** Top bar on pushed screens — 2.0: the themed teal settings header (design 1.15.0.D1 frame 18). */
 @Composable
 fun Hero(title: String, subtitle: String?, onBack: (() -> Unit)? = null, actions: @Composable () -> Unit = {}) {
-    Box(
-        Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(bottomStart = 26.dp, bottomEnd = 26.dp))
-            .background(BrandGradient)
-            .padding(start = 8.dp, end = 12.dp, top = 34.dp, bottom = 16.dp)
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            if (onBack != null) {
-                IconButton(onClick = onBack) { Icon(Icons.Filled.ArrowBack, "Back", tint = Color.White) }
-                Spacer(Modifier.width(4.dp))
-            } else Spacer(Modifier.width(8.dp))
-            Column(Modifier.weight(1f)) {
-                Text(title, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, color = Color.White)
-                if (subtitle != null) Text(
-                    subtitle, fontSize = 12.sp, color = Color.White.copy(alpha = 0.92f), maxLines = 2
-                )
-            }
-            actions()
-        }
-    }
+    DeckHeader(
+        title = title, role = com.krishna.infodeck.core.Hue.TEAL, subtitle = subtitle, onBack = onBack,
+        actions = { actions() }
+    )
 }

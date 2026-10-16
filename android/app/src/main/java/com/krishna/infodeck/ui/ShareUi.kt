@@ -1,5 +1,13 @@
 package com.krishna.infodeck.ui
 
+import androidx.compose.foundation.border
+
+import androidx.compose.ui.draw.shadow
+
+import androidx.compose.material.icons.filled.Download
+
+import androidx.compose.material.icons.filled.Send
+
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
@@ -175,38 +183,39 @@ fun ShareFieldsSheet(
     onQr: () -> Unit
 ) {
     InfoSheet(onDismiss = onDismiss) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Filled.Share, null, tint = MaterialTheme.colorScheme.primary)
-            Spacer(Modifier.width(9.dp))
-            Text("What to share", fontSize = 17.sp, fontWeight = FontWeight.ExtraBold)
-        }
+        val dp = deck
+        val green = dp.hue(com.krishna.infodeck.core.Hue.GREEN)
+        val greenInk = if (dp.dark) green.glyph else green.onTint
+        SheetTitle("What to share", com.krishna.infodeck.core.Hue.GREEN, Icons.Filled.Share)
+        Text(cardLabel, fontSize = 12.sp, color = dp.ink2, modifier = Modifier.padding(bottom = 4.dp))
 
-        Row(Modifier.padding(top = 10.dp, bottom = 4.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        SectionLabel("Presets")
+        Row(Modifier.padding(bottom = 2.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             SharePreset.values().forEach { p ->
-                Box(
-                    Modifier
-                        .height(28.dp)
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant)
-                        .clickable { onPreset(p) }
-                        .padding(horizontal = 10.dp),
-                    contentAlignment = Alignment.Center
-                ) { Text(p.label, fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1) }
+                FChip(p.label, false, role = com.krishna.infodeck.core.Hue.GREEN) { onPreset(p) }
             }
         }
+        SectionLabel("Tick what goes in the message")
 
         fields.forEachIndexed { i, f ->
             Row(
-                Modifier.fillMaxWidth().heightIn(min = 44.dp)
-                    .clickable { onChange(fields.toMutableList().also { it[i] = f.copy(selected = !f.selected) }) },
+                Modifier.padding(bottom = 6.dp).fillMaxWidth().heightIn(min = 50.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(if (f.selected) (if (dp.dark) green.tint else green.tint.copy(alpha = 0.55f)) else dp.surface2)
+                    .clickable { onChange(fields.toMutableList().also { it[i] = f.copy(selected = !f.selected) }) }
+                    .padding(start = 10.dp, end = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Checkbox(
-                    checked = f.selected,
-                    onCheckedChange = { on ->
-                        onChange(fields.toMutableList().also { it[i] = f.copy(selected = on) })
-                    }
-                )
+                Box(
+                    Modifier.size(24.dp).clip(RoundedCornerShape(7.dp))
+                        .background(if (f.selected) green.glyph else Color.Transparent)
+                        .border(if (f.selected) 0.dp else 1.5.dp, if (f.selected) Color.Transparent else dp.outline, RoundedCornerShape(7.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (f.selected) Icon(Icons.Filled.Check, "Ticked", Modifier.size(16.dp),
+                        tint = if (dp.dark) Color(0xFF0A0E1F) else Color.White)
+                }
+                Spacer(Modifier.width(10.dp))
                 if (f.kind == ShareField.Kind.FILE) {
                     IconTile(
                         Icons.Filled.Description, hue(com.krishna.infodeck.core.Hue.PURPLE),
@@ -219,11 +228,13 @@ fun ShareFieldsSheet(
                         if (f.kind == ShareField.Kind.FILE)
                             f.label + " - " + com.krishna.infodeck.core.FileShare.humanSize(fileSizes[f.key] ?: 0L)
                         else f.label,
-                        fontSize = 10.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary
+                        fontSize = 10.sp, fontWeight = FontWeight.ExtraBold, color = if (f.selected) greenInk else dp.ink2
                     )
                     Text(
                         ShareText.shown(f), fontSize = 13.5.sp, fontWeight = FontWeight.SemiBold,
-                        maxLines = 1, overflow = TextOverflow.Ellipsis
+                        maxLines = 1, overflow = TextOverflow.Ellipsis,
+                        color = if (f.selected) dp.ink else dp.hint,
+                        textDecoration = if (f.selected) null else androidx.compose.ui.text.style.TextDecoration.LineThrough
                     )
                 }
                 if (f.kind == ShareField.Kind.DATA) {
@@ -231,7 +242,7 @@ fun ShareFieldsSheet(
                         Modifier
                             .size(32.dp)
                             .clip(RoundedCornerShape(11.dp))
-                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .background(if (f.masked) dp.hue(com.krishna.infodeck.core.Hue.ROSE).tint else dp.surface)
                             .clickable {
                                 onChange(fields.toMutableList().also { it[i] = f.copy(masked = !f.masked) })
                             },
@@ -245,7 +256,6 @@ fun ShareFieldsSheet(
                     }
                 }
             }
-            Divider(color = MaterialTheme.colorScheme.outlineVariant)
         }
 
         val tickedFiles = fields.filter { it.selected && it.kind == ShareField.Kind.FILE }
@@ -282,50 +292,53 @@ fun ShareFieldsSheet(
             }
         }
 
-        SectionLabel("Preview")
+        SectionLabel("Live preview")
         val text = ShareText.build(fields)
         Box(
             Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .background(Color(0xFF0F1522))
+                .clip(RoundedCornerShape(14.dp))
+                .background(green.tint)
+                .border(1.dp, green.glyph.copy(alpha = 0.45f), RoundedCornerShape(14.dp))
                 .padding(12.dp)
         ) {
             Column {
                 Text(
                     text.ifBlank { "Nothing ticked yet" },
-                    fontSize = 10.5.sp, color = Color(0xFFD8E2F2), fontFamily = FontFamily.Monospace, lineHeight = 15.sp
+                    fontSize = 11.sp, color = dp.ink, fontFamily = FontFamily.Monospace, lineHeight = 16.sp
                 )
                 if (tickedFiles.isNotEmpty()) Text(
                     "then, as files: " + tickedFiles.joinToString(" - ") { it.label },
-                    fontSize = 10.5.sp, color = Color(0xFF9DB4FF), modifier = Modifier.padding(top = 8.dp)
+                    fontSize = 10.5.sp, fontWeight = FontWeight.Bold, color = greenInk, modifier = Modifier.padding(top = 8.dp)
                 )
             }
         }
 
         Spacer(Modifier.height(12.dp))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(9.dp)) {
-            androidx.compose.material3.OutlinedButton(
-                onClick = onQr,
-                modifier = Modifier.weight(1f).height(50.dp),
-                shape = RoundedCornerShape(14.dp)
+            val vi = dp.hue(com.krishna.infodeck.core.Hue.VIOLET)
+            Row(
+                Modifier.weight(1f).height(50.dp).clip(RoundedCornerShape(14.dp)).background(vi.tint).clickable { onQr() },
+                horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(Icons.Filled.QrCode2, null, Modifier.size(16.dp))
-                Spacer(Modifier.width(6.dp)); Text("QR", fontWeight = FontWeight.Bold)
+                Icon(Icons.Filled.QrCode2, null, Modifier.size(16.dp), tint = if (dp.dark) vi.glyph else vi.onTint)
+                Spacer(Modifier.width(6.dp))
+                Text("QR", fontWeight = FontWeight.Bold, color = if (dp.dark) vi.glyph else vi.onTint)
             }
             Box(
                 Modifier
                     .weight(1.4f)
                     .height(50.dp)
                     .clip(RoundedCornerShape(14.dp))
-                    .background(BrandGradient)
+                    .background(androidx.compose.ui.graphics.Brush.linearGradient(listOf(green.glyph, green.glyph2)))
                     .clickable(enabled = text.isNotBlank()) { onNext() },
                 contentAlignment = Alignment.Center
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Filled.Share, null, Modifier.size(16.dp), tint = Color.White)
+                    val nextInk = if (dp.dark) Color(0xFF0A0E1F) else Color.White
+                    Icon(Icons.Filled.Share, null, Modifier.size(16.dp), tint = nextInk)
                     Spacer(Modifier.width(6.dp))
-                    Text("Next", fontWeight = FontWeight.Bold, color = Color.White)
+                    Text("Next", fontWeight = FontWeight.Bold, color = nextInk)
                 }
             }
         }
@@ -345,13 +358,9 @@ fun ShareTargetSheet(
     onDismiss: () -> Unit
 ) {
     InfoSheet(onDismiss = onDismiss) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Filled.Share, null, tint = MaterialTheme.colorScheme.primary)
-            Spacer(Modifier.width(9.dp))
-            Text("Send with", fontSize = 17.sp, fontWeight = FontWeight.ExtraBold)
-        }
+        SheetTitle("Send with", com.krishna.infodeck.core.Hue.GREEN, Icons.Filled.Send)
         Text(summary, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 2.dp, bottom = 10.dp))
+            modifier = Modifier.padding(top = 0.dp, bottom = 12.dp))
 
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             available.filter { it != ShareTarget.CHOOSER && com.krishna.infodeck.core.FileShare.offers(it, hasFile) }
@@ -363,8 +372,9 @@ fun ShareTargetSheet(
                 ) {
                     Box(
                         Modifier
-                            .size(52.dp)
-                            .clip(RoundedCornerShape(16.dp))
+                            .size(54.dp)
+                            .shadow(8.dp, RoundedCornerShape(18.dp), ambientColor = targetColour(t), spotColor = targetColour(t))
+                            .clip(RoundedCornerShape(18.dp))
                             .background(targetColour(t)),
                         contentAlignment = Alignment.Center
                     ) { Icon(targetIcon(t), t.label, Modifier.size(24.dp), tint = Color.White) }
@@ -396,10 +406,10 @@ fun ShareTargetSheet(
         }
 
         SectionLabel("Or keep it as a file")
-        SheetRow(Icons.Filled.Description, "Export as text file", "A .txt written wherever you choose", onExport)
-        SheetRow(Icons.Filled.ContentCopy, "Copy to clipboard", "Paste it anywhere yourself", onCopy)
-        SheetRow(Icons.Filled.QrCode2, "Show as QR code", "The same fields, scannable", onQr)
-        SheetRow(Icons.Filled.Share, "All other apps...", "The usual Android chooser") { onTarget(ShareTarget.CHOOSER) }
+        SheetRow(Icons.Filled.Description, "Export as text file", "A .txt written wherever you choose", com.krishna.infodeck.core.Hue.SLATE, onExport)
+        SheetRow(Icons.Filled.ContentCopy, "Copy to clipboard", "Paste it anywhere yourself", com.krishna.infodeck.core.Hue.TEAL, onCopy)
+        SheetRow(Icons.Filled.QrCode2, "Show as QR code", "The same fields, scannable", com.krishna.infodeck.core.Hue.VIOLET, onQr)
+        SheetRow(Icons.Filled.Share, "All other apps...", "The usual Android chooser", com.krishna.infodeck.core.Hue.INDIGO) { onTarget(ShareTarget.CHOOSER) }
 
         Spacer(Modifier.height(10.dp))
         Text(
@@ -414,20 +424,20 @@ fun ShareTargetSheet(
 @Composable
 private fun SheetRow(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
-    title: String, subtitle: String, onClick: () -> Unit
+    title: String, subtitle: String, role: com.krishna.infodeck.core.Hue, onClick: () -> Unit
 ) {
     Row(
-        Modifier.fillMaxWidth().heightIn(min = 48.dp).clickable { onClick() },
+        Modifier.padding(bottom = 6.dp).fillMaxWidth().heightIn(min = 52.dp).clip(RoundedCornerShape(14.dp))
+            .background(deck.surface2).clickable { onClick() }.padding(horizontal = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        IconTile(icon, MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primaryContainer, size = 32)
+        HueTile(icon, role, size = 32)
         Spacer(Modifier.width(11.dp))
         Column(Modifier.weight(1f)) {
             Text(title, fontSize = 13.5.sp, fontWeight = FontWeight.SemiBold)
             Text(subtitle, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
-    Divider(color = MaterialTheme.colorScheme.outlineVariant)
 }
 
 private fun targetIcon(t: ShareTarget) = when (t) {
@@ -465,36 +475,20 @@ fun QrSheet(
     val bmp = remember(content) { Qr.bitmap(content) }
 
     InfoSheet(onDismiss = onDismiss) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Filled.QrCode2, null, tint = MaterialTheme.colorScheme.primary)
-            Spacer(Modifier.width(9.dp))
-            Text("QR code", fontSize = 17.sp, fontWeight = FontWeight.ExtraBold)
-        }
-
-        Row(Modifier.padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            listOf(false to "One code, all fields", true to "One code per field").forEach { (v, label) ->
-                Box(
-                    Modifier
-                        .weight(1f)
-                        .height(30.dp)
-                        .clip(RoundedCornerShape(15.dp))
-                        .background(if (perField == v) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant)
-                        .clickable { onPerField(v); onPage(0) },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        label, fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1,
-                        color = if (perField == v) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-        }
+        val dq = deck
+        val vi = dq.hue(com.krishna.infodeck.core.Hue.VIOLET)
+        SheetTitle("QR code", com.krishna.infodeck.core.Hue.VIOLET, Icons.Filled.QrCode2)
+        val modes = listOf(false to "One code, all fields", true to "One code per field")
+        SegRow(modes.map { it.second }, modes.indexOfFirst { it.first == perField }.coerceAtLeast(0),
+            com.krishna.infodeck.core.Hue.VIOLET) { i -> onPerField(modes[i].first); onPage(0) }
 
         Spacer(Modifier.height(12.dp))
         Box(
-            Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(Color.White).padding(14.dp),
+            Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(vi.tint)
+                .border(1.dp, vi.glyph.copy(alpha = 0.35f), RoundedCornerShape(20.dp)).padding(12.dp),
             contentAlignment = Alignment.Center
         ) {
+          Box(Modifier.clip(RoundedCornerShape(16.dp)).background(Color.White).padding(12.dp), contentAlignment = Alignment.Center) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 if (bmp != null) {
                     Image(bmp.asImageBitmap(), "QR code", Modifier.size(210.dp))
@@ -509,7 +503,7 @@ fun QrSheet(
                 Spacer(Modifier.height(8.dp))
                 Text(
                     QrRules.caption(content, pages.size), fontSize = 11.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = Color(0xFF5B5A7A)
                 )
                 if (pages.size > 1) {
                     Spacer(Modifier.height(8.dp))
@@ -520,26 +514,27 @@ fun QrSheet(
                                     .width(if (i == safeIndex) 20.dp else 7.dp)
                                     .height(7.dp)
                                     .clip(RoundedCornerShape(4.dp))
-                                    .background(if (i == safeIndex) MaterialTheme.colorScheme.primary else Color(0xFFD5DBE7))
+                                    .background(if (i == safeIndex) vi.glyph else Color(0xFFD5DBE7))
                                     .clickable { onPage(i) }
                             )
                         }
                     }
                     Text(
                         pages[safeIndex].first, fontSize = 12.sp, fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(top = 6.dp)
+                        color = Color(0xFF1E1B4B), modifier = Modifier.padding(top = 6.dp)
                     )
                 }
             }
+          }
         }
 
         SectionLabel("What it contains")
         Box(
-            Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(Color(0xFF0F1522)).padding(11.dp)
+            Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(dq.surface2).padding(11.dp)
         ) {
             Text(
-                content.ifBlank { "Nothing selected" }, fontSize = 10.5.sp,
-                color = Color(0xFFD8E2F2), fontFamily = FontFamily.Monospace, lineHeight = 15.sp
+                content.ifBlank { "Nothing selected" }, fontSize = 11.sp,
+                color = dq.ink, fontFamily = FontFamily.Monospace, lineHeight = 16.sp
             )
         }
 
@@ -554,6 +549,7 @@ fun QrSheet(
             onCancel = onDismiss,
             onSave = { bmp?.let { onShareImage(it, cardLabel) } },
             saveText = "Share image",
+            saveBrush = androidx.compose.ui.graphics.Brush.linearGradient(listOf(vi.glyph, vi.glyph2)),
             saveEnabled = bmp != null,
             cancelText = "Close",
             dirty = false
@@ -564,7 +560,11 @@ fun QrSheet(
             enabled = bmp != null,
             modifier = Modifier.fillMaxWidth().height(50.dp),
             shape = RoundedCornerShape(14.dp)
-        ) { Text("Save as PNG", fontWeight = FontWeight.Bold) }
+        ) {
+            Icon(Icons.Filled.Download, null, Modifier.size(16.dp))
+            Spacer(Modifier.width(6.dp))
+            Text("Save as PNG", fontWeight = FontWeight.Bold)
+        }
     }
 }
 

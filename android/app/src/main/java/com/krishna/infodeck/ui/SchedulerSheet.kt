@@ -1,5 +1,15 @@
 package com.krishna.infodeck.ui
 
+import androidx.compose.foundation.layout.heightIn
+
+import androidx.compose.ui.draw.clip
+
+import androidx.compose.material.icons.filled.NotificationsActive
+
+import androidx.compose.material.icons.filled.Warning
+
+import androidx.compose.material.icons.filled.Star
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -61,7 +71,7 @@ data class SchedulerDraft(
 )
 
 /** D1 S5 — Based on / When to ring / Before-After / Ring at / live preview. */
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 fun SchedulerSheet(
     dates: List<Pair<Long, Pair<String, Long>>>,   // localId -> (name, epochDay)
@@ -89,21 +99,27 @@ fun SchedulerSheet(
     val past = preview != null && preview.isBefore(LocalDateTime.now())
 
     InfoSheet(onDismiss = onDismiss) {
-        Text(
-            if (isEditing) "Edit scheduler" else "Add scheduler",
-            fontSize = 17.sp, fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 10.dp)
-        )
+        val p = deck
+        val am = p.hue(com.krishna.infodeck.core.Hue.AMBER)
+        val amInk = if (p.dark) am.glyph else am.onTint
+        SheetTitle(if (isEditing) "Edit reminder" else "Add reminder", com.krishna.infodeck.core.Hue.AMBER, Icons.Filled.Alarm)
 
-        // Based on
+        // Based on — 2.0 themed field (design 1.15.0.D1 frame 09)
+        SectionLabel("Based on")
         Box {
-            OutlinedTextField(
-                value = baseName, onValueChange = {}, readOnly = true,
-                label = { Text("Based on") },
-                trailingIcon = { Icon(Icons.Filled.ExpandMore, null) },
-                modifier = Modifier.fillMaxWidth()
-            )
-            Box(Modifier.matchParentSize().clickable { dateMenu = true })
+            Row(
+                Modifier.fillMaxWidth().heightIn(min = 54.dp).clip(RoundedCornerShape(14.dp)).background(p.surface2)
+                    .clickable { dateMenu = true }.padding(horizontal = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(Icons.Filled.Star, null, Modifier.size(20.dp), tint = am.glyph)
+                Spacer(Modifier.width(10.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(baseName, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    if (baseDate != null) Text(Fmt.date(baseDate), fontSize = 11.5.sp, color = p.ink2)
+                }
+                Icon(Icons.Filled.ExpandMore, "Choose the date", tint = p.ink2)
+            }
             DropdownMenu(expanded = dateMenu, onDismissRequest = { dateMenu = false }) {
                 dates.forEach { (id, pair) ->
                     DropdownMenuItem(
@@ -114,110 +130,71 @@ fun SchedulerSheet(
             }
         }
 
-        Spacer(Modifier.height(14.dp))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.weight(1f)) {
-                OutlinedTextField(
-                    value = RingCalculator.unitLabel(unit), onValueChange = {}, readOnly = true,
-                    label = { Text("When to ring") },
-                    trailingIcon = { Icon(Icons.Filled.ExpandMore, null) },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Box(Modifier.matchParentSize().clickable { unitMenu = true })
-                DropdownMenu(expanded = unitMenu, onDismissRequest = { unitMenu = false }) {
-                    RingUnit.values().forEach { u ->
-                        DropdownMenuItem(
-                            text = { Text(RingCalculator.unitLabel(u)) },
-                            onClick = { unit = u; amount = RingCalculator.clamp(u, amount); unitMenu = false }
-                        )
-                    }
+        SectionLabel("When to ring")
+        androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            RingUnit.values().forEach { u ->
+                FChip(RingCalculator.unitLabel(u), unit == u, role = com.krishna.infodeck.core.Hue.AMBER) {
+                    unit = u; amount = RingCalculator.clamp(u, amount)
                 }
             }
-            if (unit != RingUnit.SAME_DAY) {
-                Spacer(Modifier.width(10.dp))
-                Row(
-                    Modifier
-                        .weight(1f)
-                        .height(56.dp)
-                        .border(1.5.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp)),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    IconButton(onClick = { amount = RingCalculator.clamp(unit, amount - 1) }) {
-                        Icon(Icons.Filled.Remove, "Less", tint = MaterialTheme.colorScheme.primary)
-                    }
-                    Text("$amount", Modifier.weight(1f), fontSize = 16.sp, fontWeight = FontWeight.Bold,
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center)
-                    IconButton(onClick = { amount = RingCalculator.clamp(unit, amount + 1) }) {
-                        Icon(Icons.Filled.Add, "More", tint = MaterialTheme.colorScheme.primary)
-                    }
-                }
+        }
+        if (unit != RingUnit.SAME_DAY) {
+            Row(
+                Modifier.fillMaxWidth().height(60.dp).clip(RoundedCornerShape(16.dp)).background(am.tint).padding(5.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    Modifier.size(50.dp).clip(RoundedCornerShape(13.dp)).background(p.surface)
+                        .clickable { amount = RingCalculator.clamp(unit, amount - 1) },
+                    contentAlignment = Alignment.Center
+                ) { Icon(Icons.Filled.Remove, "Less", tint = amInk) }
+                Text("$amount", Modifier.weight(1f), fontSize = 26.sp, fontWeight = FontWeight.ExtraBold, color = amInk,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                Box(
+                    Modifier.size(50.dp).clip(RoundedCornerShape(13.dp)).background(p.surface)
+                        .clickable { amount = RingCalculator.clamp(unit, amount + 1) },
+                    contentAlignment = Alignment.Center
+                ) { Icon(Icons.Filled.Add, "More", tint = amInk) }
             }
         }
         Text(
             RingCalculator.rangeHint(unit),
-            fontSize = 11.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(start = 4.dp, top = 5.dp, bottom = 10.dp)
+            fontSize = 11.5.sp, color = p.ink2,
+            modifier = Modifier.padding(start = 4.dp, top = 5.dp, bottom = 8.dp)
         )
 
         if (unit != RingUnit.SAME_DAY) {
-            Row(
-                Modifier.fillMaxWidth().height(38.dp)
-                    .border(1.5.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(19.dp))
-            ) {
-                listOf(RingDirection.BEFORE to "Before", RingDirection.AFTER to "After").forEach { (d, label) ->
-                    Row(
-                        Modifier.weight(1f).fillMaxWidth()
-                            .background(
-                                if (direction == d) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
-                                RoundedCornerShape(19.dp)
-                            )
-                            .clickable { direction = d },
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        if (direction == d) {
-                            Icon(Icons.Filled.Check, null, Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onPrimaryContainer)
-                            Spacer(Modifier.width(4.dp))
-                        }
-                        Text(label, fontSize = 13.sp, fontWeight = FontWeight.Bold,
-                            color = if (direction == d) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.primary)
-                    }
-                }
-            }
+            val opts = listOf(RingDirection.BEFORE to "Before", RingDirection.AFTER to "After")
+            SegRow(opts.map { it.second }, opts.indexOfFirst { it.first == direction }.coerceAtLeast(0),
+                com.krishna.infodeck.core.Hue.AMBER) { direction = opts[it].first }
         }
 
-        Spacer(Modifier.height(14.dp))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Ring at", Modifier.weight(1f), fontSize = 13.sp, fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Row(
-                Modifier
-                    .height(44.dp)
-                    .border(1.5.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp))
-                    .clickable { showTime = true }
-                    .padding(horizontal = 12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(Icons.Filled.Schedule, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                Spacer(Modifier.width(6.dp))
-                Text(Fmt.time(ringMinute), fontSize = 16.sp, fontWeight = FontWeight.Bold)
-            }
+        SectionLabel("Ring at")
+        Row(
+            Modifier.fillMaxWidth().height(54.dp).clip(RoundedCornerShape(14.dp)).background(p.surface2)
+                .clickable { showTime = true }.padding(horizontal = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(Icons.Filled.Schedule, null, Modifier.size(20.dp), tint = am.glyph)
+            Spacer(Modifier.width(10.dp))
+            Text(Fmt.time(ringMinute), fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.weight(1f))
+            Icon(Icons.Filled.ExpandMore, "Change the time", tint = p.ink2)
         }
 
-        Spacer(Modifier.height(14.dp))
+        Spacer(Modifier.height(12.dp))
+        val rose = p.hue(com.krishna.infodeck.core.Hue.ROSE)
         Row(
             Modifier
                 .fillMaxWidth()
-                .background(
-                    if (past) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.secondaryContainer,
-                    RoundedCornerShape(12.dp)
-                )
-                .padding(horizontal = 12.dp, vertical = 10.dp),
+                .clip(RoundedCornerShape(14.dp))
+                .background(if (past) rose.tint else am.tint)
+                .border(1.dp, (if (past) rose.glyph else am.glyph).copy(alpha = 0.4f), RoundedCornerShape(14.dp))
+                .padding(horizontal = 12.dp, vertical = 11.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
-                Icons.Filled.Alarm, null, Modifier.size(20.dp),
-                tint = if (past) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSecondaryContainer
+                if (past) Icons.Filled.Warning else Icons.Filled.NotificationsActive, null, Modifier.size(20.dp),
+                tint = if (past) rose.glyph else am.glyph
             )
             Spacer(Modifier.width(10.dp))
             Text(
@@ -225,7 +202,7 @@ fun SchedulerSheet(
                 else if (past) "This moment has passed - it will not ring"
                 else "Rings ${Fmt.dateTime(preview)} - ${Fmt.relativeShort(preview.toLocalDate(), LocalDate.now())}",
                 fontSize = 13.sp, fontWeight = FontWeight.Bold,
-                color = if (past) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSecondaryContainer,
+                color = if (past) (if (p.dark) rose.glyph else rose.onTint) else amInk,
                 maxLines = 3, overflow = TextOverflow.Ellipsis
             )
         }

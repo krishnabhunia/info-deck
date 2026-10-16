@@ -186,12 +186,7 @@ class MainActivity : FragmentActivity() {
 
         LaunchedEffect(Unit) { prompt() }
 
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("InfoDeck is locked", style = MaterialTheme.typography.titleMedium)
-                Button(onClick = { prompt() }, modifier = Modifier.padding(top = 12.dp)) { Text("Unlock") }
-            }
-        }
+        com.krishna.infodeck.ui.DeckLockScreen(onUnlock = { prompt() })
     }
 }
 
@@ -213,7 +208,8 @@ private fun AppNav(vm: AppViewModel, startCardId: Long) {
                 onNewCard = { catId -> nav.navigate("editor?cardId=0&catId=${catId ?: 0L}") },
                 onUpcoming = { nav.navigate("upcoming") },
                 onSettings = { nav.navigate("settings") },
-                onCategories = { nav.navigate("categories") }
+                onCategories = { nav.navigate("categories") },
+                onTags = { nav.navigate("tags") }
             )
         }
         composable(
@@ -253,7 +249,9 @@ private fun AppNav(vm: AppViewModel, startCardId: Long) {
             UpcomingScreen(
                 vm = vm, onBack = { nav.popBackStack() }, onOpenCard = { nav.navigate("card/$it") },
                 onHome = { nav.popBackStack("home", inclusive = false) },
-                onSettings = { nav.navigate("settings") }
+                onSettings = { nav.navigate("settings") },
+                onTags = { nav.navigate("tags") },
+                onNewCard = { nav.navigate("editor?cardId=0&catId=0") }
             )
         }
         composable("settings") {
@@ -265,7 +263,8 @@ private fun AppNav(vm: AppViewModel, startCardId: Long) {
                 onTags = { nav.navigate("tags") },
                 onCategories = { nav.navigate("categories") },
                 onHome = { nav.popBackStack("home", inclusive = false) },
-                onUpcoming = { nav.navigate("upcoming") }
+                onUpcoming = { nav.navigate("upcoming") },
+                onNewCard = { nav.navigate("editor?cardId=0&catId=0") }
             )
         }
         composable("textsize") {
@@ -274,7 +273,15 @@ private fun AppNav(vm: AppViewModel, startCardId: Long) {
             )
         }
         composable("finetune") { com.krishna.infodeck.ui.FineTuneScreen(vm = vm, onBack = { nav.popBackStack() }) }
-        composable("tags") { com.krishna.infodeck.ui.ManageTagsScreen(vm = vm, onBack = { nav.popBackStack() }) }
+        composable("tags") {
+            com.krishna.infodeck.ui.ManageTagsScreen(
+                vm = vm, onBack = { nav.popBackStack() },
+                onHome = { nav.popBackStack("home", inclusive = false) },
+                onUpcoming = { nav.navigate("upcoming") },
+                onSettings = { nav.navigate("settings") },
+                onNewCard = { nav.navigate("editor?cardId=0&catId=0") }
+            )
+        }
         composable("errors") { ErrorLogsScreen(vm = vm, onBack = { nav.popBackStack() }) }
     }
 }

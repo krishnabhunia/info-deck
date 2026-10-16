@@ -14,7 +14,7 @@
 |---|---|---|
 | `release:feature` | any new, added or changed feature (including mixed feature + fix) | y + 1, z = 0 — 1.9.0 → 1.10.0 |
 | `release:fix` | bug fixes only | z + 1 — 1.10.0 → 1.10.1 |
-| `release:major` | major version — **applied only by Krishna** | x + 1 → x.1.0 — 1.10.0 → 2.1.0 |
+| `release:major` | major version — **applied only by Krishna** | x + 1, y and z reset → x.0.0 — 1.15.0 → 2.0.0 |
 | `release:none` | docs, CI or tooling only | unchanged, nothing published |
 
 All new versions use three-part `x.y.z` notation. The workflow fails the PR until one label is present, then writes the new number into
